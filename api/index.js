@@ -1,15 +1,37 @@
 import app from './app.js';
+import { sequelize } from './config/database.js';
+import { env } from './config/env.js';
 
-const port = Number(process.env.PORT ?? 3000);
-if (!Number.isInteger(port) || port < 0 || port > 65535 || process.env.PORT === '') {
-  throw new Error('PORT must be an integer between 0 and 65535.');
+async function main() {
+  await sequelize.authenticate();
+  console.log('Conexión a MySQL establecida.');
+
+  const server = app.listen(env.PORT, '0.0.0.0');
+
+  server.once('listening', () => {
+    console.log(`MiniAula API listening on port ${server.address().port}`);
+  });
+
+  server.once('error', async (error) => {
+    console.error(`MiniAula API failed to start: ${error.message}`);
+    await sequelize.close().catch(() => {});
+    process.exitCode = 1;
+  });
+
+  const shutdown = (signal) => {
+    console.log(`${signal} recibido; cerrando la API.`);
+    server.close(async () => {
+      await sequelize.close();
+      process.exit(0);
+    });
+  };
+
+  process.once('SIGTERM', () => shutdown('SIGTERM'));
+  process.once('SIGINT', () => shutdown('SIGINT'));
 }
 
-const server = app.listen(port, '0.0.0.0');
-server.once('listening', () => {
-  console.log(`MiniAula API listening on port ${server.address().port}`);
-});
-server.once('error', (error) => {
+main().catch(async (error) => {
   console.error(`MiniAula API failed to start: ${error.message}`);
+  await sequelize.close().catch(() => {});
   process.exitCode = 1;
 });
