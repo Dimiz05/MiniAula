@@ -1,0 +1,9 @@
+process.env.NODE_ENV = 'test';
+process.env.MYSQL_HOST ??= '127.0.0.1';
+process.env.MYSQL_PORT ??= '3306';
+process.env.MYSQL_DATABASE ??= 'miniaula_test';
+process.env.MYSQL_USER ??= 'miniaula_test';
+process.env.MYSQL_PASSWORD ??= 'test-password';
+process.env.JWT_SECRET ??= 'test-only-jwt-secret-with-more-than-32-characters';
+process.env.BCRYPT_ROUNDS ??= '4';
+process.env.CORS_ORIGIN ??= 'http://localhost:5173';
