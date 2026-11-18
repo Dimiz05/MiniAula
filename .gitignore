@@ -1,0 +1,20 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+.vite/
+
+# Local environment files; keep shareable templates
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Local logs and editor/OS files
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+
+# Local MySQL data if a bind mount is used
+/mysql-data/
