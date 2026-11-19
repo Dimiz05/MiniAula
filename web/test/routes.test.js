@@ -58,6 +58,30 @@ function render(path) {
   );
 }
 
+test('shows the learning route panel only to signed-in users', () => {
+  assert.doesNotMatch(render('/'), /Tu ruta de aprendizaje/);
+
+  session.writeSession({ token: 'stored-token', usuario: demoUsuario });
+  const home = render('/');
+  assert.match(home, /Tu ruta de aprendizaje/);
+  assert.match(home, /Hola, Carla/);
+
+  session.clearSession();
+});
+
+test('shows a themed illustration on each authentication screen', async () => {
+  const { default: AuthIllustration } = await vite.ssrLoadModule(
+    '/src/components/AuthIllustration.jsx',
+  );
+
+  assert.match(render('/login'), /Inicio de sesión seguro/);
+  assert.match(render('/registro'), /Estudiante con laptop, libros y birrete/);
+  assert.match(
+    renderToStaticMarkup(createElement(AuthIllustration, { variant: 'instructor' })),
+    /Instructor creando un curso/,
+  );
+});
+
 const demoUsuario = {
   id: 7,
   nombre: 'Carla Méndez',

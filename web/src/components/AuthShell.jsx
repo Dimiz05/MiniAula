@@ -1,47 +1,35 @@
+import AuthIllustration from './AuthIllustration.jsx';
 import Icon from './Icon.jsx';
 
 const copy = {
   login: {
     badgeIcon: 'bolt',
     badge: 'Plataforma activa v1.0',
-    headline: 'Aprende a tu propio ritmo',
+    headline: 'Todo tu progreso, en un solo lugar',
     description:
-      'Cursos estructurados con lecciones interactivas, avance secuencial y evaluaciones prácticas en tiempo real.',
+      'Inicia sesión para retomar tus cursos, continuar donde te quedaste y revisar tus resultados al instante.',
     footerLeft: '© 2026 MiniAula LMS',
     footerRight: 'Soporte académico',
   },
-  register: {
-    badgeIcon: 'verified',
-    badge: 'Comunidad educativa',
-    headline: 'Empieza hoy con MiniAula',
+  estudiante: {
+    badgeIcon: 'school',
+    badge: 'Cuenta de estudiante',
+    headline: 'Aprende a tu propio ritmo',
     description:
-      'Ya sea como estudiante explorando nuevos temas o como instructor compartiendo tu conocimiento, todo está listo en tu panel.',
+      'Inscríbete a cursos, avanza lección por lección y guarda tu progreso automáticamente.',
+    footerLeft: 'Términos y privacidad',
+    footerRight: '© 2026 MiniAula',
+  },
+  instructor: {
+    badgeIcon: 'co_present',
+    badge: 'Cuenta de instructor',
+    headline: 'Comparte lo que sabes',
+    description:
+      'Publica cursos, organiza lecciones y evalúa a tus estudiantes desde un solo panel.',
     footerLeft: 'Términos y privacidad',
     footerRight: '© 2026 MiniAula',
   },
 };
-
-function LessonRow({ icon, iconClass, title, detail, progress }) {
-  return (
-    <div className="rounded-xl border border-white/15 bg-white/10 p-3">
-      <div className="flex items-center gap-2.5">
-        <Icon name={icon} filled className={`text-[20px] ${iconClass}`} />
-        <div className="min-w-0">
-          <p className="truncate text-xs font-semibold text-white">{title}</p>
-          <p className="text-[11px] text-white/70">{detail}</p>
-        </div>
-      </div>
-      {progress !== undefined && (
-        <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/15">
-          <div
-            className="h-full rounded-full bg-white/90"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function AuthShell({ variant = 'login', children }) {
   const content = copy[variant] ?? copy.login;
@@ -65,41 +53,9 @@ export default function AuthShell({ variant = 'login', children }) {
             </span>
           </div>
 
-          <div className="my-auto px-2 py-10 text-center">
-            <div className="relative mx-auto mb-7 max-w-xs overflow-hidden rounded-panel bg-primary p-5 text-left shadow-modal">
-              <span className="absolute -right-10 -top-10 h-32 w-32 rounded-full border border-white/15" />
-              <span className="absolute -bottom-14 -left-10 h-36 w-36 rounded-full bg-white/5" />
-
-              <div className="relative">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
-                  Ruta de aprendizaje
-                </p>
-                <p className="mt-1 text-sm font-bold text-white">
-                  Diseño de experiencias
-                </p>
-
-                <div className="mt-4 space-y-2">
-                  <LessonRow
-                    icon="check_circle"
-                    iconClass="text-white"
-                    title="Fundamentos del curso"
-                    detail="Lección completada"
-                  />
-                  <LessonRow
-                    icon="play_circle"
-                    iconClass="text-white"
-                    title="Práctica guiada"
-                    detail="En curso · 60 %"
-                    progress={60}
-                  />
-                  <LessonRow
-                    icon="lock"
-                    iconClass="text-white/60"
-                    title="Evaluación final"
-                    detail="Completa la lección anterior"
-                  />
-                </div>
-              </div>
+          <div className="my-auto px-2 py-8 text-center">
+            <div className="mx-auto mb-7 w-full max-w-sm overflow-hidden rounded-panel border border-outline bg-surface shadow-card">
+              <AuthIllustration variant={variant} />
             </div>
 
             <h2 className="mb-2 text-lg font-semibold text-secondary">

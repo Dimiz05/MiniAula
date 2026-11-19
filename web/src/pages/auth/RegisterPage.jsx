@@ -134,7 +134,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <AuthShell variant="register">
+    <AuthShell variant={form.rol}>
       <div>
         <header className="mb-6 flex items-center justify-between gap-4">
           <Logo />

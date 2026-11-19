@@ -47,7 +47,11 @@ export default function HomePage() {
   return (
     <div className="space-y-8">
       <section className="overflow-hidden rounded-panel border border-outline bg-surface shadow-card">
-        <div className="grid gap-8 p-6 sm:p-10 lg:grid-cols-[1.12fr_0.88fr] lg:items-center">
+        <div
+          className={`grid gap-8 p-6 sm:p-10 lg:items-center ${
+            isAuthenticated ? 'lg:grid-cols-[1.12fr_0.88fr]' : ''
+          }`}
+        >
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-[11px] font-semibold text-primary">
               <span className="h-1.5 w-1.5 rounded-full bg-success" />
@@ -104,45 +108,47 @@ export default function HomePage() {
             </ul>
           </div>
 
-          <div className="relative overflow-hidden rounded-panel bg-primary p-5 text-left shadow-modal sm:p-6">
-            <span className="absolute -right-12 -top-12 h-40 w-40 rounded-full border border-white/15" />
-            <span className="absolute -bottom-16 -left-12 h-44 w-44 rounded-full bg-white/5" />
+          {isAuthenticated && (
+            <div className="relative overflow-hidden rounded-panel bg-primary p-5 text-left shadow-modal sm:p-6">
+              <span className="absolute -right-12 -top-12 h-40 w-40 rounded-full border border-white/15" />
+              <span className="absolute -bottom-16 -left-12 h-44 w-44 rounded-full bg-white/5" />
 
-            <div className="relative">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
-                Tu ruta de aprendizaje
-              </p>
-              <p className="mt-1 text-base font-bold text-white">
-                Curso de ejemplo
-              </p>
+              <div className="relative">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
+                  Tu ruta de aprendizaje
+                </p>
+                <p className="mt-1 text-base font-bold text-white">
+                  Curso de ejemplo
+                </p>
 
-              <div className="mt-4 space-y-2">
-                <OutlineRow
-                  icon="check_circle"
-                  iconClass="text-white"
-                  title="Lección 1 · Fundamentos"
-                  detail="Completada"
-                />
-                <OutlineRow
-                  icon="play_circle"
-                  iconClass="text-white"
-                  title="Lección 2 · Práctica guiada"
-                  detail="En curso"
-                />
-                <OutlineRow
-                  icon="lock"
-                  iconClass="text-white/60"
-                  title="Lección 3 · Evaluación"
-                  detail="Completa la lección anterior"
-                />
-              </div>
+                <div className="mt-4 space-y-2">
+                  <OutlineRow
+                    icon="check_circle"
+                    iconClass="text-white"
+                    title="Lección 1 · Fundamentos"
+                    detail="Completada"
+                  />
+                  <OutlineRow
+                    icon="play_circle"
+                    iconClass="text-white"
+                    title="Lección 2 · Práctica guiada"
+                    detail="En curso"
+                  />
+                  <OutlineRow
+                    icon="lock"
+                    iconClass="text-white/60"
+                    title="Lección 3 · Evaluación"
+                    detail="Completa la lección anterior"
+                  />
+                </div>
 
-              <div className="mt-4 flex items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-[11px] text-white/80">
-                <span>Progreso del curso</span>
-                <span className="font-semibold text-white">40 %</span>
+                <div className="mt-4 flex items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-[11px] text-white/80">
+                  <span>Progreso del curso</span>
+                  <span className="font-semibold text-white">40 %</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 
