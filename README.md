@@ -9,9 +9,10 @@ lessons in order.
 with MySQL models `Usuario`, `Curso`, `Leccion`, `Pregunta`, `Inscripcion`, and
 `Progreso`, their migrations, the demo seed, registration/login with JWT and
 bcrypt, Zod validation, centralized errors, and HTTP security middleware all
-work. The complete stack starts with one Docker command. The course catalog,
-lesson, quiz, enrollment, and progress endpoints and their React screens are
-still pending.
+work. The React app includes login, registration, and profile screens, restores
+the session after a reload, and supports logout. The complete stack starts with
+one Docker command. The course catalog, lesson, quiz, enrollment, and progress
+endpoints and their remaining React screens are still pending.
 
 ## Repository structure
 
@@ -155,6 +156,22 @@ Sessions are stateless JWTs: logging out discards the token on the client and
 there is no server-side logout endpoint. Changing your password does not revoke
 tokens that were already issued; tokens expire with `JWT_EXPIRES_IN`.
 
+## Frontend authentication
+
+| Route | Access | Screen |
+| --- | --- | --- |
+| `/login` | Public | Sign in with email and password. |
+| `/registro` | Public | Create a student or instructor account. |
+| `/perfil` | Bearer token | Read and update name, email, and password; logout. |
+
+The SPA keeps `{ token, usuario }` in `localStorage` under
+`miniaula.session.v1`, so the session survives a page reload. One configured
+fetch client (`web/src/config/http.js`) reads `VITE_API_URL`, attaches the
+bearer token, normalizes the `{ error: { code, message, details } }` envelope,
+and clears the session on an authenticated `401`. Logout discards the stored
+token and returns to `/login`, matching the stateless JWT behavior described
+above. Passwords, tokens, and API responses are never logged.
+
 ## Postman collection
 
 [`docs/postman/MiniAula.postman_collection.json`](docs/postman/MiniAula.postman_collection.json)
@@ -234,7 +251,8 @@ npm run dev
 ```
 
 `VITE_API_URL` must point to the running API. Use `npm run build` to check the
-production build and `npm test` for the route smoke tests.
+production build and `npm test` for the authentication client, session restore,
+and route rendering tests.
 
 ## Configuration and security
 
