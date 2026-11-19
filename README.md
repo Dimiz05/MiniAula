@@ -5,12 +5,13 @@ project. Instructors create and publish courses, add lessons and quizzes, and
 track student progress. Students browse the catalog, enroll, and work through
 lessons in order.
 
-**Current status:** the data layer is in place. Sequelize with MySQL models
-`Usuario`, `Curso`, `Leccion`, `Pregunta`, `Inscripcion`, and `Progreso`, their
-migrations, the demo seed, registration/login with JWT and bcrypt, Zod
-validation, centralized errors, and HTTP security middleware all work. The
-course, lesson, quiz, enrollment, and progress endpoints are still pending, as
-is the frontend.
+**Current status:** the data layer and authentication are in place. Sequelize
+with MySQL models `Usuario`, `Curso`, `Leccion`, `Pregunta`, `Inscripcion`, and
+`Progreso`, their migrations, the demo seed, registration/login with JWT and
+bcrypt, Zod validation, centralized errors, and HTTP security middleware all
+work. The complete stack starts with one Docker command. The course catalog,
+lesson, quiz, enrollment, and progress endpoints and their React screens are
+still pending.
 
 ## Repository structure
 
@@ -18,6 +19,7 @@ is the frontend.
 | --- | --- |
 | [`api/`](api/) | REST API with Node.js, Express, JavaScript ES modules, Sequelize, and MySQL. See [API guidelines](api/AGENTS.md). |
 | [`web/`](web/) | React single-page application with Vite, JavaScript, and JSX. See [frontend guidelines](web/AGENTS.md). |
+| [`docs/`](docs/) | API documentation, including the [Postman collection](docs/postman/MiniAula.postman_collection.json). |
 
 ## Data model
 
@@ -77,8 +79,9 @@ Migrations and seeders run through Umzug and are recorded in the
 
 ### Demo accounts
 
-`npm run db:seed` creates two instructors and three students. All demo accounts
-use the password `Miniaula123!`.
+The seed (automatic on the first Docker start, or `npm run db:seed` locally)
+creates two instructors and three students. All demo accounts use the password
+`Miniaula123!`.
 
 | Email | Role |
 | --- | --- |
@@ -148,20 +151,90 @@ Passwords are hashed with bcrypt and never returned. Protected routes verify the
 JWT signature, issuer, audience, and expiration; role middleware is available
 for instructor-only routes.
 
-## API container
+Sessions are stateless JWTs: logging out discards the token on the client and
+there is no server-side logout endpoint. Changing your password does not revoke
+tokens that were already issued; tokens expire with `JWT_EXPIRES_IN`.
 
-From the repository root, with Docker running:
+## Postman collection
+
+[`docs/postman/MiniAula.postman_collection.json`](docs/postman/MiniAula.postman_collection.json)
+tests the implemented API: health, registration, login, and profile. It captures
+the token automatically and asserts the status code and error code of each case.
+
+1. Start the stack with `docker compose up --build` (or the local API).
+2. In Postman, choose **Import** and select the collection file.
+3. Run the whole collection with **Run** in the Collection Runner; requests are
+   ordered and share the collection variables.
+
+`baseUrl` defaults to `http://localhost:3000/api`; change it in the collection
+variables to test another host. Registration requests use `{{$timestamp}}`, so
+each run creates fresh accounts. Rate limits apply (registration: 5 per hour;
+login: 10 per 15 minutes); `docker compose restart api` clears the in-memory
+counters. Requests for courses, lessons, enrollments, progress, and the
+instructor dashboard will be added as those endpoints are implemented.
+
+## Full stack with Docker
+
+Requirements: Docker with Compose v2. Nothing else is installed on the host.
+The stack is defined in `docker-compose.yml` at the repository root.
+
+From the repository root:
+
+```sh
+docker compose up --build
+```
+
+The command builds the API and the frontend, starts MySQL, waits for it to be
+healthy, applies pending migrations, runs pending seeders, and then starts the
+API. The first start takes a couple of minutes; later starts reuse the images
+and the database volume. When it finishes booting:
+
+- Frontend: `http://localhost:8080`
+- API health: `http://localhost:3000/api/health`
+- Demo accounts: see [Demo accounts](#demo-accounts). The seed runs
+  automatically the first time the database is created.
+
+| Service | Container | Notes |
+| --- | --- | --- |
+| `api` | Node.js 24 + Express | Own `api/Dockerfile`; prepares the schema and seed before listening. |
+| `web` | Multi-stage Vite build served by Nginx | Own `web/Dockerfile`; SPA fallback for React Router. |
+| `mysql` | MySQL 8.4 | Data persists in the `mysql_data` volume. |
+
+Useful commands:
+
+| Command | Purpose |
+| --- | --- |
+| `docker compose up --build -d` | Run in the background. |
+| `docker compose logs -f api` | Follow API logs, including the startup migration and seed counts. |
+| `docker compose down` | Stop the stack and keep the database volume. |
+| `docker compose down -v` | Stop the stack and delete the database, so the next start is truly from zero. |
+| `docker compose run --rm api npm run db:migrate` | Run migrations manually. |
+| `docker compose run --rm api npm run db:seed` | Run pending seeders manually (already covered by startup). |
+
+Compose has local-only defaults so the one-command start works without a
+`.env`. To change ports, credentials, the JWT secret, or the API URL:
 
 ```sh
 cp .env.example .env
-docker compose up -d --build mysql api
-docker compose run --rm api node scripts/migrate.js up
-docker compose run --rm api node scripts/seed.js
 ```
 
-The API is exposed at `http://localhost:3000` and MySQL keeps its data in the
-`mysql_data` volume. The full stack (API, frontend, and database) will start
-with `docker compose up --build` once the frontend container is implemented.
+`VITE_API_URL` is baked into the frontend at build time. If you change
+`API_PORT`, set `VITE_API_URL` to match and rebuild the frontend
+(`docker compose build web`). The defaults and secrets in `docker-compose.yml`
+are for local development only; override them in `.env` for any shared
+environment.
+
+### Frontend local development
+
+```sh
+cd web
+cp .env.example .env
+npm ci
+npm run dev
+```
+
+`VITE_API_URL` must point to the running API. Use `npm run build` to check the
+production build and `npm test` for the route smoke tests.
 
 ## Configuration and security
 

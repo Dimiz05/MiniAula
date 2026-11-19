@@ -1,0 +1,420 @@
+{
+  "info": {
+    "name": "MiniAula API",
+    "description": "Colección para probar la API de MiniAula. Cubre los endpoints implementados hoy: salud, registro, login y perfil. Ejecútala en orden con el Collection Runner. Requiere la API en http://localhost:3000/api con el seed aplicado (`docker compose up --build`). Las variables viven en la colección; no hace falta importar un environment. El registro usa {{$timestamp}} para generar emails únicos. Límites: registro 5 por hora y login 10 cada 15 minutos por IP; si agotas el límite, `docker compose restart api` reinicia los contadores. La prueba de email ocupado depende del usuario del seed. Cursos, lecciones, inscripciones, progreso y panel se agregarán cuando esos endpoints existan.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api" },
+    { "key": "email", "value": "carla.estudiante@miniaula.test" },
+    { "key": "password", "value": "Miniaula123!" },
+    { "key": "token", "value": "" },
+    { "key": "instructorEmail", "value": "" },
+    { "key": "instructorToken", "value": "" },
+    { "key": "seedEmail", "value": "carla.estudiante@miniaula.test" },
+    { "key": "seedPassword", "value": "Miniaula123!" }
+  ],
+  "item": [
+    {
+      "name": "01 · Salud",
+      "item": [
+        {
+          "name": "Estado de la API",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('la API está operativa', function () { pm.expect(pm.response.json().status).to.eql('ok'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 · Autenticación",
+      "item": [
+        {
+          "name": "Registro de estudiante",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\": \"Estudiante Prueba\", \"email\": \"estudiante.{{$timestamp}}@miniaula.test\", \"password\": \"Miniaula123!\", \"rol\": \"estudiante\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/register"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "pm.test('devuelve usuario y token', function () {",
+                  "  pm.expect(body.usuario.email).to.be.a('string');",
+                  "  pm.expect(body.token).to.be.a('string');",
+                  "});",
+                  "pm.test('nunca devuelve passwordHash', function () {",
+                  "  pm.expect(body.usuario).to.not.have.property('passwordHash');",
+                  "});",
+                  "pm.collectionVariables.set('email', body.usuario.email);",
+                  "pm.collectionVariables.set('token', body.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login correcto",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"{{email}}\", \"password\": \"{{password}}\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('devuelve el rol y un token', function () {",
+                  "  pm.expect(body.usuario.rol).to.eql('estudiante');",
+                  "  pm.expect(body.token).to.be.a('string');",
+                  "});",
+                  "pm.collectionVariables.set('token', body.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login con contraseña incorrecta",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"{{email}}\", \"password\": \"ClaveIncorrecta123!\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized', function () { pm.response.to.have.status(401); });",
+                  "pm.test('código CREDENCIALES_INVALIDAS', function () { pm.expect(pm.response.json().error.code).to.eql('CREDENCIALES_INVALIDAS'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login con email inexistente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"nadie.{{$timestamp}}@miniaula.test\", \"password\": \"Miniaula123!\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized', function () { pm.response.to.have.status(401); });",
+                  "pm.test('código CREDENCIALES_INVALIDAS', function () { pm.expect(pm.response.json().error.code).to.eql('CREDENCIALES_INVALIDAS'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registro de instructor",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\": \"Docente Prueba\", \"email\": \"docente.{{$timestamp}}@miniaula.test\", \"password\": \"Miniaula123!\", \"rol\": \"instructor\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/register"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('201 Created con rol instructor', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(body.usuario.rol).to.eql('instructor');",
+                  "});",
+                  "pm.collectionVariables.set('instructorEmail', body.usuario.email);",
+                  "pm.collectionVariables.set('instructorToken', body.token);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 · Perfil",
+      "item": [
+        {
+          "name": "Ver mi perfil",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/users/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('devuelve el perfil autenticado', function () {",
+                  "  pm.expect(body.usuario.email).to.eql(pm.collectionVariables.get('email'));",
+                  "  pm.expect(body.usuario).to.not.have.property('passwordHash');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Editar mi perfil",
+          "request": {
+            "method": "PUT",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\": \"Estudiante Editado\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/users/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('el nombre se actualiza', function () { pm.expect(body.usuario.nombre).to.eql('Estudiante Editado'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ver mi perfil sin token",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": "{{baseUrl}}/users/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized', function () { pm.response.to.have.status(401); });",
+                  "pm.test('código NO_AUTENTICADO', function () { pm.expect(pm.response.json().error.code).to.eql('NO_AUTENTICADO'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Editar perfil con email ocupado",
+          "request": {
+            "method": "PUT",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"{{seedEmail}}\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/users/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
+                  "pm.test('código EMAIL_EN_USO', function () { pm.expect(pm.response.json().error.code).to.eql('EMAIL_EN_USO'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Intento de cambiar el rol",
+          "request": {
+            "method": "PUT",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"rol\": \"instructor\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/users/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 Unprocessable Entity', function () { pm.response.to.have.status(422); });",
+                  "pm.test('código VALIDACION', function () { pm.expect(pm.response.json().error.code).to.eql('VALIDACION'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 · Validación y errores",
+      "item": [
+        {
+          "name": "Registro con datos inválidos",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\": \"A\", \"email\": \"no-es-email\", \"password\": \"corta\", \"rol\": \"admin\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/register"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('422 Unprocessable Entity', function () { pm.response.to.have.status(422); });",
+                  "pm.test('detalla los cuatro campos', function () {",
+                  "  const campos = body.error.details.map(function (detalle) { return detalle.campo; }).sort();",
+                  "  pm.expect(campos).to.eql(['email', 'nombre', 'password', 'rol']);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registro con email duplicado",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\": \"Estudiante Duplicado\", \"email\": \"{{email}}\", \"password\": \"Miniaula123!\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/register"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
+                  "pm.test('código EMAIL_EN_USO', function () { pm.expect(pm.response.json().error.code).to.eql('EMAIL_EN_USO'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login con usuario del seed",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"{{seedEmail}}\", \"password\": \"{{seedPassword}}\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('el seed tiene rol estudiante', function () { pm.expect(body.usuario.rol).to.eql('estudiante'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
