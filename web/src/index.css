@@ -1,18 +1,71 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50: #f0fdfa;
-  --color-brand-200: #99f6e4;
-  --color-brand-700: #0f766e;
-  --color-brand-950: #042f2e;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-primary: #0a5c41;
+  --color-primary-dark: #084a34;
+  --color-on-primary: #ffffff;
+  --color-secondary: #1a202c;
+  --color-on-secondary: #ffffff;
+  --color-surface: #ffffff;
+  --color-on-surface: #1a202c;
+  --color-surface-variant: #edf2f7;
+  --color-on-surface-variant: #4a5568;
+  --color-background: #f8fafc;
+  --color-on-background: #1a202c;
+  --color-success: #0d7a57;
+  --color-on-success: #ffffff;
+  --color-success-light: #e6f4ea;
+  --color-warning: #d97706;
+  --color-on-warning: #1a202c;
+  --color-warning-light: #fef3c7;
+  --color-error: #dc2626;
+  --color-on-error: #ffffff;
+  --color-error-light: #fee2e2;
+  --color-outline: #e2e8f0;
+  --color-outline-light: #f1f5f9;
+
+  --radius-card: 1rem;
+  --radius-panel: 1.25rem;
+
+  --shadow-card: 0 2px 8px -2px rgba(36, 36, 58, 0.06);
+  --shadow-hover: 0 8px 24px -4px rgba(36, 36, 58, 0.1);
+  --shadow-modal: 0 16px 36px -6px rgba(36, 36, 58, 0.16);
 }
 
 @layer base {
-  body {
-    @apply bg-brand-50 text-brand-950 antialiased;
+  html {
+    @apply scroll-smooth;
   }
 
-  a:focus-visible {
-    @apply outline-2 outline-offset-4 outline-brand-700;
+  body {
+    @apply bg-background font-sans text-on-surface antialiased;
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+
+  ::selection {
+    background-color: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  }
+}
+
+@layer components {
+  .material-symbols-outlined {
+    display: inline-block;
+    line-height: 1;
+    vertical-align: middle;
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  }
+
+  .icon-filled {
+    font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 24;
   }
 }
