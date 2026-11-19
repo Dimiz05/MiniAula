@@ -19,6 +19,7 @@ still pending.
 | --- | --- |
 | [`api/`](api/) | REST API with Node.js, Express, JavaScript ES modules, Sequelize, and MySQL. See [API guidelines](api/AGENTS.md). |
 | [`web/`](web/) | React single-page application with Vite, JavaScript, and JSX. See [frontend guidelines](web/AGENTS.md). |
+| [`docs/`](docs/) | API documentation, including the [Postman collection](docs/postman/MiniAula.postman_collection.json). |
 
 ## Data model
 
@@ -152,7 +153,25 @@ for instructor-only routes.
 
 Sessions are stateless JWTs: logging out discards the token on the client and
 there is no server-side logout endpoint. Changing your password does not revoke
-tokens that were already issued; tokens expire after `JWT_EXPIRES_IN`.
+tokens that were already issued; tokens expire with `JWT_EXPIRES_IN`.
+
+## Postman collection
+
+[`docs/postman/MiniAula.postman_collection.json`](docs/postman/MiniAula.postman_collection.json)
+tests the implemented API: health, registration, login, and profile. It captures
+the token automatically and asserts the status code and error code of each case.
+
+1. Start the stack with `docker compose up --build` (or the local API).
+2. In Postman, choose **Import** and select the collection file.
+3. Run the whole collection with **Run** in the Collection Runner; requests are
+   ordered and share the collection variables.
+
+`baseUrl` defaults to `http://localhost:3000/api`; change it in the collection
+variables to test another host. Registration requests use `{{$timestamp}}`, so
+each run creates fresh accounts. Rate limits apply (registration: 5 per hour;
+login: 10 per 15 minutes); `docker compose restart api` clears the in-memory
+counters. Requests for courses, lessons, enrollments, progress, and the
+instructor dashboard will be added as those endpoints are implemented.
 
 ## Full stack with Docker
 
