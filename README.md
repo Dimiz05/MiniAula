@@ -148,6 +148,10 @@ Passwords are hashed with bcrypt and never returned. Protected routes verify the
 JWT signature, issuer, audience, and expiration; role middleware is available
 for instructor-only routes.
 
+Sessions are stateless JWTs: logging out discards the token on the client and
+there is no server-side logout endpoint. Changing your password does not revoke
+tokens that were already issued; tokens expire after `JWT_EXPIRES_IN`.
+
 ## API container
 
 From the repository root, with Docker running:
