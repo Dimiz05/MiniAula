@@ -1,10 +1,13 @@
 import {
   actualizarCursoPropio,
+  archivarCursoPropio,
   crearCurso,
+  eliminarCursoPropio,
   listarCursosPropios,
   listarCursosPublicados,
   obtenerCursoPropio,
   obtenerCursoPublicado,
+  publicarCursoPropio,
 } from '../services/curso.service.js';
 import { AppError } from '../utils/errors.js';
 
@@ -52,4 +55,28 @@ export async function actualizar(request, response) {
     request.validated.body,
   );
   response.status(200).json({ curso });
+}
+
+export async function publicar(request, response) {
+  const curso = await publicarCursoPropio(
+    request.usuario.id,
+    request.validated.params.id,
+  );
+  response.status(200).json({ curso });
+}
+
+export async function archivar(request, response) {
+  const curso = await archivarCursoPropio(
+    request.usuario.id,
+    request.validated.params.id,
+  );
+  response.status(200).json({ curso });
+}
+
+export async function eliminar(request, response) {
+  await eliminarCursoPropio(
+    request.usuario.id,
+    request.validated.params.id,
+  );
+  response.status(204).end();
 }

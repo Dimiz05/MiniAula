@@ -4,6 +4,7 @@ import {
   Inscripcion,
   Leccion,
   Usuario,
+  sequelize,
 } from '../models/index.js';
 import { AppError } from '../utils/errors.js';
 
@@ -166,10 +167,10 @@ async function contarRelacionadosPorCurso(Modelo, cursoIds) {
   );
 }
 
-async function contarRelacionadosCurso(cursoId) {
+async function contarRelacionadosCurso(cursoId, transaction) {
   const [totalLecciones, totalInscritos] = await Promise.all([
-    Leccion.count({ where: { cursoId } }),
-    Inscripcion.count({ where: { cursoId } }),
+    Leccion.count({ where: { cursoId }, transaction }),
+    Inscripcion.count({ where: { cursoId }, transaction }),
   ]);
 
   return { totalLecciones, totalInscritos };
@@ -237,6 +238,105 @@ export async function actualizarCursoPropio(instructorId, cursoId, cambios) {
   await curso.save();
 
   return toInstructorCurso(curso, await contarRelacionadosCurso(curso.id));
+}
+
+async function obtenerCursoBloqueado(cursoId, transaction) {
+  return Curso.findByPk(cursoId, {
+    transaction,
+    lock: transaction.LOCK.UPDATE,
+  });
+}
+
+export async function publicarCursoPropio(instructorId, cursoId) {
+  return sequelize.transaction(async (transaction) => {
+    const curso = await obtenerCursoBloqueado(cursoId, transaction);
+    asegurarPropiedadCurso(curso, instructorId);
+
+    if (curso.estado === 'publicado') {
+      throw new AppError(
+        409,
+        'CURSO_YA_PUBLICADO',
+        'El curso ya está publicado.',
+      );
+    }
+
+    if (curso.estado !== 'borrador') {
+      throw new AppError(
+        409,
+        'TRANSICION_INVALIDA',
+        'Solo un curso en borrador puede publicarse.',
+      );
+    }
+
+    // A course needs at least one lesson before it can be published.
+    const totalLecciones = await Leccion.count({
+      where: { cursoId: curso.id },
+      transaction,
+    });
+
+    if (totalLecciones === 0) {
+      throw new AppError(
+        409,
+        'CURSO_SIN_LECCIONES',
+        'El curso debe tener al menos una lección antes de publicarse.',
+      );
+    }
+
+    curso.estado = 'publicado';
+    await curso.save({ transaction });
+
+    const totalInscritos = await Inscripcion.count({
+      where: { cursoId: curso.id },
+      transaction,
+    });
+    return toInstructorCurso(curso, { totalLecciones, totalInscritos });
+  });
+}
+
+export async function archivarCursoPropio(instructorId, cursoId) {
+  return sequelize.transaction(async (transaction) => {
+    const curso = await obtenerCursoBloqueado(cursoId, transaction);
+    asegurarPropiedadCurso(curso, instructorId);
+
+    if (curso.estado === 'archivado') {
+      throw new AppError(
+        409,
+        'CURSO_YA_ARCHIVADO',
+        'El curso ya está archivado.',
+      );
+    }
+
+    curso.estado = 'archivado';
+    await curso.save({ transaction });
+
+    return toInstructorCurso(
+      curso,
+      await contarRelacionadosCurso(curso.id, transaction),
+    );
+  });
+}
+
+export async function eliminarCursoPropio(instructorId, cursoId) {
+  await sequelize.transaction(async (transaction) => {
+    const curso = await obtenerCursoBloqueado(cursoId, transaction);
+    asegurarPropiedadCurso(curso, instructorId);
+
+    // A course with enrolled students must be archived, not deleted.
+    const totalInscritos = await Inscripcion.count({
+      where: { cursoId: curso.id },
+      transaction,
+    });
+
+    if (totalInscritos > 0) {
+      throw new AppError(
+        409,
+        'CURSO_CON_INSCRIPCIONES',
+        'No puedes eliminar un curso con estudiantes inscritos. Archívalo en su lugar.',
+      );
+    }
+
+    await curso.destroy({ transaction });
+  });
 }
 
 export async function listarCursosPublicados({ page, limit, q, categoria }) {

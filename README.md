@@ -168,8 +168,18 @@ courses; another instructor's course returns `403 CURSO_NO_PROPIO`.
 | `GET /api/cursos/mios/:id` | Return one own course for editing. Returns `{ curso }`. |
 | `POST /api/cursos` | Create a course with `titulo`, `descripcion`, `categoria`, and optional `nivel`. The server always stores `estado: "borrador"` and the authenticated instructor as owner. Returns `201` with `{ curso }`. |
 | `PUT /api/cursos/:id` | Update `titulo`, `descripcion`, `categoria`, and/or `nivel` of an own course. `estado` and `instructorId` are not editable. Returns `{ curso }`. |
+| `PATCH /api/cursos/:id/publicar` | Publish an own draft. Requires at least one lesson; otherwise returns `409 CURSO_SIN_LECCIONES`. Returns `{ curso }` with `estado: "publicado"`. |
+| `PATCH /api/cursos/:id/archivar` | Archive an own draft or published course. Works even when students are enrolled. Returns `{ curso }` with `estado: "archivado"`. |
+| `DELETE /api/cursos/:id` | Delete an own course only when it has no enrolled students; otherwise returns `409 CURSO_CON_INSCRIPCIONES` and the course must be archived. Returns `204` with no body. |
 
-Publishing, archiving, and deleting courses are not implemented yet.
+State transitions are enforced by the backend: `borrador → publicado` only
+after at least one lesson exists, and `borrador|publicado → archivado`.
+Publishing an already published course returns `409 CURSO_YA_PUBLICADO`;
+publishing an archived course or archiving an already archived course returns
+`409 TRANSICION_INVALIDA` / `409 CURSO_YA_ARCHIVADO`. State changes and
+deletion run in a transaction with the course row locked, so a failed rule
+never leaves a partial delete. Archived courses disappear from the public
+catalog because it only lists `publicado` courses.
 
 ## Frontend authentication
 

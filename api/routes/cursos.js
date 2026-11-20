@@ -1,11 +1,14 @@
 import { Router } from 'express';
 import {
   actualizar,
+  archivar,
   crear,
   detalle,
   detallePropio,
+  eliminar,
   listar,
   misCursos,
+  publicar,
 } from '../controllers/curso.js';
 import { authenticate, authorize } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
@@ -40,6 +43,27 @@ router.put(
   authorize('instructor'),
   validate({ params: cursoIdParamsSchema, body: actualizarCursoSchema }),
   actualizar,
+);
+router.patch(
+  '/:id/publicar',
+  authenticate,
+  authorize('instructor'),
+  validate({ params: cursoIdParamsSchema }),
+  publicar,
+);
+router.patch(
+  '/:id/archivar',
+  authenticate,
+  authorize('instructor'),
+  validate({ params: cursoIdParamsSchema }),
+  archivar,
+);
+router.delete(
+  '/:id',
+  authenticate,
+  authorize('instructor'),
+  validate({ params: cursoIdParamsSchema }),
+  eliminar,
 );
 
 router.get('/', validate({ query: catalogoQuerySchema }), listar);
