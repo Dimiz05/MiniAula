@@ -7,7 +7,9 @@ import NotFoundPage from '../pages/NotFoundPage.jsx';
 import LoginPage from '../pages/auth/LoginPage.jsx';
 import ProfilePage from '../pages/auth/ProfilePage.jsx';
 import RegisterPage from '../pages/auth/RegisterPage.jsx';
-import { GuestOnly, RequireAuth } from './guards.jsx';
+import CourseEditorPage from '../pages/instructor/CourseEditorPage.jsx';
+import MyCoursesPage from '../pages/instructor/MyCoursesPage.jsx';
+import { GuestOnly, RequireAuth, RequireInstructor } from './guards.jsx';
 
 export default function AppRoutes() {
   return (
@@ -24,6 +26,11 @@ export default function AppRoutes() {
         <Route path="course/:id" element={<CourseDetailPage />} />
         <Route element={<RequireAuth />}>
           <Route path="perfil" element={<ProfilePage />} />
+          <Route element={<RequireInstructor />}>
+            <Route path="instructor/cursos" element={<MyCoursesPage />} />
+            <Route path="instructor/cursos/nuevo" element={<CourseEditorPage />} />
+            <Route path="instructor/cursos/:id/editar" element={<CourseEditorPage />} />
+          </Route>
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Route>

@@ -51,6 +51,11 @@ export default function SiteLayout() {
             <NavLink to="/catalog" className={navClass}>
               Catálogo
             </NavLink>
+            {isAuthenticated && usuario?.rol === 'instructor' && (
+              <NavLink to="/instructor/cursos" className={navClass}>
+                Mis cursos
+              </NavLink>
+            )}
           </nav>
 
           <div className="ml-auto flex items-center gap-2">

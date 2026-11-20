@@ -146,6 +146,26 @@ test('ignores a malformed stored session', () => {
   assert.doesNotMatch(html, /Datos personales/);
 });
 
+test('only instructors see course management routes and navigation', () => {
+  const paths = ['/instructor/cursos', '/instructor/cursos/nuevo', '/instructor/cursos/7/editar'];
+  for (const usuario of [null, demoUsuario]) {
+    if (usuario) session.writeSession({ token: 'stored-token', usuario });
+    for (const path of paths) {
+      assert.doesNotMatch(render(path), /Mis cursos|Nuevo curso|Cargando curso|name="titulo"/);
+    }
+  }
+
+  session.writeSession({ token: 'stored-token', usuario: { ...demoUsuario, rol: 'instructor' } });
+  assert.match(render(paths[0]), /Cargando tus cursos/);
+  const nuevo = render(paths[1]);
+  assert.match(nuevo, /Nuevo curso/);
+  assert.match(nuevo, /Borrador/);
+  assert.match(nuevo, /name="titulo"/);
+  const editar = render(paths[2]);
+  assert.match(editar, /Cargando curso/);
+  assert.doesNotMatch(editar, /name="titulo"/);
+});
+
 test('session helpers persist, validate and clear the stored session', () => {
   assert.equal(session.readSession(), null);
 

@@ -18,6 +18,11 @@ export function RequireAuth() {
   return <Outlet />;
 }
 
+export function RequireInstructor() {
+  const { usuario } = useAuth();
+  return usuario?.rol === 'instructor' ? <Outlet /> : <Navigate to="/perfil" replace />;
+}
+
 export function GuestOnly() {
   const { isAuthenticated } = useAuth();
 

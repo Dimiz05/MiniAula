@@ -45,6 +45,34 @@ export async function obtenerCurso(...args) {
   return apiRequest(`/cursos/${id}`);
 }
 
+export function listarCursosPropios() {
+  return apiRequest('/cursos/mios', { auth: true });
+}
+
+export function obtenerCursoPropio(id) {
+  return apiRequest(`/cursos/mios/${encodeURIComponent(id)}`, { auth: true });
+}
+
+export function crearCurso(body) {
+  return apiRequest('/cursos', { auth: true, method: 'POST', body });
+}
+
+export function actualizarCurso(id, body) {
+  return apiRequest(`/cursos/${encodeURIComponent(id)}`, { auth: true, method: 'PUT', body });
+}
+
+export function publicarCurso(id) {
+  return apiRequest(`/cursos/${encodeURIComponent(id)}/publicar`, { auth: true, method: 'PATCH' });
+}
+
+export function archivarCurso(id) {
+  return apiRequest(`/cursos/${encodeURIComponent(id)}/archivar`, { auth: true, method: 'PATCH' });
+}
+
+export function eliminarCurso(id) {
+  return apiRequest(`/cursos/${encodeURIComponent(id)}`, { auth: true, method: 'DELETE' });
+}
+
 // Aliases kept for compatibility with different naming conventions.
 export const listarCursosPublicados = listarCursos;
 export const listarCursosPublicos = listarCursos;
