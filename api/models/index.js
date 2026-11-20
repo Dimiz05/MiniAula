@@ -1,5 +1,6 @@
 import { sequelize } from '../config/database.js';
 import { Curso } from './curso.js';
+import { Leccion } from './leccion.js';
 import { Usuario } from './usuario.js';
 
 Usuario.hasMany(Curso, {
@@ -12,4 +13,14 @@ Curso.belongsTo(Usuario, {
   as: 'instructor',
 });
 
-export { sequelize, Curso, Usuario };
+Curso.hasMany(Leccion, {
+  foreignKey: 'cursoId',
+  as: 'lecciones',
+});
+
+Leccion.belongsTo(Curso, {
+  foreignKey: 'cursoId',
+  as: 'curso',
+});
+
+export { sequelize, Curso, Leccion, Usuario };

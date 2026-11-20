@@ -1,7 +1,8 @@
 import { Op } from 'sequelize';
-import { Curso, Usuario } from '../models/index.js';
+import { Curso, Leccion, Usuario } from '../models/index.js';
 
 const ATRIBUTOS_INSTRUCTOR = ['id', 'nombre'];
+const ATRIBUTOS_TEMARIO = ['id', 'titulo', 'tipo', 'orden', 'notaMinima'];
 
 export function escaparLike(value) {
   return value.replace(/[\\%_]/g, '\\$&');
@@ -49,6 +50,50 @@ export function toPublicCurso(curso) {
     nivel,
     instructor: instructor ? { id: instructor.id, nombre: instructor.nombre } : null,
     creadoEn,
+  };
+}
+
+export function toTemarioItem(leccion) {
+  const {
+    id,
+    titulo,
+    tipo,
+    orden,
+    notaMinima,
+  } = leccion.get({ plain: true });
+
+  return {
+    id,
+    titulo,
+    tipo,
+    orden,
+    notaMinima,
+  };
+}
+
+export async function obtenerCursoPublicado(id) {
+  const curso = await Curso.findOne({
+    where: { id, estado: 'publicado' },
+    include: [{
+      model: Usuario,
+      as: 'instructor',
+      attributes: ATRIBUTOS_INSTRUCTOR,
+    }],
+  });
+
+  if (!curso) {
+    return null;
+  }
+
+  const lecciones = await Leccion.findAll({
+    where: { cursoId: id },
+    attributes: ATRIBUTOS_TEMARIO,
+    order: [['orden', 'ASC'], ['id', 'ASC']],
+  });
+
+  return {
+    curso: toPublicCurso(curso),
+    temario: lecciones.map(toTemarioItem),
   };
 }
 

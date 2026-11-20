@@ -6,10 +6,11 @@ track student progress. Students browse the catalog, enroll, and work through
 lessons in order.
 
 **Current status:** the Express API foundation is in place: Sequelize with
-MySQL, the `Usuario` and `Curso` models with migrations, registration/login with
-JWT and bcrypt, the public course catalog with search, category filters, and
-pagination, Zod validation, centralized errors, and HTTP security middleware.
-The frontend, lessons, quizzes, and progress modules are still pending.
+MySQL, the `Usuario`, `Curso`, and `Leccion` models with migrations,
+registration/login with JWT and bcrypt, the public course catalog with search,
+category filters, pagination, and the course detail with its outline, Zod
+validation, centralized errors, and HTTP security middleware.
+The frontend, quizzes, and progress modules are still pending.
 
 ## Repository structure
 
@@ -97,9 +98,11 @@ for instructor-only routes.
 | Method and path | Access | Description |
 | --- | --- | --- |
 | `GET /api/cursos` | Public | List published courses. Query: `q` (title search), `categoria`, `page` (default `1`), and `limit` (default `12`, max `50`). |
+| `GET /api/cursos/:id` | Public | Return a published course and its outline (title, type, order, and minimum grade per lesson). |
 
 Only courses with `estado = "publicado"` are returned. Drafts and archived
-courses never appear in the catalog. The response includes the instructor's
+courses never appear in the catalog. Requesting the detail of a draft, archived,
+or missing course returns `404` with `CURSO_NO_ENCONTRADO`. The response includes the instructor's
 public name and pagination metadata:
 
 ```json
@@ -126,6 +129,40 @@ public name and pagination metadata:
 
 Unknown query parameters and invalid `page`/`limit` values return `422` with
 the standard error shape.
+
+`GET /api/cursos/:id` returns the course and its outline. Lesson `contenido` and
+`videoUrl` are never included, so the public outline cannot disclose lesson
+content:
+
+```json
+{
+  "curso": {
+    "id": 1,
+    "titulo": "JavaScript moderno desde cero",
+    "descripcion": "Aprende las bases del lenguaje...",
+    "categoria": "Programación",
+    "nivel": "principiante",
+    "instructor": { "id": 1, "nombre": "Ana Torres" },
+    "creadoEn": "2026-09-02T10:00:00.000Z"
+  },
+  "temario": [
+    {
+      "id": 10,
+      "titulo": "Variables y tipos",
+      "tipo": "contenido",
+      "orden": 1,
+      "notaMinima": null
+    },
+    {
+      "id": 11,
+      "titulo": "Cuestionario del módulo",
+      "tipo": "cuestionario",
+      "orden": 2,
+      "notaMinima": 70
+    }
+  ]
+}
+```
 
 ## API container
 

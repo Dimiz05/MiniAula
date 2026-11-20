@@ -3,13 +3,17 @@ import { once } from 'node:events';
 import { test } from 'node:test';
 import { Op } from 'sequelize';
 import app from '../app.js';
-import { catalogoQuerySchema } from '../schemas/curso.js';
+import {
+  catalogoQuerySchema,
+  cursoIdParamsSchema,
+} from '../schemas/curso.js';
 import { formatZodIssues } from '../utils/zod.js';
 import {
   construirFiltroCatalogo,
   construirPaginacion,
   escaparLike,
   toPublicCurso,
+  toTemarioItem,
 } from '../services/curso.service.js';
 
 test('catalog query applies pagination defaults and trims empty filters', () => {
@@ -110,6 +114,46 @@ test('public course hides internal fields and flattens the instructor', () => {
   });
 });
 
+test('course detail accepts positive integer ids only', () => {
+  assert.deepEqual(cursoIdParamsSchema.parse({ id: '12' }), { id: 12 });
+
+  for (const id of ['0', '-2', '1.5', 'abc']) {
+    const result = cursoIdParamsSchema.safeParse({ id });
+
+    assert.equal(result.success, false);
+    assert.deepEqual(
+      formatZodIssues(result.error).map((detail) => detail.campo),
+      ['id'],
+    );
+  }
+});
+
+test('outline items never expose lesson content, video, or course internals', () => {
+  const item = toTemarioItem({
+    get: () => ({
+      id: 7,
+      titulo: 'Componentes y props',
+      tipo: 'contenido',
+      contenido: 'Texto privado de la lección',
+      videoUrl: 'https://videos.example.com/privado.mp4',
+      orden: 2,
+      notaMinima: null,
+      cursoId: 3,
+    }),
+  });
+
+  assert.deepEqual(item, {
+    id: 7,
+    titulo: 'Componentes y props',
+    tipo: 'contenido',
+    orden: 2,
+    notaMinima: null,
+  });
+  assert.equal('contenido' in item, false);
+  assert.equal('videoUrl' in item, false);
+  assert.equal('cursoId' in item, false);
+});
+
 test('GET /api/cursos rejects invalid filters before hitting the database', async (t) => {
   const server = app.listen(0, '127.0.0.1');
   t.after(() => new Promise((resolve, reject) => {
@@ -128,4 +172,21 @@ test('GET /api/cursos rejects invalid filters before hitting the database', asyn
     body.error.details.map((detail) => detail.campo).sort(),
     ['estado', 'limit', 'page'],
   );
+});
+
+test('GET /api/cursos/:id rejects invalid ids before hitting the database', async (t) => {
+  const server = app.listen(0, '127.0.0.1');
+  t.after(() => new Promise((resolve, reject) => {
+    server.close((error) => error ? reject(error) : resolve());
+  }));
+  await once(server, 'listening');
+
+  const response = await fetch(
+    `http://127.0.0.1:${server.address().port}/api/cursos/abc`,
+  );
+
+  assert.equal(response.status, 422);
+  const body = await response.json();
+  assert.equal(body.error.code, 'VALIDACION');
+  assert.deepEqual(body.error.details.map((detail) => detail.campo), ['id']);
 });

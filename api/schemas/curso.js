@@ -7,6 +7,15 @@ const textoOpcional = (maximo, mensaje) => z
   .optional()
   .transform((value) => value || undefined);
 
+export const cursoIdParamsSchema = z
+  .object({
+    id: z.coerce
+      .number({ message: 'El identificador del curso debe ser un número.' })
+      .int('El identificador del curso debe ser un número entero.')
+      .positive('El identificador del curso debe ser mayor que 0.'),
+  })
+  .strict();
+
 export const catalogoQuerySchema = z
   .object({
     q: textoOpcional(120, 'La búsqueda no puede superar los 120 caracteres.'),
