@@ -156,6 +156,21 @@ Sessions are stateless JWTs: logging out discards the token on the client and
 there is no server-side logout endpoint. Changing your password does not revoke
 tokens that were already issued; tokens expire with `JWT_EXPIRES_IN`.
 
+## Course management API (instructor)
+
+Instructor-only routes require a bearer token whose user has the `instructor`
+role. Every route below works only on the authenticated instructor's own
+courses; another instructor's course returns `403 CURSO_NO_PROPIO`.
+
+| Method and path | Description |
+| --- | --- |
+| `GET /api/cursos/mios` | List the authenticated instructor's courses in every state, with `totalLecciones` and `totalInscritos`. Returns `{ cursos }`. |
+| `GET /api/cursos/mios/:id` | Return one own course for editing. Returns `{ curso }`. |
+| `POST /api/cursos` | Create a course with `titulo`, `descripcion`, `categoria`, and optional `nivel`. The server always stores `estado: "borrador"` and the authenticated instructor as owner. Returns `201` with `{ curso }`. |
+| `PUT /api/cursos/:id` | Update `titulo`, `descripcion`, `categoria`, and/or `nivel` of an own course. `estado` and `instructorId` are not editable. Returns `{ curso }`. |
+
+Publishing, archiving, and deleting courses are not implemented yet.
+
 ## Frontend authentication
 
 | Route | Access | Screen |

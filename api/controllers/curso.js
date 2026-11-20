@@ -1,4 +1,11 @@
-import { listarCursosPublicados, obtenerCursoPublicado } from '../services/curso.service.js';
+import {
+  actualizarCursoPropio,
+  crearCurso,
+  listarCursosPropios,
+  listarCursosPublicados,
+  obtenerCursoPropio,
+  obtenerCursoPublicado,
+} from '../services/curso.service.js';
 import { AppError } from '../utils/errors.js';
 
 export async function listar(request, response) {
@@ -18,4 +25,31 @@ export async function detalle(request, response) {
   }
 
   response.status(200).json(resultado);
+}
+
+export async function misCursos(request, response) {
+  const cursos = await listarCursosPropios(request.usuario.id);
+  response.status(200).json({ cursos });
+}
+
+export async function detallePropio(request, response) {
+  const curso = await obtenerCursoPropio(
+    request.usuario.id,
+    request.validated.params.id,
+  );
+  response.status(200).json({ curso });
+}
+
+export async function crear(request, response) {
+  const curso = await crearCurso(request.usuario.id, request.validated.body);
+  response.status(201).json({ curso });
+}
+
+export async function actualizar(request, response) {
+  const curso = await actualizarCursoPropio(
+    request.usuario.id,
+    request.validated.params.id,
+    request.validated.body,
+  );
+  response.status(200).json({ curso });
 }

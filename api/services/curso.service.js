@@ -1,5 +1,11 @@
-import { Op } from 'sequelize';
-import { Curso, Leccion, Usuario } from '../models/index.js';
+import { Op, col, fn } from 'sequelize';
+import {
+  Curso,
+  Inscripcion,
+  Leccion,
+  Usuario,
+} from '../models/index.js';
+import { AppError } from '../utils/errors.js';
 
 const ATRIBUTOS_INSTRUCTOR = ['id', 'nombre'];
 const ATRIBUTOS_TEMARIO = ['id', 'titulo', 'tipo', 'orden', 'notaMinima'];
@@ -95,6 +101,142 @@ export async function obtenerCursoPublicado(id) {
     curso: toPublicCurso(curso),
     temario: lecciones.map(toTemarioItem),
   };
+}
+
+export function toInstructorCurso(
+  curso,
+  { totalLecciones = 0, totalInscritos = 0 } = {},
+) {
+  const {
+    id,
+    titulo,
+    descripcion,
+    categoria,
+    nivel,
+    estado,
+    creadoEn,
+  } = curso.get({ plain: true });
+
+  return {
+    id,
+    titulo,
+    descripcion,
+    categoria,
+    nivel,
+    estado,
+    creadoEn,
+    totalLecciones,
+    totalInscritos,
+  };
+}
+
+export function asegurarPropiedadCurso(curso, instructorId) {
+  if (!curso) {
+    throw new AppError(404, 'CURSO_NO_ENCONTRADO', 'El curso no existe.');
+  }
+
+  if (curso.instructorId !== instructorId) {
+    throw new AppError(
+      403,
+      'CURSO_NO_PROPIO',
+      'Solo puedes administrar tus propios cursos.',
+    );
+  }
+
+  return curso;
+}
+
+async function contarRelacionadosPorCurso(Modelo, cursoIds) {
+  if (cursoIds.length === 0) {
+    return new Map();
+  }
+
+  const filas = await Modelo.findAll({
+    attributes: [
+      [col('curso_id'), 'cursoId'],
+      [fn('COUNT', col('id')), 'total'],
+    ],
+    where: { cursoId: { [Op.in]: cursoIds } },
+    group: [col('curso_id')],
+    raw: true,
+  });
+
+  return new Map(
+    filas.map((fila) => [Number(fila.cursoId), Number(fila.total)]),
+  );
+}
+
+async function contarRelacionadosCurso(cursoId) {
+  const [totalLecciones, totalInscritos] = await Promise.all([
+    Leccion.count({ where: { cursoId } }),
+    Inscripcion.count({ where: { cursoId } }),
+  ]);
+
+  return { totalLecciones, totalInscritos };
+}
+
+export async function listarCursosPropios(instructorId) {
+  const cursos = await Curso.findAll({
+    where: { instructorId },
+    order: [['creadoEn', 'DESC'], ['id', 'DESC']],
+  });
+
+  const cursoIds = cursos.map((curso) => curso.id);
+  const [lecciones, inscripciones] = await Promise.all([
+    contarRelacionadosPorCurso(Leccion, cursoIds),
+    contarRelacionadosPorCurso(Inscripcion, cursoIds),
+  ]);
+
+  return cursos.map((curso) => toInstructorCurso(curso, {
+    totalLecciones: lecciones.get(curso.id) ?? 0,
+    totalInscritos: inscripciones.get(curso.id) ?? 0,
+  }));
+}
+
+export async function obtenerCursoPropio(instructorId, cursoId) {
+  const curso = await Curso.findByPk(cursoId);
+  asegurarPropiedadCurso(curso, instructorId);
+
+  return toInstructorCurso(curso, await contarRelacionadosCurso(curso.id));
+}
+
+export async function crearCurso(instructorId, datos) {
+  const curso = await Curso.create({
+    titulo: datos.titulo,
+    descripcion: datos.descripcion,
+    categoria: datos.categoria,
+    nivel: datos.nivel,
+    // RF-06: every new course starts as a draft, regardless of client input.
+    estado: 'borrador',
+    instructorId,
+  });
+
+  return toInstructorCurso(curso);
+}
+
+export async function actualizarCursoPropio(instructorId, cursoId, cambios) {
+  const curso = await Curso.findByPk(cursoId);
+  asegurarPropiedadCurso(curso, instructorId);
+
+  if (cambios.titulo !== undefined) {
+    curso.titulo = cambios.titulo;
+  }
+
+  if (cambios.descripcion !== undefined) {
+    curso.descripcion = cambios.descripcion;
+  }
+
+  if (cambios.categoria !== undefined) {
+    curso.categoria = cambios.categoria;
+  }
+
+  if (cambios.nivel !== undefined) {
+    curso.nivel = cambios.nivel;
+  }
+
+  await curso.save();
+
+  return toInstructorCurso(curso, await contarRelacionadosCurso(curso.id));
 }
 
 export async function listarCursosPublicados({ page, limit, q, categoria }) {
