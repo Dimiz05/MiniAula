@@ -6,9 +6,10 @@ track student progress. Students browse the catalog, enroll, and work through
 lessons in order.
 
 **Current status:** the Express API foundation is in place: Sequelize with
-MySQL, the `Usuario` model and migration, registration/login with JWT and
-bcrypt, Zod validation, centralized errors, and HTTP security middleware. The
-frontend, courses, lessons, quizzes, and progress modules are still pending.
+MySQL, the `Usuario` and `Curso` models with migrations, registration/login with
+JWT and bcrypt, the public course catalog with search, category filters, and
+pagination, Zod validation, centralized errors, and HTTP security middleware.
+The frontend, lessons, quizzes, and progress modules are still pending.
 
 ## Repository structure
 
@@ -60,7 +61,9 @@ Migrations and seeders run through Umzug and are recorded in the
 ### Demo accounts
 
 `npm run db:seed` creates two instructors and three students. All demo accounts
-use the password `Miniaula123!`.
+use the password `Miniaula123!`. It also seeds six published courses plus one
+draft and one archived course, so the catalog filters and pagination can be
+tested without creating data by hand.
 
 | Email | Role |
 | --- | --- |
@@ -88,6 +91,41 @@ Send the token as `Authorization: Bearer <token>`. Errors always use:
 Passwords are hashed with bcrypt and never returned. Protected routes verify the
 JWT signature, issuer, audience, and expiration; role middleware is available
 for instructor-only routes.
+
+## Catalog API
+
+| Method and path | Access | Description |
+| --- | --- | --- |
+| `GET /api/cursos` | Public | List published courses. Query: `q` (title search), `categoria`, `page` (default `1`), and `limit` (default `12`, max `50`). |
+
+Only courses with `estado = "publicado"` are returned. Drafts and archived
+courses never appear in the catalog. The response includes the instructor's
+public name and pagination metadata:
+
+```json
+{
+  "cursos": [
+    {
+      "id": 1,
+      "titulo": "JavaScript moderno desde cero",
+      "descripcion": "Aprende las bases del lenguaje...",
+      "categoria": "Programación",
+      "nivel": "principiante",
+      "instructor": { "id": 1, "nombre": "Ana Torres" },
+      "creadoEn": "2026-09-02T10:00:00.000Z"
+    }
+  ],
+  "paginacion": {
+    "pagina": 1,
+    "limite": 12,
+    "total": 6,
+    "totalPaginas": 1
+  }
+}
+```
+
+Unknown query parameters and invalid `page`/`limit` values return `422` with
+the standard error shape.
 
 ## API container
 
