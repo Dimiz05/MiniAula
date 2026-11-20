@@ -18,3 +18,6 @@ Thumbs.db
 
 # Local MySQL data if a bind mount is used
 /mysql-data/
+
+# Local agent task tracking
+/odd/

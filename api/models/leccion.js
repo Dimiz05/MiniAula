@@ -10,11 +10,11 @@ export const Leccion = sequelize.define(
       primaryKey: true,
     },
     titulo: {
-      type: DataTypes.STRING(160),
+      type: DataTypes.STRING(150),
       allowNull: false,
       validate: {
         notEmpty: true,
-        len: [3, 160],
+        len: [3, 150],
       },
     },
     tipo: {
@@ -30,9 +30,6 @@ export const Leccion = sequelize.define(
       type: DataTypes.STRING(500),
       allowNull: true,
       field: 'video_url',
-      validate: {
-        isUrl: true,
-      },
     },
     orden: {
       type: DataTypes.INTEGER.UNSIGNED,
@@ -42,11 +39,11 @@ export const Leccion = sequelize.define(
       },
     },
     notaMinima: {
-      type: DataTypes.TINYINT.UNSIGNED,
+      type: DataTypes.INTEGER.UNSIGNED,
       allowNull: true,
       field: 'nota_minima',
       validate: {
-        min: 0,
+        min: 1,
         max: 100,
       },
     },
@@ -59,5 +56,17 @@ export const Leccion = sequelize.define(
   {
     tableName: 'lecciones',
     timestamps: false,
+    indexes: [{ fields: ['curso_id', 'orden'] }],
+    validate: {
+      contenidoSegunTipo() {
+        if (this.tipo === 'contenido' && !this.contenido) {
+          throw new Error('Una lección de contenido requiere el campo contenido.');
+        }
+
+        if (this.tipo === 'cuestionario' && (this.notaMinima === null || this.notaMinima === undefined)) {
+          throw new Error('Un cuestionario requiere la nota mínima de aprobación.');
+        }
+      },
+    },
   },
 );

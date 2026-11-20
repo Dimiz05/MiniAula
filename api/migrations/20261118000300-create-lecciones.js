@@ -9,7 +9,7 @@ export async function up({ context: queryInterface }) {
       primaryKey: true,
     },
     titulo: {
-      type: DataTypes.STRING(160),
+      type: DataTypes.STRING(150),
       allowNull: false,
     },
     tipo: {
@@ -30,25 +30,16 @@ export async function up({ context: queryInterface }) {
       allowNull: false,
     },
     nota_minima: {
-      type: DataTypes.TINYINT.UNSIGNED,
+      type: DataTypes.INTEGER.UNSIGNED,
       allowNull: true,
     },
     curso_id: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
+      references: { model: 'cursos', key: 'id' },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
     },
-  });
-
-  await queryInterface.addConstraint('lecciones', {
-    fields: ['curso_id'],
-    type: 'foreign key',
-    name: 'lecciones_curso_id_fk',
-    references: {
-      table: 'cursos',
-      field: 'id',
-    },
-    onDelete: 'CASCADE',
-    onUpdate: 'CASCADE',
   });
 
   await queryInterface.addIndex('lecciones', ['curso_id', 'orden'], {

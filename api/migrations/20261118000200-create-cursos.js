@@ -9,7 +9,7 @@ export async function up({ context: queryInterface }) {
       primaryKey: true,
     },
     titulo: {
-      type: DataTypes.STRING(160),
+      type: DataTypes.STRING(150),
       allowNull: false,
     },
     descripcion: {
@@ -17,13 +17,13 @@ export async function up({ context: queryInterface }) {
       allowNull: false,
     },
     categoria: {
-      type: DataTypes.STRING(80),
+      type: DataTypes.STRING(60),
       allowNull: false,
     },
     nivel: {
-      type: DataTypes.ENUM('principiante', 'intermedio', 'avanzado'),
+      type: DataTypes.ENUM('basico', 'intermedio', 'avanzado'),
       allowNull: false,
-      defaultValue: 'principiante',
+      defaultValue: 'basico',
     },
     estado: {
       type: DataTypes.ENUM('borrador', 'publicado', 'archivado'),
@@ -33,6 +33,9 @@ export async function up({ context: queryInterface }) {
     instructor_id: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
+      references: { model: 'usuarios', key: 'id' },
+      onDelete: 'RESTRICT',
+      onUpdate: 'CASCADE',
     },
     creado_en: {
       type: DataTypes.DATE,
@@ -41,21 +44,9 @@ export async function up({ context: queryInterface }) {
     },
   });
 
-  await queryInterface.addConstraint('cursos', {
-    fields: ['instructor_id'],
-    type: 'foreign key',
-    name: 'cursos_instructor_id_fk',
-    references: {
-      table: 'usuarios',
-      field: 'id',
-    },
-    onDelete: 'RESTRICT',
-    onUpdate: 'CASCADE',
-  });
-
-  await queryInterface.addIndex('cursos', ['estado', 'categoria', 'creado_en'], {
-    name: 'cursos_catalogo_idx',
-  });
+  await queryInterface.addIndex('cursos', ['estado'], { name: 'cursos_estado_idx' });
+  await queryInterface.addIndex('cursos', ['categoria'], { name: 'cursos_categoria_idx' });
+  await queryInterface.addIndex('cursos', ['instructor_id'], { name: 'cursos_instructor_id_idx' });
 }
 
 export async function down({ context: queryInterface }) {

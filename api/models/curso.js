@@ -10,11 +10,11 @@ export const Curso = sequelize.define(
       primaryKey: true,
     },
     titulo: {
-      type: DataTypes.STRING(160),
+      type: DataTypes.STRING(150),
       allowNull: false,
       validate: {
         notEmpty: true,
-        len: [3, 160],
+        len: [3, 150],
       },
     },
     descripcion: {
@@ -25,17 +25,20 @@ export const Curso = sequelize.define(
       },
     },
     categoria: {
-      type: DataTypes.STRING(80),
+      type: DataTypes.STRING(60),
       allowNull: false,
       validate: {
         notEmpty: true,
-        len: [2, 80],
+        len: [2, 60],
+      },
+      set(value) {
+        this.setDataValue('categoria', String(value).trim());
       },
     },
     nivel: {
-      type: DataTypes.ENUM('principiante', 'intermedio', 'avanzado'),
+      type: DataTypes.ENUM('basico', 'intermedio', 'avanzado'),
       allowNull: false,
-      defaultValue: 'principiante',
+      defaultValue: 'basico',
     },
     estado: {
       type: DataTypes.ENUM('borrador', 'publicado', 'archivado'),
@@ -59,5 +62,10 @@ export const Curso = sequelize.define(
     timestamps: true,
     createdAt: 'creadoEn',
     updatedAt: false,
+    indexes: [
+      { fields: ['estado'] },
+      { fields: ['categoria'] },
+      { fields: ['instructor_id'] },
+    ],
   },
 );

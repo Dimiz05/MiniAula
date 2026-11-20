@@ -26,6 +26,8 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().trim().min(1).default('http://localhost:5173'),
   LOGIN_RATE_WINDOW_MINUTES: z.coerce.number().int().min(1).default(15),
   LOGIN_RATE_MAX: z.coerce.number().int().min(1).default(10),
+  REGISTER_RATE_WINDOW_MINUTES: z.coerce.number().int().min(1).default(60),
+  REGISTER_RATE_MAX: z.coerce.number().int().min(1).default(5),
 });
 
 const parsed = envSchema.safeParse(process.env);
