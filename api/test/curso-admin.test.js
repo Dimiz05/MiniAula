@@ -146,6 +146,9 @@ test('own-course routes require an instructor session', async (t) => {
     ['GET', '/api/cursos/mios/1'],
     ['POST', '/api/cursos'],
     ['PUT', '/api/cursos/1'],
+    ['PATCH', '/api/cursos/1/publicar'],
+    ['PATCH', '/api/cursos/1/archivar'],
+    ['DELETE', '/api/cursos/1'],
   ]) {
     const response = await fetch(`${baseUrl}${path}`, {
       method,
