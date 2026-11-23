@@ -10,6 +10,7 @@ import {
   misCursos,
   publicar,
 } from '../controllers/curso.js';
+import { inscribir } from '../controllers/inscripcion.js';
 import { authenticate, authorize } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
 import {
@@ -29,6 +30,13 @@ router.get(
   authorize('instructor'),
   validate({ params: cursoIdParamsSchema }),
   detallePropio,
+);
+router.post(
+  '/:id/inscripcion',
+  authenticate,
+  authorize('estudiante'),
+  validate({ params: cursoIdParamsSchema }),
+  inscribir,
 );
 router.post(
   '/',
