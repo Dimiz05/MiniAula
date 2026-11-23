@@ -7,6 +7,7 @@ import {
   sequelize,
 } from '../models/index.js';
 import { AppError } from '../utils/errors.js';
+import { borrarArchivoPortada } from '../utils/portadaFiles.js';
 
 const ATRIBUTOS_INSTRUCTOR = ['id', 'nombre'];
 const ATRIBUTOS_TEMARIO = ['id', 'titulo', 'tipo', 'orden', 'notaMinima'];
@@ -43,6 +44,7 @@ export function toPublicCurso(curso) {
     id,
     titulo,
     descripcion,
+    portada,
     categoria,
     nivel,
     creadoEn,
@@ -53,6 +55,7 @@ export function toPublicCurso(curso) {
     id,
     titulo,
     descripcion,
+    portada: portada ?? null,
     categoria,
     nivel,
     instructor: instructor ? { id: instructor.id, nombre: instructor.nombre } : null,
@@ -112,6 +115,7 @@ export function toInstructorCurso(
     id,
     titulo,
     descripcion,
+    portada,
     categoria,
     nivel,
     estado,
@@ -122,6 +126,7 @@ export function toInstructorCurso(
     id,
     titulo,
     descripcion,
+    portada: portada ?? null,
     categoria,
     nivel,
     estado,
@@ -167,7 +172,7 @@ async function contarRelacionadosPorCurso(Modelo, cursoIds) {
   );
 }
 
-async function contarRelacionadosCurso(cursoId, transaction) {
+export async function contarRelacionadosCurso(cursoId, transaction) {
   const [totalLecciones, totalInscritos] = await Promise.all([
     Leccion.count({ where: { cursoId }, transaction }),
     Inscripcion.count({ where: { cursoId }, transaction }),
@@ -317,6 +322,8 @@ export async function archivarCursoPropio(instructorId, cursoId) {
 }
 
 export async function eliminarCursoPropio(instructorId, cursoId) {
+  let portada;
+
   await sequelize.transaction(async (transaction) => {
     const curso = await obtenerCursoBloqueado(cursoId, transaction);
     asegurarPropiedadCurso(curso, instructorId);
@@ -335,8 +342,11 @@ export async function eliminarCursoPropio(instructorId, cursoId) {
       );
     }
 
+    portada = curso.portada;
     await curso.destroy({ transaction });
   });
+
+  await borrarArchivoPortada(portada);
 }
 
 export async function listarCursosPublicados({ page, limit, q, categoria }) {

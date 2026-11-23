@@ -26,6 +26,7 @@ test('creating a course ignores client state and ownership fields', () => {
   const datos = crearCursoSchema.parse({
     titulo: '  Curso de prueba  ',
     descripcion: '  Descripción del curso  ',
+    portada: '  https://images.example.com/curso.jpg  ',
     categoria: '  Diseño  ',
     nivel: 'avanzado',
     estado: 'publicado',
@@ -40,6 +41,8 @@ test('creating a course ignores client state and ownership fields', () => {
   });
   assert.equal('estado' in datos, false);
   assert.equal('instructorId' in datos, false);
+  // The cover is managed by its dedicated upload route.
+  assert.equal('portada' in datos, false);
 });
 
 test('creating a course defaults the level to basic', () => {
@@ -99,6 +102,7 @@ test('the instructor presenter exposes state and related totals', () => {
         id: 4,
         titulo: 'React',
         descripcion: 'Curso de React',
+        portada: 'https://images.example.com/react.jpg',
         categoria: 'Programación',
         nivel: 'intermedio',
         estado: 'borrador',
@@ -113,6 +117,7 @@ test('the instructor presenter exposes state and related totals', () => {
     id: 4,
     titulo: 'React',
     descripcion: 'Curso de React',
+    portada: 'https://images.example.com/react.jpg',
     categoria: 'Programación',
     nivel: 'intermedio',
     estado: 'borrador',

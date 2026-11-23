@@ -53,12 +53,23 @@ async function readPayload(response) {
 
 export async function apiRequest(
   path,
-  { method = 'GET', body, auth = false, signal } = {},
+  {
+    method = 'GET',
+    body,
+    rawBody,
+    headers: extraHeaders,
+    auth = false,
+    signal,
+  } = {},
 ) {
-  const headers = { Accept: 'application/json' };
+  const headers = { Accept: 'application/json', ...extraHeaders };
+  let cuerpo;
 
-  if (body !== undefined) {
+  if (rawBody !== undefined) {
+    cuerpo = rawBody;
+  } else if (body !== undefined) {
     headers['Content-Type'] = 'application/json';
+    cuerpo = JSON.stringify(body);
   }
 
   if (auth && accessToken) {
@@ -73,7 +84,7 @@ export async function apiRequest(
     response = await fetch(`${API_URL}${path}`, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: cuerpo,
       signal,
     });
   } catch (error) {

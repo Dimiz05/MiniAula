@@ -2,7 +2,11 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { API_URL, setAccessToken } from '../src/config/http.js';
 import * as cursos from '../src/services/curso.service.js';
-import { accionesCurso, validarCurso } from '../src/pages/instructor/courseForm.js';
+import {
+  accionesCurso,
+  validarArchivoPortada,
+  validarCurso,
+} from '../src/pages/instructor/courseForm.js';
 
 test('las operaciones del instructor usan los endpoints privados y el cliente autenticado', async (t) => {
   const calls = [];
@@ -64,6 +68,37 @@ test('un rechazo al publicar conserva el mensaje del servidor', async (t) => {
   });
 });
 
+test('la portada se sube con el archivo, no con un campo del formulario', async (t) => {
+  const llamadas = [];
+  setAccessToken('test-token');
+  t.after(() => setAccessToken(null));
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    llamadas.push([
+      url.slice(API_URL.length),
+      options.method,
+      options.headers['Content-Type'],
+      options.body,
+    ]);
+    return Response.json({
+      curso: { id: 7, portada: '/uploads/portadas/curso.png' },
+    });
+  });
+
+  const archivo = new Blob([Buffer.from('png')], { type: 'image/png' });
+  const subida = await cursos.subirPortada(7, archivo);
+  const eliminado = await cursos.eliminarPortada(7);
+
+  assert.equal(llamadas[0][0], '/cursos/7/portada');
+  assert.equal(llamadas[0][1], 'POST');
+  assert.equal(llamadas[0][2], 'image/png');
+  assert.equal(llamadas[0][3], archivo);
+  assert.equal(subida.curso.portada, '/uploads/portadas/curso.png');
+
+  assert.equal(llamadas[1][0], '/cursos/7/portada');
+  assert.equal(llamadas[1][1], 'DELETE');
+  assert.equal(eliminado.curso.portada, '/uploads/portadas/curso.png');
+});
+
 test('el formulario valida los campos editables y excluye estado y propietario', () => {
   const { datos, errores } = validarCurso({
     titulo: '  Curso  ', descripcion: ' Contenido ', categoria: ' Web ', nivel: 'basico',
@@ -74,4 +109,17 @@ test('el formulario valida los campos editables y excluye estado y propietario',
   assert.deepEqual(Object.keys(validarCurso({
     titulo: ' ab ', descripcion: ' ', categoria: 'x'.repeat(61), nivel: 'otro',
   }).errores), ['titulo', 'descripcion', 'categoria', 'nivel']);
+});
+
+test('la validación de archivo acepta imágenes y rechaza formatos y tamaños inválidos', () => {
+  assert.equal(validarArchivoPortada({ name: 'foto.png', type: 'image/png', size: 1024 }), null);
+  assert.equal(validarArchivoPortada({ name: 'foto.jpg', type: '', size: 1024 }), null);
+  assert.match(
+    validarArchivoPortada({ name: 'foto.pdf', type: 'application/pdf', size: 1024 }),
+    /PNG, JPG o WebP/,
+  );
+  assert.match(
+    validarArchivoPortada({ name: 'foto.png', type: 'image/png', size: 6 * 1024 * 1024 }),
+    /5 MB/,
+  );
 });

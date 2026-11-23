@@ -19,5 +19,8 @@ Thumbs.db
 # Local MySQL data if a bind mount is used
 /mysql-data/
 
+# Locally uploaded course covers
+/api/uploads/
+
 # Local agent task tracking
 /odd/

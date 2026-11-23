@@ -24,6 +24,10 @@ export const Curso = sequelize.define(
         notEmpty: true,
       },
     },
+    portada: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
     categoria: {
       type: DataTypes.STRING(60),
       allowNull: false,

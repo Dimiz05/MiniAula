@@ -7,6 +7,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 COPY . .
+RUN mkdir -p /app/uploads/portadas && chown -R node:node /app/uploads
 USER node
 EXPOSE 3000
 

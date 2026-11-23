@@ -39,7 +39,8 @@ const nivelCursoSchema = z.enum(
 );
 
 // New courses always start as drafts on the server. Unknown fields such as
-// estado or instructorId are stripped instead of trusted.
+// estado or instructorId are stripped instead of trusted. The cover is managed
+// by the dedicated upload route, never by the JSON body.
 export const crearCursoSchema = z.object({
   titulo: tituloCursoSchema,
   descripcion: descripcionCursoSchema,
