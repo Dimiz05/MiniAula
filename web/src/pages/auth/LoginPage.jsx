@@ -12,7 +12,7 @@ import {
   validateEmail,
 } from '../../utils/validation.js';
 
-function resolveDestination(from) {
+function resolveDestination(from, rol) {
   if (
     typeof from === 'string'
     && from.startsWith('/')
@@ -22,7 +22,7 @@ function resolveDestination(from) {
     return from;
   }
 
-  return '/perfil';
+  return rol === 'instructor' ? '/instructor/cursos' : '/panel';
 }
 
 export default function LoginPage() {
@@ -33,8 +33,6 @@ export default function LoginPage() {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-
-  const destination = resolveDestination(location.state?.from);
 
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -64,11 +62,13 @@ export default function LoginPage() {
     setSubmitting(true);
 
     try {
-      await login({
+      const usuarioSesion = await login({
         email: normalizeEmail(form.email),
         password: form.password,
       });
-      navigate(destination, { replace: true });
+      navigate(resolveDestination(location.state?.from, usuarioSesion?.rol), {
+        replace: true,
+      });
     } catch (error) {
       if (error.status === 422) {
         const detailErrors = toFieldErrors(error.details, ['email', 'password']);

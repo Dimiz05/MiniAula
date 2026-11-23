@@ -23,11 +23,27 @@ export function RequireInstructor() {
   return usuario?.rol === 'instructor' ? <Outlet /> : <Navigate to="/perfil" replace />;
 }
 
+export function RequireStudent() {
+  const { usuario } = useAuth();
+
+  if (usuario?.rol === 'estudiante') {
+    return <Outlet />;
+  }
+
+  return (
+    <Navigate
+      to={usuario?.rol === 'instructor' ? '/instructor/cursos' : '/perfil'}
+      replace
+    />
+  );
+}
+
 export function GuestOnly() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, usuario } = useAuth();
 
   if (isAuthenticated) {
-    return <Navigate to="/perfil" replace />;
+    const destination = usuario?.rol === 'instructor' ? '/instructor/cursos' : '/panel';
+    return <Navigate to={destination} replace />;
   }
 
   return <Outlet />;

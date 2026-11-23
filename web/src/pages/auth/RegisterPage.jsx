@@ -87,13 +87,16 @@ export default function RegisterPage() {
     setSubmitting(true);
 
     try {
-      await register({
+      const usuarioSesion = await register({
         nombre: form.nombre.trim(),
         email: normalizeEmail(form.email),
         password: form.password,
         rol: form.rol,
       });
-      navigate('/perfil', { replace: true, state: { welcome: true } });
+      navigate(usuarioSesion?.rol === 'instructor' ? '/instructor/cursos' : '/panel', {
+        replace: true,
+        state: { welcome: true },
+      });
     } catch (error) {
       if (error.status === 409) {
         const detailErrors = toFieldErrors(error.details, [

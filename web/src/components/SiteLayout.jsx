@@ -55,17 +55,22 @@ export default function SiteLayout() {
                   </span>
                 </Link>
               ) : (
-                <Logo size="sm" />
+                <Logo
+                  size="sm"
+                  to={isAuthenticated && !isInstructor ? '/panel' : '/'}
+                />
               )}
 
               <nav
                 aria-label="Navegación principal"
                 className="order-3 hidden w-full items-center gap-1 overflow-x-auto md:order-none md:flex md:w-auto"
               >
-                <NavLink to="/" end className={navClass}>
-                  <Icon name="home" className="text-[20px]" />
-                  Inicio
-                </NavLink>
+                {!isInstructor && (
+                  <NavLink to={isAuthenticated ? '/panel' : '/'} end className={navClass}>
+                    <Icon name="home" className="text-[20px]" />
+                    Inicio
+                  </NavLink>
+                )}
                 <NavLink to="/catalog" className={navClass}>
                   <Icon name="search" className="text-[20px]" />
                   Explorar cursos
@@ -143,10 +148,12 @@ export default function SiteLayout() {
             aria-label="Navegación principal móvil"
             className="flex items-center gap-1 overflow-x-auto pb-2 md:hidden"
           >
-            <NavLink to="/" end className={navClass}>
-              <Icon name="home" className="text-[18px]" />
-              Inicio
-            </NavLink>
+            {!isInstructor && (
+              <NavLink to={isAuthenticated ? '/panel' : '/'} end className={navClass}>
+                <Icon name="home" className="text-[18px]" />
+                Inicio
+              </NavLink>
+            )}
             <NavLink to="/catalog" className={navClass}>
               <Icon name="search" className="text-[18px]" />
               Explorar cursos
@@ -155,6 +162,12 @@ export default function SiteLayout() {
               <NavLink to="/instructor/cursos" end className={navClass}>
                 <Icon name="dashboard" className="text-[18px]" />
                 Panel principal
+              </NavLink>
+            )}
+            {isInstructor && (
+              <NavLink to="/instructor/cursos/nuevo" className={navClass}>
+                <Icon name="add_circle" className="text-[18px]" />
+                Crear curso
               </NavLink>
             )}
           </nav>
