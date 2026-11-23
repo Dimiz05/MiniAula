@@ -6,6 +6,16 @@ Build a React SPA with Vite, JavaScript, and JSX. Consume the MiniAula REST API
 using `VITE_API_URL` as the base URL; do not hard-code a deployment URL or put
 secrets in `VITE_` variables.
 
+## Design reference
+
+The reviewed visual reference lives in `docs/MiniAula_Disenos_Revisados/`:
+`miniaula_design_system.md` plus one HTML screen per flow. Treat it as the
+source of truth for colors, type scale, spacing, radii, shadows, and layout
+patterns. Its tokens are implemented in `src/index.css` as `text-headline-*`,
+`text-body-*`, `text-label-*`, `text-display-*`, `rounded-control`,
+`rounded-card`, `rounded-panel`, and `shadow-card|hover|modal`. Reuse the shared
+components in `src/components/` instead of restyling controls per page.
+
 ## Layout
 
 | Path | Responsibility |

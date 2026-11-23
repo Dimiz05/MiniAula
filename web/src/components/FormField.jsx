@@ -28,7 +28,7 @@ export default function FormField({
     <div className={className}>
       <label
         htmlFor={fieldId}
-        className="mb-1.5 block text-xs font-semibold text-secondary"
+        className="mb-1.5 block text-label-md text-secondary"
       >
         {label}
         {required && <span className="ml-0.5 text-error">*</span>}
@@ -48,7 +48,7 @@ export default function FormField({
           required={required}
           aria-invalid={error ? 'true' : undefined}
           aria-describedby={describedBy || undefined}
-          className={`w-full rounded-[10px] border bg-surface py-2.5 text-sm text-secondary placeholder:text-on-surface-variant/70 transition-colors focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:bg-surface-variant ${
+          className={`w-full rounded-control border bg-surface py-2.5 text-body-md text-secondary placeholder:text-on-surface-variant/70 transition-colors focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:bg-surface-variant ${
             icon ? 'pl-10' : 'pl-3.5'
           } ${revealable ? 'pr-11' : 'pr-3.5'} ${
             error
@@ -75,7 +75,7 @@ export default function FormField({
       </div>
 
       {hint && !error && (
-        <p id={hintId} className="mt-1.5 text-xs text-on-surface-variant">
+        <p id={hintId} className="mt-1.5 text-label-sm text-on-surface-variant">
           {hint}
         </p>
       )}
@@ -84,7 +84,7 @@ export default function FormField({
         <p
           id={errorId}
           role="alert"
-          className="mt-1.5 text-xs font-medium text-error"
+          className="mt-1.5 text-label-sm font-medium text-error"
         >
           {error}
         </p>

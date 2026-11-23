@@ -92,21 +92,18 @@ export default function LoginPage() {
           <Logo />
           <Link
             to="/"
-            className="rounded-lg px-2 py-1 text-xs font-semibold text-on-surface-variant transition-colors hover:bg-surface-variant hover:text-secondary"
+            className="rounded-control px-2 py-1 text-label-md text-on-surface-variant transition-colors hover:bg-surface-variant hover:text-secondary"
           >
             Volver al inicio
           </Link>
         </header>
 
-        <div className="mb-7">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
-            Acceso a tu cuenta
-          </p>
-          <h1 className="text-2xl font-bold tracking-tight text-secondary sm:text-[28px] sm:leading-9">
+        <div className="mb-8">
+          <h1 className="mb-2 text-headline-lg-mobile text-secondary sm:text-headline-lg">
             ¡Qué bueno tenerte de vuelta!
           </h1>
-          <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-            Ingresa tus credenciales para acceder a tus cursos y progreso.
+          <p className="text-body-md text-on-surface-variant">
+            Accede a tus cursos y retoma tu aprendizaje.
           </p>
         </div>
 
@@ -165,12 +162,12 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <p className="mt-4 text-center text-xs text-on-surface-variant">
+        <p className="mt-4 text-center text-body-sm text-on-surface-variant">
           Tu sesión se mantendrá iniciada en este dispositivo hasta que cierres
           sesión o el token expire.
         </p>
 
-        <details className="mt-6 rounded-[10px] border border-dashed border-outline bg-background p-3 text-xs text-on-surface-variant">
+        <details className="mt-6 rounded-control border border-dashed border-outline bg-background p-3 text-body-sm text-on-surface-variant">
           <summary className="cursor-pointer font-semibold text-secondary">
             Usar una cuenta de demostración
           </summary>
@@ -190,7 +187,7 @@ export default function LoginPage() {
       </div>
 
       <footer className="mt-8 border-t border-outline-light pt-5 text-center">
-        <p className="text-sm text-on-surface-variant">
+        <p className="text-body-md text-on-surface-variant">
           ¿No tienes una cuenta aún?{' '}
           <Link
             to="/registro"

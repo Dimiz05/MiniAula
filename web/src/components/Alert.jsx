@@ -29,7 +29,7 @@ export default function Alert({ variant = 'info', title, children, className = '
   return (
     <div
       role={variant === 'error' ? 'alert' : 'status'}
-      className={`flex items-start gap-3 rounded-[10px] border px-4 py-3 text-sm ${style.box} ${className}`}
+      className={`flex items-start gap-3 rounded-control border px-4 py-3 text-body-md ${style.box} ${className}`}
     >
       <Icon name={style.icon} filled className="mt-0.5 shrink-0 text-[20px]" />
       <div className="min-w-0">
