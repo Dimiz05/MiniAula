@@ -28,7 +28,7 @@ export function toProgreso(progreso) {
   };
 }
 
-function leccionAprobada(leccion, progreso) {
+export function leccionAprobada(leccion, progreso) {
   if (!progreso) {
     return false;
   }
@@ -40,6 +40,32 @@ function leccionAprobada(leccion, progreso) {
   }
 
   return progreso.completada === true;
+}
+
+export function calcularAvanceCurso(lecciones, progresos) {
+  const totalLecciones = lecciones.length;
+
+  // A course without lessons has no meaningful percentage; avoid 0/0.
+  if (totalLecciones === 0) {
+    return {
+      porcentajeAvance: 0,
+      leccionesCompletadas: 0,
+      totalLecciones: 0,
+    };
+  }
+
+  const progresoPorLeccion = new Map(
+    progresos.map((progreso) => [Number(progreso.leccionId), progreso]),
+  );
+  const leccionesCompletadas = lecciones.filter((leccion) => (
+    leccionAprobada(leccion, progresoPorLeccion.get(Number(leccion.id)))
+  )).length;
+
+  return {
+    porcentajeAvance: Math.round((leccionesCompletadas * 100) / totalLecciones),
+    leccionesCompletadas,
+    totalLecciones,
+  };
 }
 
 async function asegurarLeccionDesbloqueada(leccion, inscripcionId, transaction) {

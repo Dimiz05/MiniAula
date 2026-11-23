@@ -8,6 +8,7 @@ import { obtenerCurso } from '../../services/curso.service.js';
 import {
   listarMisInscripciones,
   normalizarInscripciones,
+  porcentajeAvanceInscripcion,
 } from '../../services/inscripcion.service.js';
 
 const niveles = {
@@ -62,7 +63,9 @@ async function cargarMisInscripciones() {
 export default function MyCoursesPage() {
   const { data, loading, error, refetch } = useFetch(cargarMisInscripciones);
   const inscripciones = data?.inscripciones ?? [];
-  const completados = inscripciones.filter((inscripcion) => inscripcion.completado).length;
+  const completados = inscripciones.filter(
+    (inscripcion) => porcentajeAvanceInscripcion(inscripcion) >= 100,
+  ).length;
   const enProgreso = inscripciones.length - completados;
 
   return (
@@ -179,6 +182,11 @@ export default function MyCoursesPage() {
                 const curso = inscripcion.curso;
                 const fecha = formatearFecha(inscripcion.fechaInscripcion);
                 const titulo = curso?.titulo ?? `Curso #${cursoId}`;
+                const avance = porcentajeAvanceInscripcion(inscripcion);
+                const completadoCurso = avance >= 100;
+                const totalLecciones = Number(inscripcion.totalLecciones) || 0;
+                const leccionesCompletadas =
+                  Number(inscripcion.leccionesCompletadas) || 0;
 
                 return (
                   <li
@@ -195,7 +203,7 @@ export default function MyCoursesPage() {
                         <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-label-sm font-semibold text-primary shadow-sm">
                           {curso?.categoria ?? 'Curso'}
                         </span>
-                        {inscripcion.completado && (
+                        {completadoCurso && (
                           <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-success-light px-2.5 py-1 text-label-sm font-semibold text-success shadow-sm">
                             <Icon name="verified" filled className="text-[16px]" />
                             Completado
@@ -221,6 +229,39 @@ export default function MyCoursesPage() {
                           </p>
                         )}
 
+                        <div className="mb-4">
+                          <div className="mb-1 flex items-center justify-between gap-2 text-label-sm">
+                            <span className="text-on-surface-variant">Avance</span>
+                            <span
+                              className={`font-semibold tabular-nums ${
+                                completadoCurso ? 'text-success' : 'text-primary'
+                              }`}
+                            >
+                              {avance}% completado
+                            </span>
+                          </div>
+                          <div
+                            role="progressbar"
+                            aria-label={`Avance de ${titulo}`}
+                            aria-valuenow={avance}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            className="h-2 w-full overflow-hidden rounded-full bg-surface-variant"
+                          >
+                            <div
+                              className={`h-2 rounded-full ${
+                                completadoCurso ? 'bg-success' : 'bg-primary'
+                              }`}
+                              style={{ width: `${avance}%` }}
+                            />
+                          </div>
+                          {totalLecciones > 0 && (
+                            <p className="mt-1 text-label-sm text-on-surface-variant">
+                              {leccionesCompletadas} de {totalLecciones} lecciones completadas
+                            </p>
+                          )}
+                        </div>
+
                         <dl className="my-3 grid grid-cols-2 gap-2 border-y border-outline-light py-2 text-label-sm">
                           <div>
                             <dt className="text-on-surface-variant">Nivel:</dt>
@@ -232,10 +273,10 @@ export default function MyCoursesPage() {
                             <dt className="text-on-surface-variant">Estado:</dt>
                             <dd
                               className={`font-semibold ${
-                                inscripcion.completado ? 'text-success' : 'text-primary'
+                                completadoCurso ? 'text-success' : 'text-primary'
                               }`}
                             >
-                              {inscripcion.completado ? 'Completado' : 'En progreso'}
+                              {completadoCurso ? 'Completado' : 'En progreso'}
                             </dd>
                           </div>
                           {fecha && (
