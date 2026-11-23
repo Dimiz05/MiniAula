@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "MiniAula API",
-    "description": "Colección para probar la API de MiniAula. Cubre los endpoints implementados hoy: salud, registro, login y perfil. Ejecútala en orden con el Collection Runner. Requiere la API en http://localhost:3000/api con el seed aplicado (`docker compose up --build`). Las variables viven en la colección; no hace falta importar un environment. El registro usa {{$timestamp}} para generar emails únicos. Límites: registro 5 por hora y login 10 cada 15 minutos por IP; si agotas el límite, `docker compose restart api` reinicia los contadores. La prueba de email ocupado depende del usuario del seed. Cursos, lecciones, inscripciones, progreso y panel se agregarán cuando esos endpoints existan.",
+    "description": "Colección para probar la API de MiniAula. Cubre los endpoints implementados hoy: salud, registro, login y perfil. Ejecútala en orden con el Collection Runner. Requiere la API en http://localhost:3000/api con el seed aplicado (`docker compose up --build`). Las variables viven en la colección; no hace falta importar un environment. El registro usa {{$timestamp}} para generar emails únicos. Límites: registro 5 por hora y login 10 cada 15 minutos por IP; si agotas el límite, `docker compose restart api` reinicia los contadores. La prueba de email ocupado depende del usuario del seed. La carpeta 05 usa al instructor del seed para probar la gestión de lecciones: crea una lección temporal, la actualiza, reordena el curso y restaura el orden original antes de eliminarla. Requiere el seed aplicado. Inscripciones, progreso y panel se agregarán cuando esos endpoints existan.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -12,7 +12,20 @@
     { "key": "instructorEmail", "value": "" },
     { "key": "instructorToken", "value": "" },
     { "key": "seedEmail", "value": "carla.estudiante@miniaula.test" },
-    { "key": "seedPassword", "value": "Miniaula123!" }
+    { "key": "seedPassword", "value": "Miniaula123!" },
+    { "key": "seedInstructorEmail", "value": "ana.instructora@miniaula.test" },
+    { "key": "seedInstructorPassword", "value": "Miniaula123!" },
+    { "key": "seedInstructorToken", "value": "" },
+    { "key": "brunoInstructorEmail", "value": "bruno.instructor@miniaula.test" },
+    { "key": "brunoInstructorPassword", "value": "Miniaula123!" },
+    { "key": "brunoInstructorToken", "value": "" },
+    { "key": "cursoId", "value": "" },
+    { "key": "cursoTitulo", "value": "" },
+    { "key": "leccionId", "value": "" },
+    { "key": "quizLeccionId", "value": "" },
+    { "key": "leccionIds", "value": "[]" },
+    { "key": "ordenPrueba", "value": "[]" },
+    { "key": "brunoCursoId", "value": "" }
   ],
   "item": [
     {
@@ -409,6 +422,470 @@
                   "const body = pm.response.json();",
                   "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
                   "pm.test('el seed tiene rol estudiante', function () { pm.expect(body.usuario.rol).to.eql('estudiante'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 · Lecciones (instructor)",
+      "item": [
+        {
+          "name": "Login instructor del seed",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"{{seedInstructorEmail}}\", \"password\": \"{{seedInstructorPassword}}\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('inicia sesión como instructor', function () { pm.expect(body.usuario.rol).to.eql('instructor'); });",
+                  "pm.collectionVariables.set('seedInstructorToken', body.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar mis cursos",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{seedInstructorToken}}", "type": "string" }]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/cursos/mios"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('devuelve cursos propios', function () { pm.expect(body.cursos).to.be.an('array'); });",
+                  "const cursos = Array.isArray(body.cursos) ? body.cursos : [];",
+                  "const curso = cursos.find(function (item) { return item.totalLecciones > 0; }) || cursos[0] || null;",
+                  "pm.test('hay un curso con lecciones', function () { pm.expect(curso).to.be.an('object'); });",
+                  "if (curso) {",
+                  "  pm.collectionVariables.set('cursoId', String(curso.id));",
+                  "  pm.collectionVariables.set('cursoTitulo', curso.titulo);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ver curso propio con lecciones",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{seedInstructorToken}}", "type": "string" }]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/cursos/mios/{{cursoId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const lecciones = Array.isArray(body.lecciones) ? body.lecciones : [];",
+                  "pm.test('devuelve las lecciones del editor', function () { pm.expect(lecciones.length).to.be.above(0); });",
+                  "const contenido = lecciones.find(function (leccion) { return leccion.tipo === 'contenido'; });",
+                  "const cuestionario = lecciones.find(function (leccion) { return leccion.tipo === 'cuestionario'; });",
+                  "pm.test('las lecciones incluyen contenido', function () { pm.expect(contenido).to.have.property('contenido'); });",
+                  "const ids = lecciones.map(function (leccion) { return leccion.id; });",
+                  "pm.collectionVariables.set('leccionIds', JSON.stringify(ids));",
+                  "pm.collectionVariables.set('ordenPrueba', JSON.stringify(ids.slice().reverse()));",
+                  "pm.collectionVariables.set('leccionId', contenido ? String(contenido.id) : '');",
+                  "pm.collectionVariables.set('quizLeccionId', cuestionario ? String(cuestionario.id) : '');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Editar cuestionario (rechazado)",
+          "request": {
+            "method": "PUT",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{seedInstructorToken}}", "type": "string" }]
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"titulo\": \"Intento de editar cuestionario\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/lecciones/{{quizLeccionId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
+                  "pm.test('código LECCION_NO_ES_CONTENIDO', function () { pm.expect(pm.response.json().error.code).to.eql('LECCION_NO_ES_CONTENIDO'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear lección de contenido",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{seedInstructorToken}}", "type": "string" }]
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"titulo\": \"Lección Postman {{$timestamp}}\", \"contenido\": \"Contenido creado por la colección de Postman.\", \"videoUrl\": \"https://www.youtube.com/watch?v=W6NZfCO5SIk\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/cursos/{{cursoId}}/lecciones"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "pm.test('crea una lección de contenido en el curso', function () {",
+                  "  pm.expect(body.leccion.tipo).to.eql('contenido');",
+                  "  pm.expect(body.leccion.cursoId).to.eql(Number(pm.collectionVariables.get('cursoId')));",
+                  "  pm.expect(body.leccion.videoUrl).to.be.a('string');",
+                  "});",
+                  "pm.collectionVariables.set('leccionId', String(body.leccion.id));",
+                  "const ids = JSON.parse(pm.collectionVariables.get('leccionIds') || '[]');",
+                  "ids.push(body.leccion.id);",
+                  "pm.collectionVariables.set('leccionIds', JSON.stringify(ids));",
+                  "pm.collectionVariables.set('ordenPrueba', JSON.stringify(ids.slice().reverse()));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar lección",
+          "request": {
+            "method": "PUT",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{seedInstructorToken}}", "type": "string" }]
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"titulo\": \"Lección actualizada {{$timestamp}}\", \"contenido\": \"Contenido actualizado por Postman.\", \"videoUrl\": \"\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/lecciones/{{leccionId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('actualiza el título y limpia el video', function () {",
+                  "  pm.expect(body.leccion.titulo).to.include('Lección actualizada');",
+                  "  pm.expect(body.leccion.videoUrl).to.eql(null);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reordenar lecciones",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{seedInstructorToken}}", "type": "string" }]
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"orden\": {{ordenPrueba}}}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/cursos/{{cursoId}}/lecciones/orden"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const esperado = JSON.parse(pm.collectionVariables.get('ordenPrueba'));",
+                  "pm.test('devuelve el orden solicitado con posiciones 1..N', function () {",
+                  "  const ids = body.lecciones.map(function (leccion) { return leccion.id; });",
+                  "  const ordenes = body.lecciones.map(function (leccion) { return leccion.orden; });",
+                  "  pm.expect(ids).to.eql(esperado);",
+                  "  pm.expect(ordenes).to.eql(esperado.map(function (_, indice) { return indice + 1; }));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Restaurar orden original",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{seedInstructorToken}}", "type": "string" }]
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"orden\": {{leccionIds}}}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/cursos/{{cursoId}}/lecciones/orden"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const esperado = JSON.parse(pm.collectionVariables.get('leccionIds'));",
+                  "pm.test('restaura el orden del seed', function () {",
+                  "  pm.expect(body.lecciones.map(function (leccion) { return leccion.id; })).to.eql(esperado);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar lección",
+          "request": {
+            "method": "DELETE",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{seedInstructorToken}}", "type": "string" }]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/lecciones/{{leccionId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', function () { pm.response.to.have.status(204); });",
+                  "pm.collectionVariables.set('leccionId', '');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear lección sin token",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"titulo\": \"Lección sin sesión\", \"contenido\": \"No debería crearse.\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/cursos/{{cursoId}}/lecciones"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized', function () { pm.response.to.have.status(401); });",
+                  "pm.test('código NO_AUTENTICADO', function () { pm.expect(pm.response.json().error.code).to.eql('NO_AUTENTICADO'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear lección con datos inválidos",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{seedInstructorToken}}", "type": "string" }]
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"titulo\": \"ab\", \"contenido\": \"   \", \"videoUrl\": \"no-es-url\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/cursos/{{cursoId}}/lecciones"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('422 Unprocessable Entity', function () { pm.response.to.have.status(422); });",
+                  "pm.test('detalla título, contenido y video', function () {",
+                  "  const campos = body.error.details.map(function (detalle) { return detalle.campo; }).sort();",
+                  "  pm.expect(campos).to.eql(['contenido', 'titulo', 'videoUrl']);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reordenar con lista incompleta",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{seedInstructorToken}}", "type": "string" }]
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"orden\": []}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/cursos/{{cursoId}}/lecciones/orden"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
+                  "pm.test('código ORDEN_LECCIONES_INVALIDO', function () { pm.expect(pm.response.json().error.code).to.eql('ORDEN_LECCIONES_INVALIDO'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login instructor Bruno",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"{{brunoInstructorEmail}}\", \"password\": \"{{brunoInstructorPassword}}\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('inicia sesión como instructor', function () { pm.expect(body.usuario.rol).to.eql('instructor'); });",
+                  "pm.collectionVariables.set('brunoInstructorToken', body.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar cursos de Bruno",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{brunoInstructorToken}}", "type": "string" }]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/cursos/mios"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const cursos = Array.isArray(body.cursos) ? body.cursos : [];",
+                  "const curso = cursos[0] || null;",
+                  "pm.test('Bruno tiene un curso', function () { pm.expect(curso).to.be.an('object'); });",
+                  "if (curso) { pm.collectionVariables.set('brunoCursoId', String(curso.id)); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear lección en curso ajeno",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{seedInstructorToken}}", "type": "string" }]
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"titulo\": \"Lección ajena\", \"contenido\": \"No debería crearse.\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/cursos/{{brunoCursoId}}/lecciones"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden', function () { pm.response.to.have.status(403); });",
+                  "pm.test('código CURSO_NO_PROPIO', function () { pm.expect(pm.response.json().error.code).to.eql('CURSO_NO_PROPIO'); });"
                 ]
               }
             }

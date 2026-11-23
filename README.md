@@ -222,8 +222,9 @@ above. Passwords, tokens, and API responses are never logged.
 ## Postman collection
 
 [`docs/postman/MiniAula.postman_collection.json`](docs/postman/MiniAula.postman_collection.json)
-tests the implemented API: health, registration, login, and profile. It captures
-the token automatically and asserts the status code and error code of each case.
+tests the implemented API: health, registration, login, profile, validation, and
+instructor lesson management. It captures tokens and course/lesson IDs
+automatically and asserts the status code and error code of each case.
 
 1. Start the stack with `docker compose up --build` (or the local API).
 2. In Postman, choose **Import** and select the collection file.
@@ -234,8 +235,10 @@ the token automatically and asserts the status code and error code of each case.
 variables to test another host. Registration requests use `{{$timestamp}}`, so
 each run creates fresh accounts. Rate limits apply (registration: 5 per hour;
 login: 10 per 15 minutes); `docker compose restart api` clears the in-memory
-counters. Requests for courses, lessons, enrollments, progress, and the
-instructor dashboard will be added as those endpoints are implemented.
+counters. The lesson folder uses the seeded instructors, creates a temporary
+lesson, restores the course order, and deletes that lesson at the end. Requests
+for course CRUD, enrollments, progress, and the instructor dashboard will be
+added later.
 
 ## Full stack with Docker
 
