@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import { test } from 'node:test';
 import app from '../app.js';
-import { Curso, Leccion, sequelize } from '../models/index.js';
+import { Curso, Leccion, Usuario, sequelize } from '../models/index.js';
 import {
   actualizarLeccionSchema,
   crearLeccionSchema,
@@ -17,6 +17,7 @@ import {
   reordenarLeccionesPropias,
   toLeccionDetalle,
 } from '../services/leccion.service.js';
+import { signAccessToken } from '../utils/jwt.js';
 
 const TRANSACCION = { LOCK: { UPDATE: 'UPDATE' } };
 
@@ -57,6 +58,20 @@ function leccionFalsa(cambios = {}) {
 
 function simularTransaccion(t) {
   t.mock.method(sequelize, 'transaction', async (callback) => callback(TRANSACCION));
+}
+
+async function iniciarServidor(t) {
+  const server = app.listen(0, '127.0.0.1');
+  t.after(() => new Promise((resolve, reject) => {
+    server.close((error) => error ? reject(error) : resolve());
+  }));
+  await once(server, 'listening');
+
+  return `http://127.0.0.1:${server.address().port}`;
+}
+
+function tokenDe(id, rol) {
+  return `Bearer ${signAccessToken({ id, rol })}`;
 }
 
 test('creating a content lesson trims input and rejects quiz or server fields', () => {
@@ -434,12 +449,7 @@ test('reordering a foreign or missing course is rejected', async (t) => {
 });
 
 test('lesson routes require an instructor session', async (t) => {
-  const server = app.listen(0, '127.0.0.1');
-  t.after(() => new Promise((resolve, reject) => {
-    server.close((error) => error ? reject(error) : resolve());
-  }));
-  await once(server, 'listening');
-  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+  const baseUrl = await iniciarServidor(t);
 
   for (const [method, path] of [
     ['POST', '/api/cursos/1/lecciones'],
@@ -457,4 +467,104 @@ test('lesson routes require an instructor session', async (t) => {
     const body = await response.json();
     assert.equal(body.error.code, 'NO_AUTENTICADO');
   }
+});
+
+test('creating a lesson through the route returns 201', async (t) => {
+  const baseUrl = await iniciarServidor(t);
+  t.mock.method(Usuario, 'findByPk', async () => ({ id: 9, rol: 'instructor' }));
+  simularTransaccion(t);
+  t.mock.method(Curso, 'findByPk', async () => cursoFalso());
+  t.mock.method(Leccion, 'max', async () => 0);
+  t.mock.method(Leccion, 'create', async (datos) => leccionFalsa({ ...datos, id: 15 }));
+
+  const response = await fetch(`${baseUrl}/api/cursos/5/lecciones`, {
+    method: 'POST',
+    headers: {
+      Authorization: tokenDe(9, 'instructor'),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ titulo: 'Nueva lección', contenido: 'Contenido' }),
+  });
+
+  assert.equal(response.status, 201);
+  const body = await response.json();
+  assert.equal(body.leccion.id, 15);
+  assert.equal(body.leccion.tipo, 'contenido');
+  assert.equal(body.leccion.orden, 1);
+});
+
+test('updating a lesson through the route returns 200', async (t) => {
+  const baseUrl = await iniciarServidor(t);
+  t.mock.method(Usuario, 'findByPk', async () => ({ id: 9, rol: 'instructor' }));
+  const leccion = leccionFalsa();
+  t.mock.method(Leccion, 'findByPk', async () => leccion);
+  t.mock.method(Curso, 'findByPk', async () => cursoFalso());
+
+  const response = await fetch(`${baseUrl}/api/lecciones/10`, {
+    method: 'PUT',
+    headers: {
+      Authorization: tokenDe(9, 'instructor'),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ titulo: 'Actualizado' }),
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).leccion.titulo, 'Actualizado');
+});
+
+test('deleting a lesson through the route returns 204', async (t) => {
+  const baseUrl = await iniciarServidor(t);
+  t.mock.method(Usuario, 'findByPk', async () => ({ id: 9, rol: 'instructor' }));
+  simularTransaccion(t);
+  const leccion = leccionFalsa();
+  t.mock.method(Leccion, 'findByPk', async () => leccion);
+  t.mock.method(Curso, 'findByPk', async () => cursoFalso());
+
+  const response = await fetch(`${baseUrl}/api/lecciones/10`, {
+    method: 'DELETE',
+    headers: { Authorization: tokenDe(9, 'instructor') },
+  });
+
+  assert.equal(response.status, 204);
+});
+
+test('an incomplete order through the route returns 409', async (t) => {
+  const baseUrl = await iniciarServidor(t);
+  t.mock.method(Usuario, 'findByPk', async () => ({ id: 9, rol: 'instructor' }));
+  simularTransaccion(t);
+  t.mock.method(Curso, 'findByPk', async () => cursoFalso());
+  t.mock.method(Leccion, 'findAll', async () => [{ id: 10 }, { id: 11 }]);
+
+  const response = await fetch(`${baseUrl}/api/cursos/5/lecciones/orden`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: tokenDe(9, 'instructor'),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ orden: [] }),
+  });
+
+  assert.equal(response.status, 409);
+  assert.equal((await response.json()).error.code, 'ORDEN_LECCIONES_INVALIDO');
+});
+
+test('invalid lesson ids are rejected through the route', async (t) => {
+  const baseUrl = await iniciarServidor(t);
+  t.mock.method(Usuario, 'findByPk', async () => ({ id: 9, rol: 'instructor' }));
+
+  const response = await fetch(`${baseUrl}/api/lecciones/abc`, {
+    method: 'PUT',
+    headers: {
+      Authorization: tokenDe(9, 'instructor'),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ titulo: 'Actualizado' }),
+  });
+
+  assert.equal(response.status, 422);
+  assert.deepEqual(
+    (await response.json()).error.details.map((detail) => detail.campo),
+    ['id'],
+  );
 });
