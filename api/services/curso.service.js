@@ -240,7 +240,7 @@ export async function actualizarCursoPropio(instructorId, cursoId, cambios) {
   return toInstructorCurso(curso, await contarRelacionadosCurso(curso.id));
 }
 
-async function obtenerCursoBloqueado(cursoId, transaction) {
+export async function obtenerCursoBloqueado(cursoId, transaction) {
   return Curso.findByPk(cursoId, {
     transaction,
     lock: transaction.LOCK.UPDATE,

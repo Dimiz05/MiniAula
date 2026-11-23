@@ -8,6 +8,7 @@ import { useFetch } from '../../hooks/useFetch.js';
 import { actualizarCurso, crearCurso, obtenerCursoPropio } from '../../services/curso.service.js';
 import { toFieldErrors } from '../../utils/validation.js';
 import { estados, niveles, validarCurso } from './courseForm.js';
+import LessonEditor from './LessonEditor.jsx';
 
 const emptyCourse = { titulo: '', descripcion: '', categoria: '', nivel: 'basico', estado: 'borrador' };
 const controlClass = 'w-full rounded-control border border-outline bg-surface px-3.5 py-2.5 text-body-md text-secondary placeholder:text-on-surface-variant/70 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary aria-invalid:border-error';
@@ -167,14 +168,19 @@ function ExistingCourse({ id }) {
     );
   }
 
-  return <CourseForm curso={data.curso} editing />;
+  return (
+    <div className="space-y-8">
+      <CourseForm curso={data.curso} editing />
+      <LessonEditor cursoId={id} lecciones={data.lecciones ?? []} />
+    </div>
+  );
 }
 
 export default function CourseEditorPage() {
   const { id } = useParams();
 
   return (
-    <section className="mx-auto max-w-3xl space-y-6">
+    <section className="mx-auto max-w-5xl space-y-6">
       <div className="flex items-center gap-3">
         <Link
           to="/instructor/cursos"

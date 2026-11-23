@@ -11,8 +11,9 @@ with MySQL models `Usuario`, `Curso`, `Leccion`, `Pregunta`, `Inscripcion`, and
 bcrypt, Zod validation, centralized errors, and HTTP security middleware all
 work. The React app includes login, registration, and profile screens, restores
 the session after a reload, and supports logout. The complete stack starts with
-one Docker command. The course catalog, lesson, quiz, enrollment, and progress
-endpoints and their remaining React screens are still pending.
+one Docker command. The catalog, course management, enrollment, and instructor
+lesson-editing endpoints and screens are implemented. Quiz, progress, and the
+remaining student lesson screens are still pending.
 
 ## Repository structure
 
@@ -181,6 +182,27 @@ deletion run in a transaction with the course row locked, so a failed rule
 never leaves a partial delete. Archived courses disappear from the public
 catalog because it only lists `publicado` courses.
 
+## Lesson management API (instructor)
+
+These routes require a bearer token with the `instructor` role and work only on
+the authenticated instructor's own courses. The course detail used by the
+editor returns the full lesson content; the public course detail keeps hiding it.
+
+| Method and path | Description |
+| --- | --- |
+| `GET /api/cursos/mios/:id` | Return an own course for editing with `{ curso, lecciones }`. Each lesson includes `id`, `titulo`, `tipo`, `contenido`, `videoUrl`, `orden`, `notaMinima`, and `cursoId`. |
+| `POST /api/cursos/:id/lecciones` | Create a content lesson with `titulo`, `contenido`, and optional `videoUrl`. The server stores `tipo: "contenido"`, assigns the next `orden`, and returns `201 { leccion }`. |
+| `PUT /api/lecciones/:id` | Update `titulo`, `contenido`, and/or `videoUrl` of an own content lesson. At least one field is required. Returns `{ leccion }`; a quiz returns `409 LECCION_NO_ES_CONTENIDO`. |
+| `DELETE /api/lecciones/:id` | Delete an own lesson. Returns `204`. Deleting a lesson also removes its questions and student progress through the existing foreign-key cascade. |
+| `PATCH /api/cursos/:id/lecciones/orden` | Reorder an own course with `{ "orden": [lessonId, ...] }`. The list must contain every lesson of the course exactly once; an empty list is valid only when the course has no lessons. The server rewrites `orden` as `1..N` and returns `{ lecciones }`. |
+
+Creating, reordering, and deleting a lesson run inside a transaction with the
+course row locked. A foreign course or lesson returns
+`403 CURSO_NO_PROPIO`, a missing one returns `404`, an invalid body returns
+`422 VALIDACION`, an order that does not match the course lessons returns
+`409 ORDEN_LECCIONES_INVALIDO`, and editing a quiz through the content route
+returns `409 LECCION_NO_ES_CONTENIDO`.
+
 ## Frontend authentication
 
 | Route | Access | Screen |
@@ -200,8 +222,9 @@ above. Passwords, tokens, and API responses are never logged.
 ## Postman collection
 
 [`docs/postman/MiniAula.postman_collection.json`](docs/postman/MiniAula.postman_collection.json)
-tests the implemented API: health, registration, login, and profile. It captures
-the token automatically and asserts the status code and error code of each case.
+tests the implemented API: health, registration, login, profile, validation, and
+instructor lesson management. It captures tokens and course/lesson IDs
+automatically and asserts the status code and error code of each case.
 
 1. Start the stack with `docker compose up --build` (or the local API).
 2. In Postman, choose **Import** and select the collection file.
@@ -212,8 +235,10 @@ the token automatically and asserts the status code and error code of each case.
 variables to test another host. Registration requests use `{{$timestamp}}`, so
 each run creates fresh accounts. Rate limits apply (registration: 5 per hour;
 login: 10 per 15 minutes); `docker compose restart api` clears the in-memory
-counters. Requests for courses, lessons, enrollments, progress, and the
-instructor dashboard will be added as those endpoints are implemented.
+counters. The lesson folder uses the seeded instructors, creates a temporary
+lesson, restores the course order, and deletes that lesson at the end. Requests
+for course CRUD, enrollments, progress, and the instructor dashboard will be
+added later.
 
 ## Full stack with Docker
 

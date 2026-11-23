@@ -11,6 +11,10 @@ import {
   publicar,
 } from '../controllers/curso.js';
 import { inscribir } from '../controllers/inscripcion.js';
+import {
+  crear as crearLeccion,
+  reordenar as reordenarLecciones,
+} from '../controllers/leccion.js';
 import { authenticate, authorize } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
 import {
@@ -19,6 +23,10 @@ import {
   crearCursoSchema,
   cursoIdParamsSchema,
 } from '../schemas/curso.js';
+import {
+  crearLeccionSchema,
+  reordenarLeccionesSchema,
+} from '../schemas/leccion.js';
 
 const router = Router();
 
@@ -37,6 +45,20 @@ router.post(
   authorize('estudiante'),
   validate({ params: cursoIdParamsSchema }),
   inscribir,
+);
+router.post(
+  '/:id/lecciones',
+  authenticate,
+  authorize('instructor'),
+  validate({ params: cursoIdParamsSchema, body: crearLeccionSchema }),
+  crearLeccion,
+);
+router.patch(
+  '/:id/lecciones/orden',
+  authenticate,
+  authorize('instructor'),
+  validate({ params: cursoIdParamsSchema, body: reordenarLeccionesSchema }),
+  reordenarLecciones,
 );
 router.post(
   '/',
