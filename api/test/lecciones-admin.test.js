@@ -131,15 +131,15 @@ test('updating a lesson only accepts editable fields and at least one change', (
   }
 });
 
-test('reordering requires a non-empty list of positive integer ids', () => {
+test('reordering requires a list of positive integer ids', () => {
   assert.deepEqual(
     reordenarLeccionesSchema.parse({ orden: [3, 1, 2] }),
     { orden: [3, 1, 2] },
   );
+  assert.deepEqual(reordenarLeccionesSchema.parse({ orden: [] }), { orden: [] });
 
   for (const invalido of [
     {},
-    { orden: [] },
     { orden: [0] },
     { orden: [-1] },
     { orden: [1.5] },
@@ -269,6 +269,22 @@ test('updating a lesson saves only the received content fields', async (t) => {
   assert.equal(leccion.videoUrl, null);
 });
 
+test('updating a quiz lesson is rejected in this phase', async (t) => {
+  const leccion = leccionFalsa({ tipo: 'cuestionario', notaMinima: 70 });
+  let guardada = false;
+  leccion.save = async () => {
+    guardada = true;
+  };
+  t.mock.method(Leccion, 'findByPk', async () => leccion);
+  t.mock.method(Curso, 'findByPk', async () => cursoFalso());
+
+  await assert.rejects(
+    () => actualizarLeccionPropia(9, 10, { titulo: 'Nuevo título' }),
+    (error) => error.statusCode === 409 && error.code === 'LECCION_NO_ES_CONTENIDO',
+  );
+  assert.equal(guardada, false);
+});
+
 test('updating a missing or foreign lesson is rejected', async (t) => {
   const actual = { leccion: leccionFalsa() };
   t.mock.method(Leccion, 'findByPk', async () => actual.leccion);
@@ -380,7 +396,7 @@ test('reordering rejects missing, duplicate or foreign ids', async (t) => {
     return [1];
   });
 
-  for (const orden of [[10, 11], [10, 10, 11], [10, 11, 12, 99]]) {
+  for (const orden of [[], [10, 11], [10, 10, 11], [10, 11, 12, 99]]) {
     await assert.rejects(
       () => reordenarLeccionesPropias(9, 5, orden),
       (error) => error.statusCode === 409 && error.code === 'ORDEN_LECCIONES_INVALIDO',
@@ -388,6 +404,16 @@ test('reordering rejects missing, duplicate or foreign ids', async (t) => {
   }
 
   assert.equal(actualizadas, 0);
+});
+
+test('reordering an empty course with an empty list is a no-op', async (t) => {
+  simularTransaccion(t);
+  t.mock.method(Curso, 'findByPk', async () => cursoFalso());
+  t.mock.method(Leccion, 'findAll', async () => []);
+
+  const lecciones = await reordenarLeccionesPropias(9, 5, []);
+
+  assert.deepEqual(lecciones, []);
 });
 
 test('reordering a foreign or missing course is rejected', async (t) => {

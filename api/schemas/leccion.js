@@ -72,13 +72,11 @@ export const actualizarLeccionSchema = z
 
 export const reordenarLeccionesSchema = z
   .object({
-    orden: z
-      .array(
-        z
-          .number({ message: 'Cada identificador de lección debe ser un número.' })
-          .int('Cada identificador de lección debe ser un número entero.')
-          .positive('Cada identificador de lección debe ser mayor que 0.'),
-      )
-      .min(1, 'Incluye al menos una lección en el orden.'),
+    orden: z.array(
+      z
+        .number({ message: 'Cada identificador de lección debe ser un número.' })
+        .int('Cada identificador de lección debe ser un número entero.')
+        .positive('Cada identificador de lección debe ser mayor que 0.'),
+    ),
   })
   .strict();

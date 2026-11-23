@@ -82,6 +82,15 @@ export async function actualizarLeccionPropia(instructorId, leccionId, cambios) 
   const curso = await Curso.findByPk(leccion.cursoId);
   asegurarPropiedadCurso(curso, instructorId);
 
+  // Los cuestionarios pertenecen a la Tarea 6. Esta fase solo edita contenido.
+  if (leccion.tipo !== 'contenido') {
+    throw new AppError(
+      409,
+      'LECCION_NO_ES_CONTENIDO',
+      'Solo puedes editar lecciones de contenido en esta versión.',
+    );
+  }
+
   if (cambios.titulo !== undefined) {
     leccion.titulo = cambios.titulo;
   }
