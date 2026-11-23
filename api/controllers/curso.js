@@ -9,6 +9,7 @@ import {
   obtenerCursoPublicado,
   publicarCursoPropio,
 } from '../services/curso.service.js';
+import { listarLeccionesPropias } from '../services/leccion.service.js';
 import { AppError } from '../utils/errors.js';
 
 export async function listar(request, response) {
@@ -40,7 +41,11 @@ export async function detallePropio(request, response) {
     request.usuario.id,
     request.validated.params.id,
   );
-  response.status(200).json({ curso });
+  const lecciones = await listarLeccionesPropias(
+    request.usuario.id,
+    request.validated.params.id,
+  );
+  response.status(200).json({ curso, lecciones });
 }
 
 export async function crear(request, response) {
