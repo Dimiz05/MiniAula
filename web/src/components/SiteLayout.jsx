@@ -71,6 +71,12 @@ export default function SiteLayout() {
                     Inicio
                   </NavLink>
                 )}
+                {isAuthenticated && !isInstructor && (
+                  <NavLink to="/mis-cursos" className={navClass}>
+                    <Icon name="auto_stories" className="text-[20px]" />
+                    Mis cursos
+                  </NavLink>
+                )}
                 <NavLink to="/catalog" className={navClass}>
                   <Icon name="search" className="text-[20px]" />
                   Explorar cursos
@@ -152,6 +158,12 @@ export default function SiteLayout() {
               <NavLink to={isAuthenticated ? '/panel' : '/'} end className={navClass}>
                 <Icon name="home" className="text-[18px]" />
                 Inicio
+              </NavLink>
+            )}
+            {isAuthenticated && !isInstructor && (
+              <NavLink to="/mis-cursos" className={navClass}>
+                <Icon name="auto_stories" className="text-[18px]" />
+                Mis cursos
               </NavLink>
             )}
             <NavLink to="/catalog" className={navClass}>
