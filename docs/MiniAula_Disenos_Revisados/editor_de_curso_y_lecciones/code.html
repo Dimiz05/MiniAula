@@ -1,0 +1,403 @@
+<!DOCTYPE html><html lang="es"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor de Curso — MiniAula</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'primary': '#0A5C41',
+        'on-primary': '#FFFFFF',
+        'secondary': '#1A202C',
+        'on-secondary': '#FFFFFF',
+        'surface': '#FFFFFF',
+        'on-surface': '#1A202C',
+        'surface-variant': '#EDF2F7',
+        'on-surface-variant': '#4A5568',
+        'background': '#F8FAFC',
+        'on-background': '#1A202C',
+        'success': '#0D7A57',
+        'on-success': '#FFFFFF',
+        'success-light': '#E6F4EA',
+        'warning': '#D97706',
+        'on-warning': '#1A202C',
+        'warning-light': '#FEF3C7',
+        'error': '#DC2626',
+        'on-error': '#FFFFFF',
+        'error-light': '#FEE2E2',
+        'outline': '#E2E8F0',
+        'outline-light': '#F1F5F9',
+      },
+      borderRadius: {
+        'sm': '6px',
+        'DEFAULT': '10px',
+        'md': '12px',
+        'lg': '16px',
+        'xl': '20px',
+        'full': '9999px',
+      },
+      spacing: {
+        'xs': '4px',
+        'sm': '8px',
+        'md': '16px',
+        'lg': '24px',
+        'xl': '32px',
+        '2xl': '48px',
+        '3xl': '64px',
+      },
+      fontFamily: {
+        'display': ['"Inter"', 'sans-serif'],
+        'headline': ['"Inter"', 'sans-serif'],
+        'body': ['"Inter"', 'sans-serif'],
+        'label': ['"Inter"', 'sans-serif'],
+      },
+      fontSize: {
+        'display-lg': ['36px', { lineHeight: '44px', letterSpacing: '-0.02em', fontWeight: '700' }],
+        'display-lg-mobile': ['28px', { lineHeight: '34px', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'headline-lg': ['28px', { lineHeight: '36px', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'headline-lg-mobile': ['24px', { lineHeight: '30px', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'headline-md': ['22px', { lineHeight: '28px', fontWeight: '600' }],
+        'headline-sm': ['18px', { lineHeight: '24px', fontWeight: '600' }],
+        'body-lg': ['16px', { lineHeight: '24px', fontWeight: '400' }],
+        'body-md': ['14px', { lineHeight: '20px', fontWeight: '400' }],
+        'body-sm': ['12px', { lineHeight: '16px', fontWeight: '400' }],
+        'label-lg': ['14px', { lineHeight: '20px', fontWeight: '600' }],
+        'label-md': ['12px', { lineHeight: '16px', fontWeight: '600' }],
+        'label-sm': ['11px', { lineHeight: '14px', fontWeight: '500' }],
+      },
+      transitionDuration: {
+        'state-change': '150ms',
+        'surface-enter': '250ms',
+        'surface-exit': '150ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+        'surface-enter': '0ms',
+        'surface-exit': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'cubic-bezier(0.4, 0, 0.2, 1)',
+        'surface-enter': 'cubic-bezier(0, 0, 0.2, 1)',
+        'surface-exit': 'cubic-bezier(0.4, 0, 1, 1)',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <style>.material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons { display: inline-block; width: 1em; height: 1em; line-height: 1 !important; box-sizing: content-box; overflow: hidden; white-space: nowrap; direction: ltr; vertical-align: middle; }</style>
+</head>
+<body class="bg-background text-on-surface font-body min-h-[1024px] flex flex-col" data-stitch-vh="min-h-[1024px]===min-h-screen">
+  <!-- Top Horizontal Navbar (Instructor Shell) -->
+  <header class="bg-surface border-b border-outline sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 gap-4">
+        <!-- Brand & Instructor Links -->
+        <div class="flex items-center gap-8">
+          <a href="../panel_de_instructor/code.html" class="flex items-center gap-2.5 shrink-0">
+            <div class="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center text-on-secondary shadow-xs">
+              <span class="material-symbols-outlined text-[22px]">co_present</span>
+            </div>
+            <div>
+              <span class="font-headline text-headline-sm font-bold text-secondary tracking-tight block leading-tight">MiniAula</span>
+              <span class="text-[10px] text-primary font-bold tracking-wider uppercase leading-none">Instructor</span>
+            </div>
+          </a>
+
+          <!-- Horizontal Navigation Links -->
+          <nav class="hidden md:flex items-center gap-1">
+            <a href="../panel_de_instructor/code.html" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-DEFAULT text-on-surface-variant hover:text-secondary hover:bg-surface-variant font-label text-label-md transition-colors">
+              <span class="material-symbols-outlined text-[20px]">dashboard</span>
+              <span>Panel principal</span>
+            </a>
+            <a href="../editor_de_curso_y_lecciones/code.html" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-DEFAULT bg-primary/10 text-primary font-label text-label-md font-semibold">
+              <span class="material-symbols-outlined text-[20px]">add_circle</span>
+              <span>Crear curso</span>
+            </a>
+            <a href="../anal_ticas_del_curso/code.html" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-DEFAULT text-on-surface-variant hover:text-secondary hover:bg-surface-variant font-label text-label-md transition-colors">
+              <span class="material-symbols-outlined text-[20px]">insights</span>
+              <span>Analíticas</span>
+            </a>
+          </nav>
+        </div>
+
+        <!-- Instructor Actions & Profile -->
+        <div class="flex items-center gap-3">
+          <button class="px-3.5 py-1.5 bg-surface border border-outline hover:bg-surface-variant text-secondary rounded-DEFAULT text-label-md font-label">
+            Guardar borrador
+          </button>
+          <button onclick="document.getElementById(&#39;publish-modal&#39;).classList.remove(&#39;hidden&#39;)" class="px-4 py-1.5 bg-primary text-on-primary rounded-DEFAULT text-label-md font-label font-semibold hover:opacity-95 shadow-sm flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px]">rocket_launch</span>
+            <span>Publicar</span>
+          </button>
+
+          <div class="h-8 border-r border-outline hidden sm:block"></div>
+
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label text-label-sm font-bold">DR</div>
+            <a href="../iniciar_sesi_n/code.html" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-light rounded-DEFAULT transition-colors" title="Cerrar sesión">
+              <span class="material-symbols-outlined text-[20px]">logout</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 p-6 md:p-8 space-y-8 max-w-5xl mx-auto w-full">
+    <!-- Breadcrumb / Header status -->
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="../panel_de_instructor/code.html" class="p-1.5 text-on-surface-variant hover:text-secondary rounded-DEFAULT hover:bg-surface-variant">
+          <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+        </a>
+        <div class="flex items-center gap-2">
+          <h1 class="font-headline text-headline-sm text-secondary font-bold">Editando Curso: React y Vite</h1>
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-warning-light text-secondary text-label-sm font-label font-semibold">
+            <span class="w-2 h-2 rounded-full bg-warning"></span> Borrador (RF-06)
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 1: Course Info Form -->
+    <section class="bg-surface p-6 md:p-8 rounded-xl border border-outline shadow-sm space-y-6">
+      <div class="flex items-center justify-between border-b border-outline pb-4">
+        <div>
+          <h2 class="font-headline text-headline-sm text-secondary" data-design-text-token="headline-sm">1. Información General del Curso</h2>
+          <p class="text-body-sm text-on-surface-variant">Configura los datos que los estudiantes verán en el catálogo público.</p>
+        </div>
+        <span class="text-label-sm text-on-surface-variant">ID: crs_8921-react</span>
+      </div>
+
+      <form class="space-y-4" onsubmit="event.preventDefault();">
+        <div>
+          <label class="block text-label-md font-label text-secondary mb-1.5" data-design-text-token="label-md">Título del curso</label>
+          <input type="text" value="Desarrollo Web con React y Vite" class="w-full px-3.5 py-2.5 bg-surface text-secondary border border-outline rounded-DEFAULT text-body-md focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-primary">
+        </div>
+
+        <div>
+          <label class="block text-label-md font-label text-secondary mb-1.5" data-design-text-token="label-md">Descripción detallada</label>
+          <textarea rows="3" class="w-full px-3.5 py-2.5 bg-surface text-secondary border border-outline rounded-DEFAULT text-body-md focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-primary">Aprende a estructurar aplicaciones SPA robustas y escalables con React 18, Vite, Context API y consumo de endpoints REST con avance secuencial.</textarea>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-label-md font-label text-secondary mb-1.5" data-design-text-token="label-md">Categoría</label>
+            <select class="w-full px-3.5 py-2.5 bg-surface text-secondary border border-outline rounded-DEFAULT text-body-md focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-primary">
+              <option selected>Programación</option>
+              <option>Diseño</option>
+              <option>Idiomas</option>
+              <option>Marketing</option>
+              <option>Tecnología</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-label-md font-label text-secondary mb-1.5" data-design-text-token="label-md">Nivel de dificultad</label>
+            <select class="w-full px-3.5 py-2.5 bg-surface text-secondary border border-outline rounded-DEFAULT text-body-md focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-primary">
+              <option>Principiante</option>
+              <option selected>Intermedio</option>
+              <option>Avanzado</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-label-md font-label text-secondary mb-1.5" data-design-text-token="label-md">Imagen de portada</label>
+            <div class="flex items-center gap-2">
+              <input type="text" value="images/course_react.jpg" readonly class="w-full px-3 py-2 bg-surface-variant text-on-surface-variant text-label-sm border border-outline rounded-DEFAULT">
+              <button type="button" class="p-2 border border-outline rounded bg-surface hover:bg-surface-variant text-secondary" title="Cambiar portada">
+                <span class="material-symbols-outlined text-[20px]">upload</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- Section 2: Curriculum Management (RF-08, RF-09, RF-14) -->
+    <section class="bg-surface p-6 md:p-8 rounded-xl border border-outline shadow-sm space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-outline pb-4">
+        <div>
+          <h2 class="font-headline text-headline-sm text-secondary" data-design-text-token="headline-sm">2. Estructura del Temario y Lecciones</h2>
+          <p class="text-body-sm text-on-surface-variant">Reordena lecciones arrastrando y crea contenido o cuestionarios evaluativos.</p>
+        </div>
+        <!-- Add Lesson Actions -->
+        <div class="flex items-center gap-2">
+          <button class="px-3.5 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-DEFAULT text-label-sm font-label font-semibold flex items-center gap-1.5 whitespace-nowrap">
+            <span class="material-symbols-outlined text-[18px]">post_add</span>
+            <span>+ Lección de contenido</span>
+          </button>
+          <button class="px-3.5 py-2 bg-warning-light text-secondary hover:bg-warning/20 rounded-DEFAULT text-label-sm font-label font-semibold flex items-center gap-1.5 whitespace-nowrap">
+            <span class="material-symbols-outlined text-[18px]">quiz</span>
+            <span>+ Cuestionario</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Draggable Reorderable Lesson List -->
+      <div class="space-y-3">
+        <!-- Lesson Item 1 -->
+        <div class="p-4 rounded-lg border border-outline bg-surface hover:border-primary/50 flex items-center justify-between gap-4 transition-all">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-on-surface-variant cursor-grab" title="Arrastrar para ordenar">drag_indicator</span>
+            <span class="w-6 h-6 rounded-full bg-surface-variant text-secondary text-label-sm font-bold flex items-center justify-center">1</span>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-label text-label-md text-secondary font-semibold">Introducción a React 18 y Vite</span>
+                <span class="px-2 py-0.5 rounded text-label-sm bg-primary/10 text-primary font-medium">Contenido</span>
+              </div>
+              <span class="text-label-sm text-on-surface-variant">Video URL: https://player.miniaula.edu/video/react-intro</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="p-1.5 text-on-surface-variant hover:text-secondary rounded" title="Editar"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+            <button class="p-1.5 text-error hover:bg-error-light rounded" title="Eliminar"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+          </div>
+        </div>
+
+        <!-- Lesson Item 2 -->
+        <div class="p-4 rounded-lg border border-outline bg-surface hover:border-primary/50 flex items-center justify-between gap-4 transition-all">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-on-surface-variant cursor-grab" title="Arrastrar para ordenar">drag_indicator</span>
+            <span class="w-6 h-6 rounded-full bg-surface-variant text-secondary text-label-sm font-bold flex items-center justify-center">2</span>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-label text-label-md text-secondary font-semibold">Componentes Funcionales y JSX Limpio</span>
+                <span class="px-2 py-0.5 rounded text-label-sm bg-primary/10 text-primary font-medium">Contenido</span>
+              </div>
+              <span class="text-label-sm text-on-surface-variant">Lectura técnica · 1,200 palabras</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="p-1.5 text-on-surface-variant hover:text-secondary rounded" title="Editar"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+            <button class="p-1.5 text-error hover:bg-error-light rounded" title="Eliminar"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+          </div>
+        </div>
+
+        <!-- Lesson Item 3 -->
+        <div class="p-4 rounded-lg border border-outline bg-surface hover:border-primary/50 flex items-center justify-between gap-4 transition-all">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-on-surface-variant cursor-grab" title="Arrastrar para ordenar">drag_indicator</span>
+            <span class="w-6 h-6 rounded-full bg-surface-variant text-secondary text-label-sm font-bold flex items-center justify-center">3</span>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-label text-label-md text-secondary font-semibold">Manejo de Estado con Context API y Hooks</span>
+                <span class="px-2 py-0.5 rounded text-label-sm bg-primary/10 text-primary font-medium">Contenido</span>
+              </div>
+              <span class="text-label-sm text-on-surface-variant">Video URL + Guía de implementación</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="p-1.5 text-on-surface-variant hover:text-secondary rounded" title="Editar"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+            <button class="p-1.5 text-error hover:bg-error-light rounded" title="Eliminar"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+          </div>
+        </div>
+
+        <!-- Lesson Item 4 (Quiz Lesson) -->
+        <div class="p-4 rounded-lg border border-warning/40 bg-warning-light/30 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-on-surface-variant cursor-grab" title="Arrastrar para ordenar">drag_indicator</span>
+            <span class="w-6 h-6 rounded-full bg-secondary text-white text-label-sm font-bold flex items-center justify-center">4</span>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-label text-label-md text-secondary font-semibold">Cuestionario Evaluativo Final: React y Vite</span>
+                <span class="px-2 py-0.5 rounded text-label-sm bg-secondary text-white font-medium">Cuestionario (RF-14)</span>
+              </div>
+              <span class="text-label-sm text-on-surface-variant">5 preguntas configuradas · Nota mínima de aprobación: 70 pts · Máx 3 intentos</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="px-3 py-1.5 bg-surface border border-outline rounded text-label-sm font-label text-secondary hover:bg-surface-variant flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px]">tune</span>
+              <span>Editar preguntas</span>
+            </button>
+            <button class="p-1.5 text-error hover:bg-error-light rounded" title="Eliminar"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Interactive Lesson & Quiz Editor Drawer Mockup -->
+    <section class="bg-surface p-6 md:p-8 rounded-xl border border-outline shadow-sm space-y-6">
+      <div class="flex items-center justify-between border-b border-outline pb-4">
+        <div>
+          <h2 class="font-headline text-headline-sm text-secondary">3. Editor Detallado de Preguntas de Cuestionario</h2>
+          <p class="text-body-sm text-on-surface-variant">Define enunciados, opciones y selecciona el índice correcto (evaluado en el servidor).</p>
+        </div>
+        <span class="px-2.5 py-0.5 rounded bg-surface-variant text-secondary text-label-sm font-label">Nota mínima: 70/100</span>
+      </div>
+
+      <div class="bg-surface-variant/30 p-5 rounded-lg border border-outline space-y-4">
+        <div>
+          <label class="block text-label-md font-label text-secondary mb-1">Enunciado de la pregunta</label>
+          <input type="text" value="¿Cuál es la función principal del hook useContext en React?" class="w-full px-3.5 py-2.5 bg-surface text-secondary border border-outline rounded-DEFAULT text-body-md focus-visible:ring-2 focus-visible:ring-primary">
+        </div>
+
+        <div class="space-y-2">
+          <span class="text-label-md font-label text-secondary block">Opciones de respuesta (Marca la opción correcta):</span>
+
+          <div class="flex items-center gap-3 p-3 bg-surface rounded border border-outline">
+            <input type="radio" name="opt-correct" class="text-primary focus:ring-primary">
+            <input type="text" value="Modificar directamente el árbol del DOM sin Virtual DOM." class="w-full text-body-md bg-transparent border-0 focus:ring-0 p-0 text-secondary">
+            <span class="text-label-sm text-on-surface-variant">Opción A</span>
+          </div>
+
+          <div class="flex items-center gap-3 p-3 bg-success-light/40 rounded border border-success">
+            <input type="radio" name="opt-correct" checked class="text-success focus:ring-success">
+            <input type="text" value="Acceder al valor actual del contexto provisto por Provider sin prop-drilling." class="w-full text-body-md bg-transparent border-0 focus:ring-0 p-0 text-secondary font-medium">
+            <span class="px-2 py-0.5 rounded bg-secondary text-white text-label-sm font-semibold">Correcta</span>
+          </div>
+
+          <div class="flex items-center gap-3 p-3 bg-surface rounded border border-outline">
+            <input type="radio" name="opt-correct" class="text-primary focus:ring-primary">
+            <input type="text" value="Crear un servidor WebSocket en segundo plano." class="w-full text-body-md bg-transparent border-0 focus:ring-0 p-0 text-secondary">
+            <span class="text-label-sm text-on-surface-variant">Opción C</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-2">
+          <button type="button" class="text-label-sm font-label text-primary hover:underline flex items-center gap-1">
+            <span class="material-symbols-outlined text-[16px]">add</span> Añadir otra opción
+          </button>
+          <div class="flex gap-2">
+            <button class="px-4 py-2 bg-surface border border-outline text-secondary rounded text-label-sm font-label">Cancelar</button>
+            <button class="px-4 py-2 bg-secondary text-white rounded text-label-sm font-label">Guardar pregunta</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Publish Confirmation Dialog (RN-05 & RF-07) -->
+  <div id="publish-modal" class="hidden fixed inset-0 bg-secondary/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+    <div class="bg-surface rounded-xl border border-outline shadow-xl max-w-md w-full p-6 space-y-4">
+      <div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+        <span class="material-symbols-outlined text-[28px]">rocket_launch</span>
+      </div>
+      <div>
+        <h3 class="font-headline text-headline-sm text-secondary mb-1">¿Deseas publicar este curso?</h3>
+        <p class="text-body-md text-on-surface-variant">
+          Al publicar el curso estará visible en el catálogo de estudiantes. Cuenta con 4 lecciones y 1 cuestionario, cumpliendo la regla de negocio (mínimo 1 lección obligatoria).
+        </p>
+      </div>
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-outline">
+        <button onclick="document.getElementById(&#39;publish-modal&#39;).classList.add(&#39;hidden&#39;)" class="px-4 py-2 bg-surface border border-outline text-secondary hover:bg-surface-variant rounded-DEFAULT text-label-md font-label">
+          Cancelar
+        </button>
+        <a href="../panel_de_instructor/code.html" class="px-5 py-2 bg-primary text-on-primary rounded-DEFAULT text-label-md font-label font-semibold hover:opacity-95 shadow-sm">
+          Confirmar y publicar
+        </a>
+      </div>
+    </div>
+  </div>
+
+
+</body></html>

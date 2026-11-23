@@ -1,0 +1,256 @@
+<!DOCTYPE html><html lang="es"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cuestionario y Evaluación — MiniAula</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'primary': '#0A5C41',
+        'on-primary': '#FFFFFF',
+        'secondary': '#1A202C',
+        'on-secondary': '#FFFFFF',
+        'surface': '#FFFFFF',
+        'on-surface': '#1A202C',
+        'surface-variant': '#EDF2F7',
+        'on-surface-variant': '#4A5568',
+        'background': '#F8FAFC',
+        'on-background': '#1A202C',
+        'success': '#0D7A57',
+        'on-success': '#FFFFFF',
+        'success-light': '#E6F4EA',
+        'warning': '#D97706',
+        'on-warning': '#1A202C',
+        'warning-light': '#FEF3C7',
+        'error': '#DC2626',
+        'on-error': '#FFFFFF',
+        'error-light': '#FEE2E2',
+        'outline': '#E2E8F0',
+        'outline-light': '#F1F5F9',
+      },
+      borderRadius: {
+        'sm': '6px',
+        'DEFAULT': '10px',
+        'md': '12px',
+        'lg': '16px',
+        'xl': '20px',
+        'full': '9999px',
+      },
+      spacing: {
+        'xs': '4px',
+        'sm': '8px',
+        'md': '16px',
+        'lg': '24px',
+        'xl': '32px',
+        '2xl': '48px',
+        '3xl': '64px',
+      },
+      fontFamily: {
+        'display': ['"Inter"', 'sans-serif'],
+        'headline': ['"Inter"', 'sans-serif'],
+        'body': ['"Inter"', 'sans-serif'],
+        'label': ['"Inter"', 'sans-serif'],
+      },
+      fontSize: {
+        'display-lg': ['36px', { lineHeight: '44px', letterSpacing: '-0.02em', fontWeight: '700' }],
+        'display-lg-mobile': ['28px', { lineHeight: '34px', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'headline-lg': ['28px', { lineHeight: '36px', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'headline-lg-mobile': ['24px', { lineHeight: '30px', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'headline-md': ['22px', { lineHeight: '28px', fontWeight: '600' }],
+        'headline-sm': ['18px', { lineHeight: '24px', fontWeight: '600' }],
+        'body-lg': ['16px', { lineHeight: '24px', fontWeight: '400' }],
+        'body-md': ['14px', { lineHeight: '20px', fontWeight: '400' }],
+        'body-sm': ['12px', { lineHeight: '16px', fontWeight: '400' }],
+        'label-lg': ['14px', { lineHeight: '20px', fontWeight: '600' }],
+        'label-md': ['12px', { lineHeight: '16px', fontWeight: '600' }],
+        'label-sm': ['11px', { lineHeight: '14px', fontWeight: '500' }],
+      },
+      transitionDuration: {
+        'state-change': '150ms',
+        'surface-enter': '250ms',
+        'surface-exit': '150ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+        'surface-enter': '0ms',
+        'surface-exit': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'cubic-bezier(0.4, 0, 0.2, 1)',
+        'surface-enter': 'cubic-bezier(0, 0, 0.2, 1)',
+        'surface-exit': 'cubic-bezier(0.4, 0, 1, 1)',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <style>.material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons { display: inline-block; width: 1em; height: 1em; line-height: 1 !important; box-sizing: content-box; overflow: hidden; white-space: nowrap; direction: ltr; vertical-align: middle; }</style>
+  <style>
+    .quiz-options label:has(:checked) { border-color: #0A5C41; box-shadow: inset 0 0 0 1px #0A5C41; background: #E6F4EA; }
+    .quiz-options label:has(:focus-visible) { outline: 2px solid #0A5C41; outline-offset: 3px; }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body min-h-screen flex flex-col">
+  <!-- Top Bar -->
+  <header class="bg-surface border-b border-outline px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 md:sticky top-0 z-30 shrink-0">
+    <div class="flex items-center gap-4">
+      <a href="../vista_de_lecci_n_y_temario/code.html" class="p-2 text-on-surface-variant hover:text-secondary rounded-DEFAULT hover:bg-surface-variant" title="Regresar a la lección">
+        <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+      </a>
+      <div>
+        <span class="text-label-sm font-label text-warning font-semibold flex items-center gap-1">
+          <span class="material-symbols-outlined text-[16px]">quiz</span> Evaluación de conocimientos
+        </span>
+        <h1 class="font-headline text-headline-sm text-secondary text-base sm:text-headline-sm leading-tight">Cuestionario: Fundamentos y Manejo de Estado en React</h1>
+      </div>
+    </div>
+
+    <!-- Attempt and passing requirements badges -->
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="px-3 py-1 rounded-full bg-surface-variant text-secondary text-label-sm font-label border border-outline">
+        Nota mínima: <strong class="text-secondary font-bold">70 pts</strong>
+      </span>
+      <span class="px-3 py-1 rounded-full bg-warning-light text-warning text-label-sm font-label border border-warning/30 font-semibold">
+        Intentos restantes: <strong class="text-secondary">2 de 3</strong>
+      </span>
+    </div>
+  </header>
+
+  <!-- Interactive Quiz Container -->
+  <main class="flex-1 max-w-4xl mx-auto w-full p-4 sm:p-6 md:p-10 space-y-6">
+    <!-- Progress Indicator -->
+    <div class="bg-surface p-5 rounded-xl border border-outline shadow-sm">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-label-md font-label text-secondary font-bold">Pregunta 2 de 5</span>
+        <span class="text-label-sm font-label text-primary font-semibold tabular-nums">40% respondido</span>
+      </div>
+      <div class="w-full bg-surface-variant rounded-full h-2 overflow-hidden">
+        <div class="bg-primary h-2 rounded-full" style="width: 40%"></div>
+      </div>
+    </div>
+
+    <!-- Question Card -->
+    <section class="bg-surface p-4 sm:p-6 md:p-8 rounded-xl border border-outline shadow-sm space-y-6">
+      <div>
+        <h2 class="font-headline text-headline-md text-secondary leading-snug" data-design-text-token="headline-md">
+          ¿Cuál es la función principal del hook <code class="bg-surface-variant text-primary px-2 py-0.5 rounded font-mono text-body-md">useContext</code> en React?
+        </h2>
+      </div>
+
+      <!-- Multiple-choice options -->
+      <fieldset class="quiz-options space-y-3">
+        <legend class="sr-only">Opciones de respuesta</legend>
+
+        <label class="flex items-center gap-3.5 p-4 rounded-lg border border-outline hover:border-primary/50 hover:bg-surface-variant/30 cursor-pointer transition-all">
+          <input type="radio" name="pregunta-2" value="a" class="w-4 h-4 shrink-0 text-primary focus:ring-primary border-outline">
+          <span class="text-body-md text-secondary">
+            Modificar directamente el árbol del DOM saltándose el Virtual DOM de React.
+          </span>
+        </label>
+
+        <!-- Selected option -->
+        <label class="flex items-center gap-3.5 p-4 rounded-lg border border-outline cursor-pointer transition-all">
+          <input type="radio" name="pregunta-2" value="b" checked class="w-4 h-4 shrink-0 text-primary focus:ring-primary border-primary">
+          <span class="text-body-md text-secondary">
+            Acceder al valor actual del contexto más cercano proporcionado por un <code class="bg-primary/10 text-primary px-1.5 py-0.5 rounded font-mono text-label-sm">&lt;Context.Provider&gt;</code> sin recurrir a prop-drilling.
+          </span>
+        </label>
+
+        <label class="flex items-center gap-3.5 p-4 rounded-lg border border-outline hover:border-primary/50 hover:bg-surface-variant/30 cursor-pointer transition-all">
+          <input type="radio" name="pregunta-2" value="c" class="w-4 h-4 shrink-0 text-primary focus:ring-primary border-outline">
+          <span class="text-body-md text-secondary">
+            Crear un servidor WebSocket en segundo plano para sincronizar componentes.
+          </span>
+        </label>
+
+        <label class="flex items-center gap-3.5 p-4 rounded-lg border border-outline hover:border-primary/50 hover:bg-surface-variant/30 cursor-pointer transition-all">
+          <input type="radio" name="pregunta-2" value="d" class="w-4 h-4 shrink-0 text-primary focus:ring-primary border-outline">
+          <span class="text-body-md text-secondary">
+            Convertir un componente funcional en una clase tradicional con ciclo de vida.
+          </span>
+        </label>
+      </fieldset>
+
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-outline">
+        <button type="button" class="px-4 py-2 bg-surface border border-outline rounded-DEFAULT text-on-surface-variant hover:text-secondary text-label-md font-label">
+          Pregunta anterior
+        </button>
+        <button type="button" class="px-6 py-2.5 bg-primary text-on-primary rounded-DEFAULT font-label text-label-md font-semibold hover:opacity-95 shadow-sm inline-flex items-center justify-center gap-2">
+          <span>Enviar respuestas</span>
+          <span class="material-symbols-outlined text-[18px]">send</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Quiz Results Screen (Depicting Evaluated Attempt & Server Validation) -->
+    <section class="bg-surface rounded-xl border border-success/40 shadow-sm overflow-hidden p-6 md:p-8 space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-outline">
+        <div class="flex items-center gap-4">
+          <div class="w-14 h-14 rounded-full bg-success-light text-success flex items-center justify-center font-bold text-[28px]">
+            <span class="material-symbols-outlined text-[32px]">verified</span>
+          </div>
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full bg-success-light text-success font-label text-label-sm font-semibold inline-block mb-1">
+              ¡Aprobado con éxito!
+            </span>
+            <h3 class="font-headline text-headline-sm text-secondary">Resultado de la evaluación</h3>
+            <p class="text-body-sm text-on-surface-variant">Superaste la nota mínima de 70 puntos.</p>
+          </div>
+        </div>
+
+        <div class="text-left sm:text-right sm:border-l sm:border-outline sm:pl-6">
+          <span class="text-label-sm text-on-surface-variant font-label">Nota obtenida</span>
+          <p class="font-headline text-display-lg text-success tabular-nums font-bold">85<span class="text-body-lg text-on-surface-variant">/100</span></p>
+        </div>
+      </div>
+
+      <!-- Result Stats Summary -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="p-4 rounded-lg bg-surface-variant/40 border border-outline">
+          <span class="text-label-sm text-on-surface-variant font-label">Estado de aprobación</span>
+          <p class="text-label-lg font-label text-success font-bold mt-1">Aprobado (&gt;= 70 pts)</p>
+        </div>
+
+        <div class="p-4 rounded-lg bg-surface-variant/40 border border-outline">
+          <span class="text-label-sm text-on-surface-variant font-label">Intentos restantes</span>
+          <p class="text-label-lg font-label text-secondary font-bold mt-1">2 de 3 disponibles</p>
+        </div>
+
+        <div class="p-4 rounded-lg bg-surface-variant/40 border border-outline">
+          <span class="text-label-sm text-on-surface-variant font-label">Mejor nota guardada</span>
+          <p class="text-label-lg font-label text-primary font-bold mt-1 tabular-nums">85 / 100 pts</p>
+        </div>
+      </div>
+
+      <!-- Feedback Banner -->
+      <div class="p-4 rounded-lg bg-success-light border border-success/30 flex items-start gap-3">
+        <span class="material-symbols-outlined text-success text-[20px] mt-0.5">check_circle</span>
+        <p class="text-body-md text-secondary">
+          ¡Felicitaciones! Has superado la nota mínima requerida. La siguiente lección del curso ha sido desbloqueada en tu cuenta de forma automática.
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <footer class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+        <button class="w-full sm:w-auto px-5 py-2.5 bg-surface border border-outline hover:bg-surface-variant text-secondary rounded-DEFAULT font-label text-label-md flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">replay</span>
+          <span>Reintentar para mejorar nota (2 intentos)</span>
+        </button>
+
+        <a href="../mis_cursos_estudiante/code.html" class="w-full sm:w-auto px-6 py-2.5 bg-success text-white rounded-DEFAULT font-label text-label-md font-semibold hover:opacity-95 shadow-sm flex items-center justify-center gap-2">
+          <span>Continuar al siguiente tema</span>
+          <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+        </a>
+      </footer>
+    </section>
+  </main>
+
+
+</body></html>

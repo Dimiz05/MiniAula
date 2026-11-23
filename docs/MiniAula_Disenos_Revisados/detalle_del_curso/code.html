@@ -1,0 +1,330 @@
+<!DOCTYPE html><html lang="es"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalle del Curso — MiniAula</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'primary': '#0A5C41',
+        'on-primary': '#FFFFFF',
+        'secondary': '#1A202C',
+        'on-secondary': '#FFFFFF',
+        'surface': '#FFFFFF',
+        'on-surface': '#1A202C',
+        'surface-variant': '#EDF2F7',
+        'on-surface-variant': '#4A5568',
+        'background': '#F8FAFC',
+        'on-background': '#1A202C',
+        'success': '#0D7A57',
+        'on-success': '#FFFFFF',
+        'success-light': '#E6F4EA',
+        'warning': '#D97706',
+        'on-warning': '#1A202C',
+        'warning-light': '#FEF3C7',
+        'error': '#DC2626',
+        'on-error': '#FFFFFF',
+        'error-light': '#FEE2E2',
+        'outline': '#E2E8F0',
+        'outline-light': '#F1F5F9',
+      },
+      borderRadius: {
+        'sm': '6px',
+        'DEFAULT': '10px',
+        'md': '12px',
+        'lg': '16px',
+        'xl': '20px',
+        'full': '9999px',
+      },
+      spacing: {
+        'xs': '4px',
+        'sm': '8px',
+        'md': '16px',
+        'lg': '24px',
+        'xl': '32px',
+        '2xl': '48px',
+        '3xl': '64px',
+      },
+      fontFamily: {
+        'display': ['"Inter"', 'sans-serif'],
+        'headline': ['"Inter"', 'sans-serif'],
+        'body': ['"Inter"', 'sans-serif'],
+        'label': ['"Inter"', 'sans-serif'],
+      },
+      fontSize: {
+        'display-lg': ['36px', { lineHeight: '44px', letterSpacing: '-0.02em', fontWeight: '700' }],
+        'display-lg-mobile': ['28px', { lineHeight: '34px', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'headline-lg': ['28px', { lineHeight: '36px', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'headline-lg-mobile': ['24px', { lineHeight: '30px', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'headline-md': ['22px', { lineHeight: '28px', fontWeight: '600' }],
+        'headline-sm': ['18px', { lineHeight: '24px', fontWeight: '600' }],
+        'body-lg': ['16px', { lineHeight: '24px', fontWeight: '400' }],
+        'body-md': ['14px', { lineHeight: '20px', fontWeight: '400' }],
+        'body-sm': ['12px', { lineHeight: '16px', fontWeight: '400' }],
+        'label-lg': ['14px', { lineHeight: '20px', fontWeight: '600' }],
+        'label-md': ['12px', { lineHeight: '16px', fontWeight: '600' }],
+        'label-sm': ['11px', { lineHeight: '14px', fontWeight: '500' }],
+      },
+      transitionDuration: {
+        'state-change': '150ms',
+        'surface-enter': '250ms',
+        'surface-exit': '150ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+        'surface-enter': '0ms',
+        'surface-exit': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'cubic-bezier(0.4, 0, 0.2, 1)',
+        'surface-enter': 'cubic-bezier(0, 0, 0.2, 1)',
+        'surface-exit': 'cubic-bezier(0.4, 0, 1, 1)',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <style>.material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons { display: inline-block; width: 1em; height: 1em; line-height: 1 !important; box-sizing: content-box; overflow: hidden; white-space: nowrap; direction: ltr; vertical-align: middle; }</style>
+</head>
+<body class="bg-background text-on-surface font-body min-h-[1024px] flex flex-col" data-stitch-vh="min-h-[1024px]===min-h-screen">
+  <!-- Top Horizontal Navbar (Student Shell) -->
+  <header class="bg-surface border-b border-outline sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 gap-4">
+        <!-- Brand & Nav Links -->
+        <div class="flex items-center gap-8">
+          <a href="../panel_de_estudiante/code.html" class="flex items-center gap-2.5 shrink-0">
+            <div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-on-primary shadow-xs">
+              <span class="material-symbols-outlined text-[22px]">school</span>
+            </div>
+            <span class="font-headline text-headline-sm font-bold text-secondary tracking-tight">MiniAula</span>
+          </a>
+
+          <!-- Horizontal Navigation Links -->
+          <nav class="hidden md:flex items-center gap-1">
+            <a href="../panel_de_estudiante/code.html" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-DEFAULT text-on-surface-variant hover:text-secondary hover:bg-surface-variant font-label text-label-md transition-colors">
+              <span class="material-symbols-outlined text-[20px]">home</span>
+              <span>Inicio</span>
+            </a>
+            <a href="../cat_logo_de_cursos/code.html" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-DEFAULT bg-primary/10 text-primary font-label text-label-md font-semibold">
+              <span class="material-symbols-outlined text-[20px]">search</span>
+              <span>Explorar cursos</span>
+            </a>
+            <a href="../mis_cursos_estudiante/code.html" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-DEFAULT text-on-surface-variant hover:text-secondary hover:bg-surface-variant font-label text-label-md transition-colors">
+              <span class="material-symbols-outlined text-[20px]">menu_book</span>
+              <span>Mis cursos</span>
+            </a>
+          </nav>
+        </div>
+
+        <!-- Search Bar & User Actions -->
+        <div class="flex items-center gap-3 md:gap-4">
+          <a href="../cat_logo_de_cursos/code.html" class="inline-flex items-center gap-1.5 text-label-md font-label text-secondary hover:text-primary">
+            <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+            <span class="hidden sm:inline">Volver al catálogo</span>
+          </a>
+
+          <div class="h-8 border-r border-outline hidden sm:block"></div>
+
+          <!-- User Profile & Logout -->
+          <div class="flex items-center gap-2.5">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label text-label-sm font-bold">SM</div>
+              <div class="hidden lg:block text-left">
+                <p class="text-label-sm font-label text-secondary leading-tight font-semibold">Sofía Martínez</p>
+                <span class="text-[11px] text-on-surface-variant leading-none">Estudiante</span>
+              </div>
+            </div>
+            <a href="../iniciar_sesi_n/code.html" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-light rounded-DEFAULT transition-colors" title="Cerrar sesión">
+              <span class="material-symbols-outlined text-[20px]">logout</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 p-6 md:p-8 space-y-8 max-w-6xl mx-auto w-full">
+    <!-- Course Hero Section -->
+    <section class="bg-surface rounded-xl border border-outline shadow-sm overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-0">
+      <div class="lg:col-span-7 p-6 md:p-8 flex flex-col justify-between">
+        <div>
+          <div class="flex flex-wrap items-center gap-2 mb-3">
+            <span class="px-3 py-1 rounded-full bg-primary/10 text-primary font-label text-label-sm font-semibold">Programación</span>
+            <span class="px-3 py-1 rounded-full bg-surface-variant text-secondary font-label text-label-sm">Nivel Intermedio</span>
+            <span class="px-3 py-1 rounded-full bg-success-light text-secondary font-label text-label-sm font-semibold">Curso Oficial MiniAula</span>
+          </div>
+
+          <h1 class="font-headline text-headline-lg text-secondary mb-3 text-balance leading-snug" data-design-text-token="headline-lg">
+            Desarrollo Web con React y Vite
+          </h1>
+
+          <p class="text-body-lg text-on-surface-variant mb-6" data-design-text-token="body-lg">
+            Aprende a estructurar aplicaciones SPA robustas y escalables. Domina el ciclo de vida de componentes funcionales, hooks avanzados, Context API, y cómo proteger tus rutas para roles de estudiante e instructor.
+          </p>
+
+          <!-- Instructor Metadata -->
+          <div class="flex items-center gap-4 py-4 border-t border-b border-outline-light">
+            <div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-label-lg font-label">DR</div>
+            <div>
+              <p class="text-label-md font-label text-secondary font-bold">Prof. Daniel Rojas</p>
+              <p class="text-body-sm text-on-surface-variant">Especialista en Frontend &amp; Arquitectura Web — 8 cursos publicados</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-6 flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-6 text-label-sm font-label text-secondary">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-primary text-[20px]">play_lesson</span>
+              <span>5 lecciones</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-primary text-[20px]">quiz</span>
+              <span>1 cuestionario</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-primary text-[20px]">workspace_premium</span>
+              <span>Certificado</span>
+            </div>
+          </div>
+
+          <a href="../vista_de_lecci_n_y_temario/code.html" class="px-8 py-3 bg-primary text-on-primary rounded-DEFAULT font-label text-label-lg font-semibold hover:opacity-95 shadow-sm inline-flex items-center gap-2">
+            <span>Inscribirme al curso</span>
+            <span class="material-symbols-outlined text-[20px]">how_to_reg</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="lg:col-span-5 relative bg-surface-variant border-t lg:border-t-0 lg:border-l border-outline">
+        <img src="https://lh3.googleusercontent.com/aida/ALJJyrC2neRF9HQjrQ32aB8q5wtmyoiu1RYQ-YxBit-pKf7aQ0oKbAcfdgptIbzpLT_zjUzKKpUgn0WHulkTKdrmnvo994pJy-8H_ZdixE92VZa79Pwc3iaLGBv3571zvOFMlYClMLJ8nn1rGJfqyKFOG8EdiIrowcWfztyFTcHMNBh-9f_dmTvWJjtX2-PI6YzVcfdY30DUnEeUq0WMD_lLH106FaU-emJkNZwk6Cxw5kOTKroyUN2s" alt="React y Vite" class="w-full h-full object-cover min-h-[280px]">
+        <div class="absolute inset-0 bg-gradient-to-t from-secondary/60 via-transparent to-transparent flex items-end p-6">
+          <span class="text-white text-body-sm bg-secondary px-3 py-1.5 rounded-full inline-flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px] text-white">lock_open</span> Vista previa pública
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Curriculum Preview Notice (Constraint RN-01 & RN-05) -->
+    <section class="bg-warning-light border border-warning/40 rounded-xl p-4 flex items-start gap-3">
+      <span class="material-symbols-outlined text-secondary text-[24px] mt-0.5">info</span>
+      <div>
+        <h4 class="font-label text-label-md text-secondary font-bold">Vista previa del temario</h4>
+        <p class="text-body-sm text-secondary">
+          Estás visualizando el temario estructurado del curso. Los contenidos interactivos y evaluaciones se desbloquean en estricto orden secuencial una vez que confirmes tu inscripción.
+        </p>
+      </div>
+    </section>
+
+    <!-- Structured Curriculum Accordion/List -->
+    <section class="bg-surface rounded-xl border border-outline shadow-sm p-6 md:p-8">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="font-headline text-headline-sm text-secondary" data-design-text-token="headline-sm">Temario del curso</h2>
+          <p class="text-body-sm text-on-surface-variant">5 lecciones secuenciales preparadas para este curso.</p>
+        </div>
+        <span class="text-label-sm font-label text-primary font-semibold">100% en línea · A tu ritmo</span>
+      </div>
+
+      <div class="space-y-3">
+        <!-- Lesson 1 -->
+        <div class="p-4 rounded-lg border border-outline bg-surface-variant/40 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-label-sm">1</div>
+            <div>
+              <h3 class="font-label text-label-md text-secondary font-semibold">Introducción a React 18 y Vite</h3>
+              <span class="text-label-sm text-on-surface-variant flex items-center gap-1 mt-0.5">
+                <span class="material-symbols-outlined text-[16px]">videocam</span> Video explicativo y lectura de bienvenida
+              </span>
+            </div>
+          </div>
+          <span class="text-label-sm font-label text-secondary flex items-center gap-1 font-semibold">
+            <span class="material-symbols-outlined text-[18px] text-primary">lock_open</span> Disponible al inscribirte
+          </span>
+        </div>
+
+        <!-- Lesson 2 -->
+        <div class="p-4 rounded-lg border border-outline bg-surface flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-surface-variant text-secondary flex items-center justify-center font-bold text-label-sm">2</div>
+            <div>
+              <h3 class="font-label text-label-md text-secondary font-semibold">Componentes Funcionales y JSX Limpio</h3>
+              <span class="text-label-sm text-on-surface-variant flex items-center gap-1 mt-0.5">
+                <span class="material-symbols-outlined text-[16px]">article</span> Guía de arquitectura y mejores prácticas
+              </span>
+            </div>
+          </div>
+          <span class="text-label-sm font-label text-on-surface-variant flex items-center gap-1">
+            <span class="material-symbols-outlined text-[18px]">lock</span> Bloqueado secuencialmente
+          </span>
+        </div>
+
+        <!-- Lesson 3 -->
+        <div class="p-4 rounded-lg border border-outline bg-surface flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-surface-variant text-secondary flex items-center justify-center font-bold text-label-sm">3</div>
+            <div>
+              <h3 class="font-label text-label-md text-secondary font-semibold">Manejo de Estado con Context API y Hooks</h3>
+              <span class="text-label-sm text-on-surface-variant flex items-center gap-1 mt-0.5">
+                <span class="material-symbols-outlined text-[16px]">article</span> Tutorial paso a paso de persistencia
+              </span>
+            </div>
+          </div>
+          <span class="text-label-sm font-label text-on-surface-variant flex items-center gap-1">
+            <span class="material-symbols-outlined text-[18px]">lock</span> Bloqueado secuencialmente
+          </span>
+        </div>
+
+        <!-- Lesson 4 -->
+        <div class="p-4 rounded-lg border border-outline bg-surface flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-surface-variant text-secondary flex items-center justify-center font-bold text-label-sm">4</div>
+            <div>
+              <h3 class="font-label text-label-md text-secondary font-semibold">Consumo de APIs REST y Servicios Centralizados</h3>
+              <span class="text-label-sm text-on-surface-variant flex items-center gap-1 mt-0.5">
+                <span class="material-symbols-outlined text-[16px]">videocam</span> Integración con backend y token JWT
+              </span>
+            </div>
+          </div>
+          <span class="text-label-sm font-label text-on-surface-variant flex items-center gap-1">
+            <span class="material-symbols-outlined text-[18px]">lock</span> Bloqueado secuencialmente
+          </span>
+        </div>
+
+        <!-- Lesson 5 (Quiz) -->
+        <div class="p-4 rounded-lg border border-outline bg-surface flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-warning-light text-secondary flex items-center justify-center font-bold text-label-sm">5</div>
+            <div>
+              <h3 class="font-label text-label-md text-secondary font-semibold">Cuestionario Evaluativo Final: React y Vite</h3>
+              <span class="text-label-sm text-on-surface-variant flex items-center gap-1 mt-0.5">
+                <span class="material-symbols-outlined text-[16px] text-secondary">quiz</span> Cuestionario de 5 preguntas (Mínimo: 70 pts)
+              </span>
+            </div>
+          </div>
+          <span class="text-label-sm font-label text-on-surface-variant flex items-center gap-1">
+            <span class="material-symbols-outlined text-[18px]">lock</span> Requiere lecciones 1-4
+          </span>
+        </div>
+      </div>
+
+      <div class="mt-8 pt-6 border-t border-outline text-center">
+        <a href="../vista_de_lecci_n_y_temario/code.html" class="px-8 py-3 bg-primary text-on-primary rounded-DEFAULT font-label text-label-lg font-semibold hover:opacity-95 shadow-sm inline-flex items-center gap-2">
+          <span>Inscribirme al curso ahora</span>
+          <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+
+</body></html>

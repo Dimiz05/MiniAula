@@ -1,0 +1,372 @@
+<!DOCTYPE html><html lang="es"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analíticas del Curso — MiniAula</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'primary': '#0A5C41',
+        'on-primary': '#FFFFFF',
+        'secondary': '#1A202C',
+        'on-secondary': '#FFFFFF',
+        'surface': '#FFFFFF',
+        'on-surface': '#1A202C',
+        'surface-variant': '#EDF2F7',
+        'on-surface-variant': '#4A5568',
+        'background': '#F8FAFC',
+        'on-background': '#1A202C',
+        'success': '#0D7A57',
+        'on-success': '#FFFFFF',
+        'success-light': '#E6F4EA',
+        'warning': '#D97706',
+        'on-warning': '#1A202C',
+        'warning-light': '#FEF3C7',
+        'error': '#DC2626',
+        'on-error': '#FFFFFF',
+        'error-light': '#FEE2E2',
+        'outline': '#E2E8F0',
+        'outline-light': '#F1F5F9',
+      },
+      borderRadius: {
+        'sm': '6px',
+        'DEFAULT': '10px',
+        'md': '12px',
+        'lg': '16px',
+        'xl': '20px',
+        'full': '9999px',
+      },
+      spacing: {
+        'xs': '4px',
+        'sm': '8px',
+        'md': '16px',
+        'lg': '24px',
+        'xl': '32px',
+        '2xl': '48px',
+        '3xl': '64px',
+      },
+      fontFamily: {
+        'display': ['"Inter"', 'sans-serif'],
+        'headline': ['"Inter"', 'sans-serif'],
+        'body': ['"Inter"', 'sans-serif'],
+        'label': ['"Inter"', 'sans-serif'],
+      },
+      fontSize: {
+        'display-lg': ['36px', { lineHeight: '44px', letterSpacing: '-0.02em', fontWeight: '700' }],
+        'display-lg-mobile': ['28px', { lineHeight: '34px', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'headline-lg': ['28px', { lineHeight: '36px', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'headline-lg-mobile': ['24px', { lineHeight: '30px', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'headline-md': ['22px', { lineHeight: '28px', fontWeight: '600' }],
+        'headline-sm': ['18px', { lineHeight: '24px', fontWeight: '600' }],
+        'body-lg': ['16px', { lineHeight: '24px', fontWeight: '400' }],
+        'body-md': ['14px', { lineHeight: '20px', fontWeight: '400' }],
+        'body-sm': ['12px', { lineHeight: '16px', fontWeight: '400' }],
+        'label-lg': ['14px', { lineHeight: '20px', fontWeight: '600' }],
+        'label-md': ['12px', { lineHeight: '16px', fontWeight: '600' }],
+        'label-sm': ['11px', { lineHeight: '14px', fontWeight: '500' }],
+      },
+      transitionDuration: {
+        'state-change': '150ms',
+        'surface-enter': '250ms',
+        'surface-exit': '150ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+        'surface-enter': '0ms',
+        'surface-exit': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'cubic-bezier(0.4, 0, 0.2, 1)',
+        'surface-enter': 'cubic-bezier(0, 0, 0.2, 1)',
+        'surface-exit': 'cubic-bezier(0.4, 0, 1, 1)',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <style>.material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons { display: inline-block; width: 1em; height: 1em; line-height: 1 !important; box-sizing: content-box; overflow: hidden; white-space: nowrap; direction: ltr; vertical-align: middle; }</style>
+</head>
+<body class="bg-background text-on-surface font-body min-h-[1024px] flex flex-col" data-stitch-vh="min-h-[1024px]===min-h-screen">
+  <!-- Top Horizontal Navbar (Instructor Shell) -->
+  <header class="bg-surface border-b border-outline sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 gap-4">
+        <!-- Brand & Instructor Links -->
+        <div class="flex items-center gap-8">
+          <a href="../panel_de_instructor/code.html" class="flex items-center gap-2.5 shrink-0">
+            <div class="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center text-on-secondary shadow-xs">
+              <span class="material-symbols-outlined text-[22px]">co_present</span>
+            </div>
+            <div>
+              <span class="font-headline text-headline-sm font-bold text-secondary tracking-tight block leading-tight">MiniAula</span>
+              <span class="text-[10px] text-primary font-bold tracking-wider uppercase leading-none">Instructor</span>
+            </div>
+          </a>
+
+          <!-- Horizontal Navigation Links -->
+          <nav class="hidden md:flex items-center gap-1">
+            <a href="../panel_de_instructor/code.html" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-DEFAULT text-on-surface-variant hover:text-secondary hover:bg-surface-variant font-label text-label-md transition-colors">
+              <span class="material-symbols-outlined text-[20px]">dashboard</span>
+              <span>Panel principal</span>
+            </a>
+            <a href="../editor_de_curso_y_lecciones/code.html" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-DEFAULT text-on-surface-variant hover:text-secondary hover:bg-surface-variant font-label text-label-md transition-colors">
+              <span class="material-symbols-outlined text-[20px]">add_circle</span>
+              <span>Crear curso</span>
+            </a>
+            <a href="../anal_ticas_del_curso/code.html" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-DEFAULT bg-primary/10 text-primary font-label text-label-md font-semibold">
+              <span class="material-symbols-outlined text-[20px]">insights</span>
+              <span>Analíticas</span>
+            </a>
+          </nav>
+        </div>
+
+        <!-- Instructor Actions & Profile -->
+        <div class="flex items-center gap-3">
+          <a href="../editor_de_curso_y_lecciones/code.html" class="px-3.5 py-1.5 bg-surface border border-outline hover:bg-surface-variant text-secondary rounded-DEFAULT text-label-sm font-label flex items-center gap-1">
+            <span class="material-symbols-outlined text-[16px]">edit</span>
+            <span class="hidden sm:inline">Editar curso</span>
+          </a>
+
+          <div class="h-8 border-r border-outline hidden sm:block"></div>
+
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label text-label-sm font-bold">DR</div>
+            <a href="../iniciar_sesi_n/code.html" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-light rounded-DEFAULT transition-colors" title="Cerrar sesión">
+              <span class="material-symbols-outlined text-[20px]">logout</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 p-6 md:p-8 space-y-8 max-w-7xl mx-auto w-full">
+    <!-- Header status banner -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <a href="../panel_de_instructor/code.html" class="p-1.5 text-on-surface-variant hover:text-secondary rounded-DEFAULT hover:bg-surface-variant">
+          <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+        </a>
+        <div>
+          <span class="text-label-sm font-label text-on-surface-variant">Analíticas detalladas del curso</span>
+          <h1 class="font-headline text-headline-sm text-secondary font-bold">Desarrollo Web con React y Vite</h1>
+        </div>
+      </div>
+      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success-light text-success font-label text-label-sm font-semibold self-start sm:self-auto">
+        <span class="w-2 h-2 rounded-full bg-success"></span> Publicado
+      </span>
+    </div>
+
+    <!-- Course Key Metric Summary (RF-16) -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-surface p-5 rounded-lg border border-outline shadow-sm">
+        <div class="flex items-center justify-between text-on-surface-variant mb-2">
+          <span class="text-label-sm font-label">Estudiantes inscritos</span>
+          <span class="material-symbols-outlined text-primary text-[22px]">group</span>
+        </div>
+        <p class="font-headline text-headline-md text-secondary tabular-nums">74</p>
+        <span class="text-label-sm text-success font-medium">+8 inscritos este mes</span>
+      </div>
+
+      <div class="bg-surface p-5 rounded-lg border border-outline shadow-sm">
+        <div class="flex items-center justify-between text-on-surface-variant mb-2">
+          <span class="text-label-sm font-label">Progreso promedio</span>
+          <span class="material-symbols-outlined text-warning text-[22px]">trending_up</span>
+        </div>
+        <p class="font-headline text-headline-md text-secondary tabular-nums">58.4%</p>
+        <span class="text-label-sm text-on-surface-variant font-medium">Avance constante</span>
+      </div>
+
+      <div class="bg-surface p-5 rounded-lg border border-outline shadow-sm">
+        <div class="flex items-center justify-between text-on-surface-variant mb-2">
+          <span class="text-label-sm font-label">Nota promedio cuestionario</span>
+          <span class="material-symbols-outlined text-success text-[22px]">grade</span>
+        </div>
+        <p class="font-headline text-headline-md text-secondary tabular-nums">81.6<span class="text-body-md text-on-surface-variant font-normal">/100</span></p>
+        <span class="text-label-sm text-secondary font-medium">Nota mínima: 70 pts</span>
+      </div>
+
+      <div class="bg-surface p-5 rounded-lg border border-outline shadow-sm">
+        <div class="flex items-center justify-between text-on-surface-variant mb-2">
+          <span class="text-label-sm font-label">Cursos completados</span>
+          <span class="material-symbols-outlined text-secondary text-[22px]">verified</span>
+        </div>
+        <p class="font-headline text-headline-md text-secondary tabular-nums">32</p>
+        <span class="text-label-sm text-primary font-medium">43.2% tasa de graduación</span>
+      </div>
+    </section>
+
+    <!-- Key Requirement RF-16: Retention & Drop-off Chart -->
+    <section class="bg-surface p-6 md:p-8 rounded-xl border border-outline shadow-sm space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-outline pb-4">
+        <div>
+          <h2 class="font-headline text-headline-sm text-secondary" data-design-text-token="headline-sm">
+            Embudo de Retención y Avance por Lección (RF-16)
+          </h2>
+          <p class="text-body-sm text-on-surface-variant">
+            Número de estudiantes que alcanzan y completan cada lección secuencial del curso.
+          </p>
+        </div>
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-error-light border border-error/30 text-secondary text-label-sm font-label font-semibold">
+          <span class="material-symbols-outlined text-error text-[18px]">warning</span>
+          <span>Mayor deserción detectada: Lección 3 (-26 alumnos)</span>
+        </div>
+      </div>
+
+      <!-- Retention Bar Graph -->
+      <div class="space-y-4">
+        <!-- Lesson 1 -->
+        <div>
+          <div class="flex items-center justify-between text-label-sm font-label mb-1">
+            <span class="text-secondary font-semibold">1. Introducción a React 18 y Vite (Contenido)</span>
+            <span class="text-secondary font-bold tabular-nums">74 estudiantes (100%)</span>
+          </div>
+          <div class="w-full bg-surface-variant rounded-full h-4 overflow-hidden">
+            <div class="bg-primary h-4 rounded-full flex items-center justify-end pr-2 text-[10px] text-white font-bold" style="width: 100%">74</div>
+          </div>
+        </div>
+
+        <!-- Lesson 2 -->
+        <div>
+          <div class="flex items-center justify-between text-label-sm font-label mb-1">
+            <span class="text-secondary font-semibold">2. Componentes Funcionales y JSX Limpio (Contenido)</span>
+            <span class="text-secondary font-bold tabular-nums">68 estudiantes (91.8%)</span>
+          </div>
+          <div class="w-full bg-surface-variant rounded-full h-4 overflow-hidden">
+            <div class="bg-primary h-4 rounded-full flex items-center justify-end pr-2 text-[10px] text-white font-bold" style="width: 91.8%">68</div>
+          </div>
+        </div>
+
+        <!-- Lesson 3: HIGHLIGHTED CRITICAL DROP-OFF -->
+        <div class="p-3 rounded-lg bg-error-light/40 border border-error/40">
+          <div class="flex items-center justify-between text-label-sm font-label mb-1">
+            <div class="flex items-center gap-2">
+              <span class="text-secondary font-bold">3. Manejo de Estado con Context API y Hooks</span>
+              <span class="px-2 py-0.5 rounded bg-error text-white text-[11px] font-bold">Mayor detención</span>
+            </div>
+            <span class="text-secondary font-bold tabular-nums">42 estudiantes (56.7%)</span>
+          </div>
+          <div class="w-full bg-surface-variant rounded-full h-4 overflow-hidden">
+            <div class="bg-error h-4 rounded-full flex items-center justify-end pr-2 text-[10px] text-white font-bold" style="width: 56.7%">42</div>
+          </div>
+          <p class="text-label-sm text-on-surface-variant mt-2">
+            💡 <strong>Recomendación pedagógica:</strong> 26 alumnos no han avanzado desde esta lección. Considera agregar un ejemplo práctico descargable o un video de soporte sobre persistencia.
+          </p>
+        </div>
+
+        <!-- Lesson 4 -->
+        <div>
+          <div class="flex items-center justify-between text-label-sm font-label mb-1">
+            <span class="text-secondary font-semibold">4. Consumo de APIs REST con Axios y Token JWT</span>
+            <span class="text-secondary font-bold tabular-nums">38 estudiantes (51.3%)</span>
+          </div>
+          <div class="w-full bg-surface-variant rounded-full h-4 overflow-hidden">
+            <div class="bg-primary h-4 rounded-full flex items-center justify-end pr-2 text-[10px] text-white font-bold" style="width: 51.3%">38</div>
+          </div>
+        </div>
+
+        <!-- Lesson 5 (Quiz) -->
+        <div>
+          <div class="flex items-center justify-between text-label-sm font-label mb-1">
+            <span class="text-secondary font-semibold">5. Cuestionario Evaluativo Final: React y Vite</span>
+            <span class="text-secondary font-bold tabular-nums">32 graduados aprobados (43.2%)</span>
+          </div>
+          <div class="w-full bg-surface-variant rounded-full h-4 overflow-hidden">
+            <div class="bg-success h-4 rounded-full flex items-center justify-end pr-2 text-[10px] text-white font-bold" style="width: 43.2%">32</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Student Progress Distribution & Quiz Grade Distribution -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Progress Distribution Card -->
+      <div class="bg-surface p-6 rounded-xl border border-outline shadow-sm space-y-4">
+        <h3 class="font-headline text-headline-sm text-secondary">Distribución de progreso de alumnos</h3>
+        <p class="text-body-sm text-on-surface-variant">Porcentaje de avance sobre el total de inscritos.</p>
+        <div class="space-y-3 pt-2">
+          <div>
+            <div class="flex justify-between text-label-sm font-label mb-1">
+              <span>0% - 25% (Iniciando)</span>
+              <span class="tabular-nums font-semibold">12 alumnos (16%)</span>
+            </div>
+            <div class="w-full bg-surface-variant rounded-full h-2">
+              <div class="bg-secondary h-2 rounded-full" style="width: 16%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-label-sm font-label mb-1">
+              <span>26% - 50% (Básico)</span>
+              <span class="tabular-nums font-semibold">14 alumnos (19%)</span>
+            </div>
+            <div class="w-full bg-surface-variant rounded-full h-2">
+              <div class="bg-secondary h-2 rounded-full" style="width: 19%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-label-sm font-label mb-1">
+              <span>51% - 75% (Intermedio avanzado)</span>
+              <span class="tabular-nums font-semibold">16 alumnos (22%)</span>
+            </div>
+            <div class="w-full bg-surface-variant rounded-full h-2">
+              <div class="bg-primary h-2 rounded-full" style="width: 22%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-label-sm font-label mb-1">
+              <span>76% - 100% (Completado o evaluando)</span>
+              <span class="tabular-nums font-semibold text-secondary">32 alumnos (43%)</span>
+            </div>
+            <div class="w-full bg-surface-variant rounded-full h-2">
+              <div class="bg-success h-2 rounded-full" style="width: 43%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quiz Attempts & Scores Breakdown -->
+      <div class="bg-surface p-6 rounded-xl border border-outline shadow-sm space-y-4">
+        <h3 class="font-headline text-headline-sm text-secondary">Desempeño en Cuestionario (RN-03)</h3>
+        <p class="text-body-sm text-on-surface-variant">Distribución de intentos (máximo 3) y mejor nota obtenida.</p>
+        <div class="space-y-3 pt-2">
+          <div class="p-3 rounded-lg bg-surface-variant/40 border border-outline flex items-center justify-between">
+            <div>
+              <p class="text-label-md font-label text-secondary font-semibold">Aprobaron en 1er intento</p>
+              <span class="text-label-sm text-on-surface-variant">Promedio: 88 pts</span>
+            </div>
+            <span class="font-headline text-headline-sm text-secondary tabular-nums font-bold">21 alumnos</span>
+          </div>
+
+          <div class="p-3 rounded-lg bg-surface-variant/40 border border-outline flex items-center justify-between">
+            <div>
+              <p class="text-label-md font-label text-secondary font-semibold">Aprobaron en 2do intento</p>
+              <span class="text-label-sm text-on-surface-variant">Promedio: 76 pts</span>
+            </div>
+            <span class="font-headline text-headline-sm text-primary tabular-nums font-bold">9 alumnos</span>
+          </div>
+
+          <div class="p-3 rounded-lg bg-surface-variant/40 border border-outline flex items-center justify-between">
+            <div>
+              <p class="text-label-md font-label text-secondary font-semibold">Aprobaron en 3er intento</p>
+              <span class="text-label-sm text-on-surface-variant">Promedio: 72 pts</span>
+            </div>
+            <span class="font-headline text-headline-sm text-secondary tabular-nums font-bold">2 alumnos</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+
+</body></html>
