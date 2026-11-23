@@ -11,8 +11,9 @@ with MySQL models `Usuario`, `Curso`, `Leccion`, `Pregunta`, `Inscripcion`, and
 bcrypt, Zod validation, centralized errors, and HTTP security middleware all
 work. The React app includes login, registration, and profile screens, restores
 the session after a reload, and supports logout. The complete stack starts with
-one Docker command. The course catalog, lesson, quiz, enrollment, and progress
-endpoints and their remaining React screens are still pending.
+one Docker command. The catalog, course management, enrollment, and instructor
+lesson-editing endpoints and screens are implemented. Quiz, progress, and the
+remaining student lesson screens are still pending.
 
 ## Repository structure
 
@@ -180,6 +181,26 @@ publishing an archived course or archiving an already archived course returns
 deletion run in a transaction with the course row locked, so a failed rule
 never leaves a partial delete. Archived courses disappear from the public
 catalog because it only lists `publicado` courses.
+
+## Lesson management API (instructor)
+
+These routes require a bearer token with the `instructor` role and work only on
+the authenticated instructor's own courses. The course detail used by the
+editor returns the full lesson content; the public course detail keeps hiding it.
+
+| Method and path | Description |
+| --- | --- |
+| `GET /api/cursos/mios/:id` | Return an own course for editing with `{ curso, lecciones }`. Each lesson includes `id`, `titulo`, `tipo`, `contenido`, `videoUrl`, `orden`, `notaMinima`, and `cursoId`. |
+| `POST /api/cursos/:id/lecciones` | Create a content lesson with `titulo`, `contenido`, and optional `videoUrl`. The server stores `tipo: "contenido"`, assigns the next `orden`, and returns `201 { leccion }`. |
+| `PUT /api/lecciones/:id` | Update `titulo`, `contenido`, and/or `videoUrl` of an own lesson. At least one field is required. Returns `{ leccion }`. |
+| `DELETE /api/lecciones/:id` | Delete an own lesson. Returns `204`. Deleting a lesson also removes its questions and student progress through the existing foreign-key cascade. |
+| `PATCH /api/cursos/:id/lecciones/orden` | Reorder an own course with `{ "orden": [lessonId, ...] }`. The list must contain every lesson of the course exactly once; the server rewrites `orden` as `1..N` and returns `{ lecciones }`. |
+
+Creating, reordering, and deleting a lesson run inside a transaction with the
+course row locked. A foreign course or lesson returns
+`403 CURSO_NO_PROPIO`, a missing one returns `404`, an invalid body returns
+`422 VALIDACION`, and an order that does not match the course lessons returns
+`409 ORDEN_LECCIONES_INVALIDO`.
 
 ## Frontend authentication
 
