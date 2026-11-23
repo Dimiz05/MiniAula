@@ -287,7 +287,9 @@ export default function LessonEditor({ cursoId, lecciones = [] }) {
 
   async function borrar(leccion) {
     if (pending) return;
-    if (!window.confirm(`¿Eliminar «${leccion.titulo}»? Esta acción no se puede deshacer.`)) {
+    if (!window.confirm(
+      `¿Eliminar «${leccion.titulo}»? También se eliminarán sus preguntas y el progreso asociado. Esta acción no se puede deshacer.`,
+    )) {
       return;
     }
 
@@ -356,7 +358,8 @@ export default function LessonEditor({ cursoId, lecciones = [] }) {
           </h2>
           <p className="text-body-sm text-on-surface-variant">
             {items.length} {items.length === 1 ? 'lección' : 'lecciones'}. Reordena con las
-            flechas o arrastrando. Los cuestionarios conservan su lugar en la secuencia.
+            flechas o arrastrando. Los cuestionarios también forman parte de la secuencia y
+            pueden reordenarse.
           </p>
         </div>
         <Button icon="post_add" iconPosition="start" onClick={abrirNueva} disabled={saving || pending !== null}>
