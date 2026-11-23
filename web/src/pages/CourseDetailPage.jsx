@@ -5,6 +5,12 @@ import Button from '../components/Button.jsx';
 import Icon from '../components/Icon.jsx';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { obtenerCurso } from '../services/curso.service.js';
+import {
+  esInscripcionDuplicada,
+  estaInscritoEn,
+  inscribirCurso,
+  listarMisInscripciones,
+} from '../services/inscripcion.service.js';
 import { getInitials } from '../utils/initials.js';
 
 function nivelLabel(nivel) {
@@ -23,6 +29,9 @@ export default function CourseDetailPage() {
   const [temario, setTemario] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [inscrito, setInscrito] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
+  const [notice, setNotice] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -54,6 +63,116 @@ export default function CourseDetailPage() {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (usuario?.rol !== 'estudiante' || !id) {
+      return undefined;
+    }
+
+    let active = true;
+    setInscrito(false);
+
+    // The enrollment is confirmed by the server. If the listing endpoint is
+    // unavailable, the detail page still offers the enrollment action.
+    listarMisInscripciones()
+      .then((data) => {
+        if (active) {
+          setInscrito(estaInscritoEn(data?.inscripciones, id));
+        }
+      })
+      .catch(() => {
+        // A missing listing endpoint must not hide the course detail.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id, usuario?.rol]);
+
+  async function handleInscribir() {
+    if (enrolling || inscrito) {
+      return;
+    }
+
+    setEnrolling(true);
+    setNotice(null);
+
+    try {
+      await inscribirCurso(id);
+      setInscrito(true);
+      setNotice({
+        variant: 'success',
+        title: 'Inscripción confirmada',
+        message: 'Ya formas parte de este curso. Puedes verlo en «Mis cursos».',
+      });
+    } catch (err) {
+      if (esInscripcionDuplicada(err)) {
+        setInscrito(true);
+        setNotice({
+          variant: 'info',
+          title: 'Ya estás inscrito',
+          message: err.message,
+        });
+      } else {
+        setNotice({
+          variant: 'error',
+          title: 'No pudimos completar la inscripción',
+          message: err.message,
+        });
+      }
+    } finally {
+      setEnrolling(false);
+    }
+  }
+
+  const puedeInscribirse = isAuthenticated && usuario?.rol === 'estudiante';
+
+  function renderInscripcionCta() {
+    if (inscrito) {
+      return (
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-success-light px-3 py-1.5 text-label-sm font-semibold text-success">
+            <Icon name="check_circle" filled className="text-[18px]" />
+            Ya estás inscrito
+          </span>
+          <Link to="/mis-cursos" className="inline-flex">
+            <Button variant="secondary" icon="arrow_forward">
+              Ir a mis cursos
+            </Button>
+          </Link>
+        </div>
+      );
+    }
+
+    if (puedeInscribirse) {
+      return (
+        <Button
+          icon="how_to_reg"
+          loading={enrolling}
+          onClick={handleInscribir}
+        >
+          Inscribirme al curso
+        </Button>
+      );
+    }
+
+    if (isAuthenticated) {
+      return (
+        <span className="inline-flex items-center gap-1.5 text-label-sm text-on-surface-variant">
+          <Icon name="info" className="text-[18px]" />
+          Solo los estudiantes pueden inscribirse.
+        </span>
+      );
+    }
+
+    return (
+      <Link to="/login" className="inline-flex">
+        <Button icon="login" iconPosition="start">
+          Inicia sesión para inscribirte
+        </Button>
+      </Link>
+    );
+  }
+
   const cuestionarios = temario.filter((leccion) => leccion.tipo === 'cuestionario').length;
 
   return (
@@ -65,6 +184,21 @@ export default function CourseDetailPage() {
         <Icon name="arrow_back" className="text-[20px]" />
         Volver al catálogo
       </Link>
+
+      {notice && (
+        <Alert variant={notice.variant} title={notice.title}>
+          <p>{notice.message}</p>
+          {notice.variant === 'success' && (
+            <Link
+              to="/mis-cursos"
+              className="mt-2 inline-flex items-center gap-1 text-label-md font-semibold underline"
+            >
+              Ver mis cursos
+              <Icon name="arrow_forward" className="text-[16px]" />
+            </Link>
+          )}
+        </Alert>
+      )}
 
       {loading && (
         <section className="rounded-panel border border-outline bg-surface p-8 text-center shadow-card">
@@ -136,15 +270,7 @@ export default function CourseDetailPage() {
                   </span>
                 </div>
 
-                {isAuthenticated && usuario?.rol === 'estudiante' ? (
-                  <Button icon="how_to_reg">Inscribirme al curso</Button>
-                ) : (
-                  <Link to="/login" className="inline-flex">
-                    <Button icon="login" iconPosition="start">
-                      Inicia sesión para inscribirte
-                    </Button>
-                  </Link>
-                )}
+                {renderInscripcionCta()}
               </div>
             </div>
 
@@ -263,13 +389,9 @@ export default function CourseDetailPage() {
             )}
 
             <div className="mt-8 border-t border-outline pt-6 text-center">
-              {isAuthenticated && usuario?.rol === 'estudiante' ? (
-                <Button icon="arrow_forward">Inscribirme al curso ahora</Button>
-              ) : (
-                <Link to="/login" className="inline-flex">
-                  <Button icon="arrow_forward">Inicia sesión para inscribirte</Button>
-                </Link>
-              )}
+              <div className="inline-flex justify-center">
+                {renderInscripcionCta()}
+              </div>
             </div>
           </section>
         </>

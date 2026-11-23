@@ -151,7 +151,7 @@ test('only instructors see course management routes and navigation', () => {
   for (const usuario of [null, demoUsuario]) {
     if (usuario) session.writeSession({ token: 'stored-token', usuario });
     for (const path of paths) {
-      assert.doesNotMatch(render(path), /Mis cursos|Nuevo curso|Cargando curso|name="titulo"/);
+      assert.doesNotMatch(render(path), /Nuevo curso|Cargando curso|name="titulo"|href="\/instructor\/cursos"/);
     }
   }
 
@@ -179,6 +179,25 @@ test('renders the student panel only for students', () => {
 
   session.clearSession();
   assert.doesNotMatch(render('/panel'), /Resumen de aprendizaje/);
+});
+
+test('keeps the student My Courses screen separate from instructor management', () => {
+  session.writeSession({ token: 'stored-token', usuario: demoUsuario });
+  const student = render('/mis-cursos');
+  assert.match(student, /<h1[^>]*>Mis cursos<\/h1>/);
+  assert.match(student, /Revisa tus cursos inscritos/);
+  assert.match(student, /Cargando tus cursos/);
+  assert.match(student, /href="\/mis-cursos"/);
+
+  session.writeSession({ token: 'stored-token', usuario: { ...demoUsuario, rol: 'instructor' } });
+  const instructor = render('/mis-cursos');
+  assert.doesNotMatch(instructor, /Revisa tus cursos inscritos/);
+  assert.doesNotMatch(instructor, /Cargando tus cursos/);
+  assert.match(instructor, /href="\/instructor\/cursos"/);
+  assert.doesNotMatch(instructor, /Crea tu cuenta/);
+
+  session.clearSession();
+  assert.doesNotMatch(render('/mis-cursos'), /Revisa tus cursos inscritos/);
 });
 
 test('session helpers persist, validate and clear the stored session', () => {
