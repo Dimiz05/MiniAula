@@ -192,15 +192,16 @@ editor returns the full lesson content; the public course detail keeps hiding it
 | --- | --- |
 | `GET /api/cursos/mios/:id` | Return an own course for editing with `{ curso, lecciones }`. Each lesson includes `id`, `titulo`, `tipo`, `contenido`, `videoUrl`, `orden`, `notaMinima`, and `cursoId`. |
 | `POST /api/cursos/:id/lecciones` | Create a content lesson with `titulo`, `contenido`, and optional `videoUrl`. The server stores `tipo: "contenido"`, assigns the next `orden`, and returns `201 { leccion }`. |
-| `PUT /api/lecciones/:id` | Update `titulo`, `contenido`, and/or `videoUrl` of an own lesson. At least one field is required. Returns `{ leccion }`. |
+| `PUT /api/lecciones/:id` | Update `titulo`, `contenido`, and/or `videoUrl` of an own content lesson. At least one field is required. Returns `{ leccion }`; a quiz returns `409 LECCION_NO_ES_CONTENIDO`. |
 | `DELETE /api/lecciones/:id` | Delete an own lesson. Returns `204`. Deleting a lesson also removes its questions and student progress through the existing foreign-key cascade. |
-| `PATCH /api/cursos/:id/lecciones/orden` | Reorder an own course with `{ "orden": [lessonId, ...] }`. The list must contain every lesson of the course exactly once; the server rewrites `orden` as `1..N` and returns `{ lecciones }`. |
+| `PATCH /api/cursos/:id/lecciones/orden` | Reorder an own course with `{ "orden": [lessonId, ...] }`. The list must contain every lesson of the course exactly once; an empty list is valid only when the course has no lessons. The server rewrites `orden` as `1..N` and returns `{ lecciones }`. |
 
 Creating, reordering, and deleting a lesson run inside a transaction with the
 course row locked. A foreign course or lesson returns
 `403 CURSO_NO_PROPIO`, a missing one returns `404`, an invalid body returns
-`422 VALIDACION`, and an order that does not match the course lessons returns
-`409 ORDEN_LECCIONES_INVALIDO`.
+`422 VALIDACION`, an order that does not match the course lessons returns
+`409 ORDEN_LECCIONES_INVALIDO`, and editing a quiz through the content route
+returns `409 LECCION_NO_ES_CONTENIDO`.
 
 ## Frontend authentication
 
