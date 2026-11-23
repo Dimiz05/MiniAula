@@ -166,6 +166,21 @@ test('only instructors see course management routes and navigation', () => {
   assert.doesNotMatch(editar, /name="titulo"/);
 });
 
+test('renders the student panel only for students', () => {
+  session.writeSession({ token: 'stored-token', usuario: demoUsuario });
+  const panel = render('/panel');
+  assert.match(panel, /Resumen de aprendizaje/);
+  assert.match(panel, /Hola, Carla/);
+  assert.match(panel, /Continúa aprendiendo/);
+  assert.match(panel, /Cursos recomendados para ti/);
+
+  session.writeSession({ token: 'stored-token', usuario: { ...demoUsuario, rol: 'instructor' } });
+  assert.doesNotMatch(render('/panel'), /Resumen de aprendizaje/);
+
+  session.clearSession();
+  assert.doesNotMatch(render('/panel'), /Resumen de aprendizaje/);
+});
+
 test('session helpers persist, validate and clear the stored session', () => {
   assert.equal(session.readSession(), null);
 

@@ -1,0 +1,267 @@
+<!DOCTYPE html><html lang="es"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lección 3: Context API — MiniAula</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'primary': '#0A5C41',
+        'on-primary': '#FFFFFF',
+        'secondary': '#1A202C',
+        'on-secondary': '#FFFFFF',
+        'surface': '#FFFFFF',
+        'on-surface': '#1A202C',
+        'surface-variant': '#EDF2F7',
+        'on-surface-variant': '#4A5568',
+        'background': '#F8FAFC',
+        'on-background': '#1A202C',
+        'success': '#0D7A57',
+        'on-success': '#FFFFFF',
+        'success-light': '#E6F4EA',
+        'warning': '#D97706',
+        'on-warning': '#1A202C',
+        'warning-light': '#FEF3C7',
+        'error': '#DC2626',
+        'on-error': '#FFFFFF',
+        'error-light': '#FEE2E2',
+        'outline': '#E2E8F0',
+        'outline-light': '#F1F5F9',
+      },
+      borderRadius: {
+        'sm': '6px',
+        'DEFAULT': '10px',
+        'md': '12px',
+        'lg': '16px',
+        'xl': '20px',
+        'full': '9999px',
+      },
+      spacing: {
+        'xs': '4px',
+        'sm': '8px',
+        'md': '16px',
+        'lg': '24px',
+        'xl': '32px',
+        '2xl': '48px',
+        '3xl': '64px',
+      },
+      fontFamily: {
+        'display': ['"Inter"', 'sans-serif'],
+        'headline': ['"Inter"', 'sans-serif'],
+        'body': ['"Inter"', 'sans-serif'],
+        'label': ['"Inter"', 'sans-serif'],
+      },
+      fontSize: {
+        'display-lg': ['36px', { lineHeight: '44px', letterSpacing: '-0.02em', fontWeight: '700' }],
+        'display-lg-mobile': ['28px', { lineHeight: '34px', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'headline-lg': ['28px', { lineHeight: '36px', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'headline-lg-mobile': ['24px', { lineHeight: '30px', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'headline-md': ['22px', { lineHeight: '28px', fontWeight: '600' }],
+        'headline-sm': ['18px', { lineHeight: '24px', fontWeight: '600' }],
+        'body-lg': ['16px', { lineHeight: '24px', fontWeight: '400' }],
+        'body-md': ['14px', { lineHeight: '20px', fontWeight: '400' }],
+        'body-sm': ['12px', { lineHeight: '16px', fontWeight: '400' }],
+        'label-lg': ['14px', { lineHeight: '20px', fontWeight: '600' }],
+        'label-md': ['12px', { lineHeight: '16px', fontWeight: '600' }],
+        'label-sm': ['11px', { lineHeight: '14px', fontWeight: '500' }],
+      },
+      transitionDuration: {
+        'state-change': '150ms',
+        'surface-enter': '250ms',
+        'surface-exit': '150ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+        'surface-enter': '0ms',
+        'surface-exit': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'cubic-bezier(0.4, 0, 0.2, 1)',
+        'surface-enter': 'cubic-bezier(0, 0, 0.2, 1)',
+        'surface-exit': 'cubic-bezier(0.4, 0, 1, 1)',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <style>.material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons { display: inline-block; width: 1em; height: 1em; line-height: 1 !important; box-sizing: content-box; overflow: hidden; white-space: nowrap; direction: ltr; vertical-align: middle; }</style>
+</head>
+<body class="bg-background text-on-surface font-body min-h-screen flex flex-col">
+  <!-- Top Bar: Distraction-free header -->
+  <header class="min-h-16 py-2 bg-surface border-b border-outline px-3 sm:px-6 flex items-center justify-between sticky top-0 z-30 shrink-0">
+    <div class="flex min-w-0 items-center gap-2 sm:gap-4">
+      <a href="../mis_cursos_estudiante/code.html" class="p-2 text-on-surface-variant hover:text-secondary rounded-DEFAULT hover:bg-surface-variant" title="Volver a mis cursos">
+        <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+      </a>
+      <div>
+        <span class="text-label-sm font-label text-primary font-semibold">Desarrollo Web con React y Vite</span>
+        <h1 class="font-headline text-headline-sm text-secondary text-base sm:text-headline-sm leading-tight">3. Manejo de Estado Global con Context API</h1>
+      </div>
+    </div>
+
+    <!-- Overall Progress Indicator -->
+    <div class="flex items-center gap-4">
+      <div class="hidden sm:flex flex-col items-end">
+        <span class="text-label-sm font-label text-secondary font-medium">Progreso del curso: 40%</span>
+        <div class="w-36 bg-surface-variant rounded-full h-1.5 mt-1 overflow-hidden">
+          <div class="bg-primary h-1.5 rounded-full" style="width: 40%"></div>
+        </div>
+      </div>
+      <div class="w-8 h-8 shrink-0 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-label-sm">SM</div>
+    </div>
+  </header>
+
+  <!-- Learning Workspace Layout -->
+  <div class="flex-1 flex flex-col md:flex-row min-h-0">
+    <!-- Left Sidebar: Curriculum Navigation with Lock/Completed/Active states -->
+    <aside class="w-full md:w-80 bg-surface border-b md:border-b-0 md:border-r border-outline shrink-0">
+      <details id="lesson-curriculum">
+      <summary class="cursor-pointer p-4 border-b border-outline bg-surface-variant/30 font-label text-label-md text-secondary font-bold">
+          Temario <span class="ml-2 text-label-sm text-on-surface-variant font-normal">2 de 5 completadas</span>
+        </summary>
+
+      <nav aria-label="Temario del curso" class="p-3 space-y-1.5">
+        <!-- Lesson 1: Completed -->
+        <a href="#" class="p-3 rounded-DEFAULT bg-surface hover:bg-surface-variant/60 border border-transparent hover:border-outline flex items-start gap-3 transition-colors">
+          <span class="material-symbols-outlined text-success text-[20px] mt-0.5" style="font-variation-settings: &#39;FILL&#39; 1;">check_circle</span>
+          <div class="overflow-hidden">
+            <p class="text-label-md font-label text-secondary truncate">1. Introducción a React 18 y Vite</p>
+            <span class="text-label-sm text-success font-medium">Completada</span>
+          </div>
+        </a>
+
+        <!-- Lesson 2: Completed -->
+        <a href="#" class="p-3 rounded-DEFAULT bg-surface hover:bg-surface-variant/60 border border-transparent hover:border-outline flex items-start gap-3 transition-colors">
+          <span class="material-symbols-outlined text-success text-[20px] mt-0.5" style="font-variation-settings: &#39;FILL&#39; 1;">check_circle</span>
+          <div class="overflow-hidden">
+            <p class="text-label-md font-label text-secondary truncate">2. Componentes Funcionales y JSX</p>
+            <span class="text-label-sm text-success font-medium">Completada</span>
+          </div>
+        </a>
+
+        <!-- Lesson 3: CURRENT ACTIVE -->
+        <div class="p-3 rounded-DEFAULT bg-primary/10 border border-primary/30 flex items-start gap-3">
+          <span class="material-symbols-outlined text-primary text-[20px] mt-0.5">play_circle</span>
+          <div class="overflow-hidden">
+            <p class="text-label-md font-label text-primary font-bold truncate">3. Manejo con Context API</p>
+            <span class="text-label-sm text-primary font-semibold">Lección actual</span>
+          </div>
+        </div>
+
+        <!-- Lesson 4: Locked (requires completing 3) -->
+        <div class="p-3 rounded-DEFAULT bg-surface opacity-60 flex items-start gap-3 cursor-not-allowed">
+          <span class="material-symbols-outlined text-on-surface-variant text-[20px] mt-0.5">lock</span>
+          <div class="overflow-hidden">
+            <p class="text-label-md font-label text-secondary truncate">4. Consumo de APIs REST con Axios</p>
+            <span class="text-label-sm text-on-surface-variant">Bloqueada (completa la lección 3)</span>
+          </div>
+        </div>
+
+        <!-- Lesson 5: Locked Quiz -->
+        <div class="p-3 rounded-DEFAULT bg-surface opacity-60 flex items-start gap-3 cursor-not-allowed">
+          <span class="material-symbols-outlined text-warning text-[20px] mt-0.5">quiz</span>
+          <div class="overflow-hidden">
+            <p class="text-label-md font-label text-secondary truncate">5. Cuestionario Evaluativo React</p>
+            <span class="text-label-sm text-on-surface-variant">Requiere aprobar lecciones anteriores</span>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Sequential Progression Callout -->
+      <div class="p-4 m-3 bg-surface-variant/50 rounded-DEFAULT border border-outline text-label-sm text-on-surface-variant flex items-start gap-2">
+        <span class="material-symbols-outlined text-primary text-[18px]">verified_user</span>
+        <span>Avanzas en modo secuencial. Cada lección se valida en el servidor.</span>
+      </div>
+      </details>
+    </aside>
+
+    <!-- Main Content: Current Lesson Viewer -->
+    <main class="flex-1 min-w-0 p-4 sm:p-6 md:p-10 max-w-4xl mx-auto w-full space-y-8">
+      <!-- Lesson Headline -->
+      <div>
+        <div class="flex items-center gap-2 mb-2">
+          <span class="px-2.5 py-0.5 rounded bg-primary/10 text-primary text-label-sm font-label font-semibold">Lección 3</span>
+          <span class="text-label-sm text-on-surface-variant">Tipo: Contenido interactivo y video</span>
+        </div>
+        <h2 class="font-headline text-headline-lg text-secondary mb-3" data-design-text-token="headline-lg">
+          Manejo de Estado Global con Context API y Hooks
+        </h2>
+        <p class="text-body-md text-on-surface-variant">
+          En esta lección aprenderemos a compartir datos de sesión y tema global entre componentes sin caer en el problema de prop-drilling.
+        </p>
+      </div>
+
+      <!-- Embedded Video Player Area -->
+      <div class="rounded-xl overflow-hidden border border-outline shadow-sm bg-secondary text-white">
+        <div class="relative aspect-video bg-secondary flex flex-col items-center justify-center p-6 text-center group cursor-pointer">
+          <div class="w-16 h-16 rounded-full bg-primary/90 text-white flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform mb-3">
+            <span class="material-symbols-outlined text-[36px]">play_arrow</span>
+          </div>
+          <p class="text-label-lg font-label font-semibold">Video explicativo: Implementando AuthContext</p>
+          <span class="text-label-sm text-outline">Duración: 14 min 30 s · Calidad HD 1080p</span>
+        </div>
+        <div class="px-5 py-3 bg-surface text-secondary flex items-center justify-between border-t border-outline text-label-sm">
+          <span class="flex items-center gap-2 text-on-surface-variant">
+            <span class="material-symbols-outlined text-[18px]">link</span>
+            <span>Video de la lección</span>
+          </span>
+          <span class="text-success font-semibold flex items-center gap-1">
+            <span class="material-symbols-outlined text-[16px]">check</span> Reproducción habilitada
+          </span>
+        </div>
+      </div>
+
+      <!-- Rich Reading Content -->
+      <article class="prose max-w-none text-secondary space-y-4">
+        <h3 class="font-headline text-headline-sm text-secondary">¿Por qué usar Context API en aplicaciones React?</h3>
+        <p class="text-body-lg text-secondary leading-relaxed" data-design-text-token="body-lg">
+          Cuando una aplicación crece, múltiples componentes en diferentes ramas del árbol necesitan acceder a los mismos datos de sesión del usuario o tokens de autenticación. En lugar de pasar props a través de componentes intermedios que no los necesitan, <strong>React Context</strong> proporciona una forma de pasar datos a través del árbol de componentes sin tener que pasar manualmente las propiedades a cada nivel.
+        </p>
+
+        <div class="bg-surface p-5 rounded-lg border border-outline shadow-sm space-y-2">
+          <h4 class="font-label text-label-md text-secondary font-bold">Conceptos clave para este módulo:</h4>
+          <ul class="list-disc pl-5 text-body-md text-on-surface-variant space-y-1">
+            <li><strong>createContext():</strong> Inicializa el contexto con un valor por defecto.</li>
+            <li><strong>Provider:</strong> Componente que envuelve el árbol y provee el valor actual (`value={{ user, token }}`).</li>
+            <li><strong>useContext() Hook:</strong> Permite que cualquier componente hijo consuma el contexto de forma limpia.</li>
+            <li><strong>Persistencia:</strong> Sincronización del estado de autenticación en almacenamiento local con manejo de errores.</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- Lesson Navigation & Complete Actions -->
+      <footer class="pt-6 border-t border-outline flex flex-col sm:flex-row items-center justify-between gap-4">
+        <a href="#" class="w-full sm:w-auto px-5 py-2.5 bg-surface border border-outline text-secondary hover:bg-surface-variant rounded-DEFAULT font-label text-label-md flex items-center justify-center gap-2 transition-colors">
+          <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+          <span>Lección anterior</span>
+        </a>
+
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <!-- Marcar como completada (RF-12) -->
+          <a href="../cuestionario_y_resultados/code.html" class="flex-1 sm:flex-initial px-6 py-2.5 bg-success text-white rounded-DEFAULT font-label text-label-md flex items-center justify-center gap-2 hover:opacity-95 shadow-sm transition-opacity">
+            <span class="material-symbols-outlined text-[20px]">task_alt</span>
+            <span>Marcar como completada</span>
+          </a>
+
+          <!-- Siguiente lección -->
+          <a href="../cuestionario_y_resultados/code.html" class="flex-1 sm:flex-initial px-6 py-2.5 bg-primary text-on-primary rounded-DEFAULT font-label text-label-md flex items-center justify-center gap-2 hover:opacity-95 shadow-sm transition-opacity">
+            <span>Siguiente lección</span>
+            <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+          </a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+
+<script>
+  document.getElementById("lesson-curriculum").open = window.matchMedia("(min-width: 768px)").matches;
+</script>
+</body></html>

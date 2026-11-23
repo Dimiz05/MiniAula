@@ -87,13 +87,16 @@ export default function RegisterPage() {
     setSubmitting(true);
 
     try {
-      await register({
+      const usuarioSesion = await register({
         nombre: form.nombre.trim(),
         email: normalizeEmail(form.email),
         password: form.password,
         rol: form.rol,
       });
-      navigate('/perfil', { replace: true, state: { welcome: true } });
+      navigate(usuarioSesion?.rol === 'instructor' ? '/instructor/cursos' : '/panel', {
+        replace: true,
+        state: { welcome: true },
+      });
     } catch (error) {
       if (error.status === 409) {
         const detailErrors = toFieldErrors(error.details, [
@@ -140,22 +143,18 @@ export default function RegisterPage() {
           <Logo />
           <Link
             to="/"
-            className="rounded-lg px-2 py-1 text-xs font-semibold text-on-surface-variant transition-colors hover:bg-surface-variant hover:text-secondary"
+            className="rounded-control px-2 py-1 text-label-md text-on-surface-variant transition-colors hover:bg-surface-variant hover:text-secondary"
           >
             Volver al inicio
           </Link>
         </header>
 
         <div className="mb-6">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
-            Nueva cuenta
-          </p>
-          <h1 className="text-2xl font-bold tracking-tight text-secondary sm:text-[28px] sm:leading-9">
+          <h1 className="mb-2 text-headline-lg-mobile text-secondary sm:text-headline-lg">
             Crea tu cuenta
           </h1>
-          <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-            Selecciona tu rol y comienza a disfrutar la experiencia de
-            aprendizaje.
+          <p className="text-body-md text-on-surface-variant">
+            Elige si quieres aprender o crear cursos.
           </p>
         </div>
 
@@ -171,20 +170,20 @@ export default function RegisterPage() {
 
         <form className="space-y-4" onSubmit={handleSubmit} noValidate>
           <fieldset>
-            <legend className="mb-2 block text-xs font-semibold text-secondary">
+            <legend className="mb-2 block text-label-md text-secondary">
               ¿Cómo deseas usar MiniAula?
             </legend>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               {roles.map((role) => {
                 const selected = form.rol === role.value;
 
                 return (
                   <label
                     key={role.value}
-                    className={`relative flex cursor-pointer flex-col items-center justify-center rounded-[10px] border-2 p-3 text-center transition-colors focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 ${
+                    className={`relative flex cursor-pointer flex-col items-center justify-center rounded-control border p-2 text-center transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary sm:p-3 ${
                       selected
-                        ? 'border-primary bg-primary/5'
-                        : 'border-outline bg-surface hover:border-primary/50'
+                        ? 'border-primary bg-success-light ring-1 ring-inset ring-primary'
+                        : 'border-outline bg-surface hover:border-primary/60'
                     }`}
                   >
                     <input
@@ -202,10 +201,10 @@ export default function RegisterPage() {
                         selected ? 'text-primary' : 'text-secondary'
                       }`}
                     />
-                    <span className="text-xs font-bold text-secondary">
+                    <span className="text-label-md font-bold text-secondary">
                       {role.title}
                     </span>
-                    <span className="mt-0.5 text-[11px] text-on-surface-variant">
+                    <span className="mt-0.5 text-label-sm text-on-surface-variant">
                       {role.description}
                     </span>
                   </label>
@@ -241,7 +240,7 @@ export default function RegisterPage() {
             onChange={(event) => updateField('email', event.target.value)}
           />
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2">
             <FormField
               id="register-password"
               name="password"
@@ -285,7 +284,7 @@ export default function RegisterPage() {
       </div>
 
       <footer className="mt-6 border-t border-outline-light pt-4 text-center">
-        <p className="text-sm text-on-surface-variant">
+        <p className="text-body-md text-on-surface-variant">
           ¿Ya tienes una cuenta registrada?{' '}
           <Link
             to="/login"
