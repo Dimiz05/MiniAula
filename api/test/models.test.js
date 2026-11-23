@@ -80,6 +80,19 @@ test('a new course starts as a draft', async () => {
   assert.equal(curso.nivel, 'basico');
 });
 
+test('a course keeps an optional cover image', () => {
+  const curso = Curso.build({
+    titulo: 'Curso',
+    descripcion: 'Descripción',
+    categoria: 'Diseño',
+    instructorId: 1,
+    portada: 'https://images.example.com/curso.jpg',
+  });
+
+  assert.equal(curso.portada, 'https://images.example.com/curso.jpg');
+  assert.equal(Curso.rawAttributes.portada.allowNull, true);
+});
+
 test('models expose the relations the API needs', () => {
   assert.equal(Curso.associations.instructor.target.name, 'Usuario');
   assert.equal(Curso.associations.lecciones.target.name, 'Leccion');

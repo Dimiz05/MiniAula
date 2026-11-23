@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import Alert from '../../components/Alert.jsx';
 import Button from '../../components/Button.jsx';
+import CourseCover from '../../components/CourseCover.jsx';
 import Icon from '../../components/Icon.jsx';
 import { useFetch } from '../../hooks/useFetch.js';
 import { archivarCurso, eliminarCurso, listarCursosPropios, publicarCurso } from '../../services/curso.service.js';
@@ -209,16 +210,19 @@ export default function MyCoursesPage() {
                     }`}
                   >
                     <div>
-                      <div className={`relative h-32 overflow-hidden bg-gradient-to-br ${style.band}`}>
-                        <Icon
-                          name={curso.estado === 'archivado' ? 'inventory_2' : 'auto_stories'}
-                          className="absolute right-4 top-4 text-[56px] text-white/15"
-                        />
+                      <CourseCover
+                        portada={curso.portada}
+                        alt={`Portada de ${curso.titulo}`}
+                        icon={curso.estado === 'archivado' ? 'inventory_2' : 'auto_stories'}
+                        className="h-32"
+                        iconClassName="absolute right-4 top-4 text-[56px] text-white/15"
+                        gradientClassName={`bg-gradient-to-br ${style.band}`}
+                      >
                         <span className={`absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-label-sm font-semibold shadow-sm ${style.badge}`}>
                           <span className={`h-2 w-2 rounded-full ${style.dot}`} />
                           {estados[curso.estado] ?? curso.estado}
                         </span>
-                      </div>
+                      </CourseCover>
 
                       <div className="p-5">
                         <h3 className="mb-2 break-words text-balance text-headline-sm leading-snug text-secondary">

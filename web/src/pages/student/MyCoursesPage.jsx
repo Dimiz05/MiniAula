@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import Alert from '../../components/Alert.jsx';
 import Button from '../../components/Button.jsx';
+import CourseCover from '../../components/CourseCover.jsx';
 import Icon from '../../components/Icon.jsx';
 import { useFetch } from '../../hooks/useFetch.js';
 import { obtenerCurso } from '../../services/curso.service.js';
@@ -185,11 +186,12 @@ export default function MyCoursesPage() {
                     className="flex flex-col justify-between overflow-hidden rounded-panel border border-outline bg-surface shadow-card transition-shadow hover:shadow-hover"
                   >
                     <div>
-                      <div className="relative h-28 overflow-hidden bg-gradient-to-br from-primary to-secondary">
-                        <Icon
-                          name="auto_stories"
-                          className="absolute right-4 top-4 text-[52px] text-white/15"
-                        />
+                      <CourseCover
+                        portada={curso?.portada}
+                        alt={curso ? `Portada de ${titulo}` : ''}
+                        className="h-28"
+                        iconClassName="absolute right-4 top-4 text-[52px] text-white/15"
+                      >
                         <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-label-sm font-semibold text-primary shadow-sm">
                           {curso?.categoria ?? 'Curso'}
                         </span>
@@ -199,7 +201,7 @@ export default function MyCoursesPage() {
                             Completado
                           </span>
                         )}
-                      </div>
+                      </CourseCover>
 
                       <div className="p-5">
                         <h3 className="mb-2 break-words text-balance text-headline-sm leading-snug text-secondary">

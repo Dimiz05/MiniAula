@@ -28,7 +28,7 @@ remaining student lesson screens are still pending.
 | Table | Key fields | Constraints |
 | --- | --- | --- |
 | `usuarios` | `nombre`, `email`, `password_hash`, `rol`, `creado_en` | `email` unique. |
-| `cursos` | `titulo`, `descripcion`, `categoria`, `nivel`, `estado`, `instructor_id`, `creado_en` | `instructor_id → usuarios.id` (`RESTRICT`). Indexed by `estado`, `categoria`, and `instructor_id`. |
+| `cursos` | `titulo`, `descripcion`, `portada`, `categoria`, `nivel`, `estado`, `instructor_id`, `creado_en` | `instructor_id → usuarios.id` (`RESTRICT`). `portada` stores the cover location: `/uploads/portadas/...` for uploaded PNG/JPG/WebP files; demo seed data uses external placeholder URLs. Indexed by `estado`, `categoria`, and `instructor_id`. |
 | `lecciones` | `titulo`, `tipo`, `contenido`, `video_url`, `orden`, `nota_minima`, `curso_id` | `curso_id → cursos.id` (`CASCADE`). Index on `(curso_id, orden)`, not unique, because reordering swaps positions. |
 | `preguntas` | `enunciado`, `opciones` (JSON list), `indice_correcto`, `leccion_id` | `leccion_id → lecciones.id` (`CASCADE`). |
 | `inscripciones` | `estudiante_id`, `curso_id`, `fecha_inscripcion`, `completado` | `(estudiante_id, curso_id)` unique. `curso_id → cursos.id` (`RESTRICT`) so a course with enrollments cannot be deleted. |
@@ -169,9 +169,18 @@ courses; another instructor's course returns `403 CURSO_NO_PROPIO`.
 | `GET /api/cursos/mios/:id` | Return one own course for editing. Returns `{ curso }`. |
 | `POST /api/cursos` | Create a course with `titulo`, `descripcion`, `categoria`, and optional `nivel`. The server always stores `estado: "borrador"` and the authenticated instructor as owner. Returns `201` with `{ curso }`. |
 | `PUT /api/cursos/:id` | Update `titulo`, `descripcion`, `categoria`, and/or `nivel` of an own course. `estado` and `instructorId` are not editable. Returns `{ curso }`. |
+| `POST /api/cursos/:id/portada` | Upload the course cover as the raw request body (`Content-Type: image/png`, `image/jpeg`, or `image/webp`), maximum 5 MB. The server validates the file signature, stores it under `/uploads/portadas`, replaces the previous image, and returns `{ curso }` with the new `portada`. |
+| `DELETE /api/cursos/:id/portada` | Remove the course cover and its stored file. Returns `{ curso }` with `portada: null`. |
 | `PATCH /api/cursos/:id/publicar` | Publish an own draft. Requires at least one lesson; otherwise returns `409 CURSO_SIN_LECCIONES`. Returns `{ curso }` with `estado: "publicado"`. |
 | `PATCH /api/cursos/:id/archivar` | Archive an own draft or published course. Works even when students are enrolled. Returns `{ curso }` with `estado: "archivado"`. |
 | `DELETE /api/cursos/:id` | Delete an own course only when it has no enrolled students; otherwise returns `409 CURSO_CON_INSCRIPCIONES` and the course must be archived. Returns `204` with no body. |
+
+The cover is uploaded from the instructor editor with a file picker. Only PNG,
+JPG/JPEG, and WebP images up to 5 MB are accepted; the API validates the file
+signature instead of trusting the extension. Files are served from
+`/uploads/portadas` and the path is returned in the public catalog, public
+course detail, and instructor course responses. Docker Compose persists the
+uploads volume so covers survive container restarts.
 
 State transitions are enforced by the backend: `borrador → publicado` only
 after at least one lesson exists, and `borrador|publicado → archivado`.

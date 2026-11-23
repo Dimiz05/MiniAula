@@ -61,6 +61,19 @@ export function actualizarCurso(id, body) {
   return apiRequest(`/cursos/${encodeURIComponent(id)}`, { auth: true, method: 'PUT', body });
 }
 
+export function subirPortada(id, archivo) {
+  return apiRequest(`/cursos/${encodeURIComponent(id)}/portada`, {
+    auth: true,
+    method: 'POST',
+    rawBody: archivo,
+    headers: { 'Content-Type': archivo.type || 'application/octet-stream' },
+  });
+}
+
+export function eliminarPortada(id) {
+  return apiRequest(`/cursos/${encodeURIComponent(id)}/portada`, { auth: true, method: 'DELETE' });
+}
+
 export function publicarCurso(id) {
   return apiRequest(`/cursos/${encodeURIComponent(id)}/publicar`, { auth: true, method: 'PATCH' });
 }

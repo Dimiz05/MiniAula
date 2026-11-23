@@ -9,8 +9,35 @@ export function accionesCurso({ estado, totalLecciones, totalInscritos }) {
   };
 }
 
+export const PORTADA_TIPOS = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+export const PORTADA_MAX_BYTES = 5 * 1024 * 1024;
+
+export function validarArchivoPortada(archivo) {
+  if (!archivo) {
+    return 'Selecciona una imagen para la portada.';
+  }
+
+  const extension = archivo.name?.split('.').pop()?.toLowerCase();
+  const extensionValida = ['png', 'jpg', 'jpeg', 'webp'].includes(extension);
+
+  if (!PORTADA_TIPOS.includes(archivo.type) && !extensionValida) {
+    return 'La portada debe ser una imagen PNG, JPG o WebP.';
+  }
+
+  if (archivo.size > PORTADA_MAX_BYTES) {
+    return 'La imagen de portada no puede superar los 5 MB.';
+  }
+
+  return null;
+}
+
 export function validarCurso({ titulo, descripcion, categoria, nivel }) {
-  const datos = { titulo: titulo.trim(), descripcion: descripcion.trim(), categoria: categoria.trim(), nivel };
+  const datos = {
+    titulo: titulo.trim(),
+    descripcion: descripcion.trim(),
+    categoria: categoria.trim(),
+    nivel,
+  };
   const errores = {};
 
   if (datos.titulo.length < 3 || datos.titulo.length > 150) {

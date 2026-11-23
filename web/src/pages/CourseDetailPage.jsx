@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import Alert from '../components/Alert.jsx';
 import Button from '../components/Button.jsx';
+import CourseCover from '../components/CourseCover.jsx';
 import Icon from '../components/Icon.jsx';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { obtenerCurso } from '../services/curso.service.js';
@@ -274,18 +275,20 @@ export default function CourseDetailPage() {
               </div>
             </div>
 
-            <div className="relative min-h-[240px] border-t border-outline bg-gradient-to-br from-primary to-secondary p-6 lg:col-span-5 lg:border-l lg:border-t-0">
-              <Icon
-                name="menu_book"
-                className="absolute right-6 top-6 text-[96px] text-white/15"
-              />
+            <CourseCover
+              portada={curso.portada}
+              alt={`Portada de ${curso.titulo}`}
+              icon="menu_book"
+              className="min-h-[240px] border-t border-outline p-6 lg:col-span-5 lg:border-l lg:border-t-0"
+              iconClassName="absolute right-6 top-6 text-[96px] text-white/15"
+            >
               <div className="flex h-full flex-col justify-end">
                 <span className="inline-flex w-fit items-center gap-2 rounded-full bg-secondary px-3 py-1.5 text-body-sm text-white">
                   <Icon name="lock_open" className="text-[18px]" />
                   Vista previa pública
                 </span>
               </div>
-            </div>
+            </CourseCover>
           </section>
 
           <section className="flex items-start gap-3 rounded-panel border border-warning/40 bg-warning-light p-4">

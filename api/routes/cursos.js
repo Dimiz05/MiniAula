@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, raw } from 'express';
 import {
   actualizar,
   archivar,
@@ -15,6 +15,10 @@ import {
   crear as crearLeccion,
   reordenar as reordenarLecciones,
 } from '../controllers/leccion.js';
+import {
+  eliminar as eliminarPortada,
+  subir as subirPortada,
+} from '../controllers/portada.js';
 import { authenticate, authorize } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
 import {
@@ -45,6 +49,21 @@ router.post(
   authorize('estudiante'),
   validate({ params: cursoIdParamsSchema }),
   inscribir,
+);
+router.post(
+  '/:id/portada',
+  authenticate,
+  authorize('instructor'),
+  validate({ params: cursoIdParamsSchema }),
+  raw({ type: () => true, limit: '5mb' }),
+  subirPortada,
+);
+router.delete(
+  '/:id/portada',
+  authenticate,
+  authorize('instructor'),
+  validate({ params: cursoIdParamsSchema }),
+  eliminarPortada,
 );
 router.post(
   '/:id/lecciones',

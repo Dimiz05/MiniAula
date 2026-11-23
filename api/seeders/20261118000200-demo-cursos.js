@@ -8,6 +8,7 @@ const cursosDemo = [
     instructorEmail: instructorAna,
     titulo: 'Fundamentos de JavaScript',
     descripcion: 'Recorre las bases del lenguaje: variables, tipos, funciones, arreglos y objetos, y cierra con un cuestionario calificado.',
+    portada: 'https://images.unsplash.com/photo-1579468118864-1b9ea3c0db4a?auto=format&fit=crop&w=1200&q=80',
     categoria: 'Programación',
     nivel: 'basico',
     lecciones: [
@@ -60,6 +61,7 @@ const cursosDemo = [
     instructorEmail: instructorBruno,
     titulo: 'Diseño de interfaces web',
     descripcion: 'Principios visuales para interfaces claras y accesibles, con un cuestionario intermedio que debes aprobar antes de continuar.',
+    portada: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=1200&q=80',
     categoria: 'Diseño',
     nivel: 'intermedio',
     lecciones: [
@@ -107,6 +109,7 @@ const cursosDemo = [
     instructorEmail: instructorAna,
     titulo: 'Inglés técnico para desarrollo',
     descripcion: 'Vocabulario y expresiones en inglés que aparecen todos los días en documentación, revisiones de código y reuniones de equipo.',
+    portada: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=1200&q=80',
     categoria: 'Idiomas',
     nivel: 'intermedio',
     lecciones: [
@@ -173,6 +176,7 @@ async function sembrarCurso(datos, instructor) {
     where: { titulo: datos.titulo, instructorId: instructor.id },
     defaults: {
       descripcion: datos.descripcion,
+      portada: datos.portada,
       categoria: datos.categoria,
       nivel: datos.nivel,
       estado: 'publicado',

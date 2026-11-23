@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import Alert from '../components/Alert.jsx';
+import CourseCover from '../components/CourseCover.jsx';
 import Icon from '../components/Icon.jsx';
 import { listarCursos } from '../services/curso.service.js';
 import { getInitials } from '../utils/initials.js';
@@ -191,18 +192,18 @@ export default function CatalogPage() {
                 className="flex flex-col justify-between overflow-hidden rounded-panel border border-outline bg-surface shadow-card transition-all hover:border-primary/40 hover:shadow-hover"
               >
                 <div>
-                  <div className="relative h-36 overflow-hidden bg-gradient-to-br from-primary to-secondary">
-                    <Icon
-                      name="auto_stories"
-                      className="absolute right-4 top-4 text-[64px] text-white/15"
-                    />
+                  <CourseCover
+                    portada={curso.portada}
+                    alt={`Portada de ${curso.titulo}`}
+                    className="h-36"
+                  >
                     <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-label-sm font-semibold text-primary shadow-sm">
                       {curso.categoria ?? 'Sin categoría'}
                     </span>
                     <span className="absolute right-3 top-3 rounded-full bg-secondary px-2.5 py-1 text-label-sm text-white">
                       {nivelLabel(curso.nivel)}
                     </span>
-                  </div>
+                  </CourseCover>
 
                   <div className="p-5">
                     <h2 className="mb-2 text-balance text-headline-sm leading-snug text-secondary">

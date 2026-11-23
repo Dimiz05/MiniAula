@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router';
 import Alert from '../../components/Alert.jsx';
+import CourseCover from '../../components/CourseCover.jsx';
 import Icon from '../../components/Icon.jsx';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useFetch } from '../../hooks/useFetch.js';
@@ -181,15 +182,16 @@ export default function DashboardPage() {
                 className="flex flex-col justify-between overflow-hidden rounded-card border border-outline bg-surface shadow-card transition-shadow hover:shadow-hover"
               >
                 <div>
-                  <div className="relative h-28 overflow-hidden bg-gradient-to-br from-primary to-secondary">
-                    <Icon
-                      name="auto_stories"
-                      className="absolute right-3 top-3 text-[48px] text-white/15"
-                    />
+                  <CourseCover
+                    portada={curso.portada}
+                    alt={`Portada de ${curso.titulo}`}
+                    className="h-28"
+                    iconClassName="absolute right-3 top-3 text-[48px] text-white/15"
+                  >
                     <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2 py-0.5 text-label-sm font-semibold text-primary shadow-sm">
                       {curso.categoria ?? 'Sin categoría'}
                     </span>
-                  </div>
+                  </CourseCover>
                   <div className="p-4">
                     <h3 className="mb-1 text-headline-sm leading-snug text-secondary">
                       {curso.titulo}
