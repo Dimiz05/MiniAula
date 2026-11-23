@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { actualizar, eliminar } from '../controllers/leccion.js';
+import { completar } from '../controllers/progreso.js';
 import { authenticate, authorize } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
 import {
@@ -9,6 +10,13 @@ import {
 
 const router = Router();
 
+router.post(
+  '/:id/completar',
+  authenticate,
+  authorize('estudiante'),
+  validate({ params: leccionIdParamsSchema }),
+  completar,
+);
 router.put(
   '/:id',
   authenticate,
