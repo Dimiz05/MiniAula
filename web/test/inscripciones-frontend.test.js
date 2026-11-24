@@ -70,6 +70,28 @@ test('the student courses screen calls the documented enrollment listing with au
   assert.deepEqual(data.inscripciones, []);
 });
 
+test('the enrollment listing keeps the progress percentage reported by the API', async (t) => {
+  setAccessToken('student-token');
+  t.after(() => setAccessToken(null));
+  t.mock.method(globalThis, 'fetch', async () => Response.json({
+    inscripciones: [{
+      id: 11,
+      cursoId: 3,
+      completado: false,
+      porcentajeAvance: 40,
+      leccionesCompletadas: 2,
+      totalLecciones: 5,
+      curso: { id: 3, titulo: 'Fundamentos de JavaScript' },
+    }],
+  }));
+
+  const data = await listarMisInscripciones();
+  const [inscripcion] = normalizarInscripciones(data);
+
+  assert.equal(inscripcion.porcentajeAvance, 40);
+  assert.equal(porcentajeAvanceInscripcion(inscripcion), 40);
+});
+
 test('progress percentages are safe for the UI and clamped to 0-100', () => {
   assert.equal(porcentajeAvanceInscripcion({ porcentajeAvance: 60 }), 60);
   assert.equal(porcentajeAvanceInscripcion({ porcentajeAvance: '33.4' }), 33);

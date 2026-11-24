@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import Alert from '../../components/Alert.jsx';
 import Button from '../../components/Button.jsx';
 import CourseCover from '../../components/CourseCover.jsx';
+import CourseProgress from '../../components/CourseProgress.jsx';
 import Icon from '../../components/Icon.jsx';
 import { useFetch } from '../../hooks/useFetch.js';
 import { obtenerCurso } from '../../services/curso.service.js';
@@ -229,38 +230,12 @@ export default function MyCoursesPage() {
                           </p>
                         )}
 
-                        <div className="mb-4">
-                          <div className="mb-1 flex items-center justify-between gap-2 text-label-sm">
-                            <span className="text-on-surface-variant">Avance</span>
-                            <span
-                              className={`font-semibold tabular-nums ${
-                                completadoCurso ? 'text-success' : 'text-primary'
-                              }`}
-                            >
-                              {avance}% completado
-                            </span>
-                          </div>
-                          <div
-                            role="progressbar"
-                            aria-label={`Avance de ${titulo}`}
-                            aria-valuenow={avance}
-                            aria-valuemin={0}
-                            aria-valuemax={100}
-                            className="h-2 w-full overflow-hidden rounded-full bg-surface-variant"
-                          >
-                            <div
-                              className={`h-2 rounded-full ${
-                                completadoCurso ? 'bg-success' : 'bg-primary'
-                              }`}
-                              style={{ width: `${avance}%` }}
-                            />
-                          </div>
-                          {totalLecciones > 0 && (
-                            <p className="mt-1 text-label-sm text-on-surface-variant">
-                              {leccionesCompletadas} de {totalLecciones} lecciones completadas
-                            </p>
-                          )}
-                        </div>
+                        <CourseProgress
+                          porcentaje={avance}
+                          leccionesCompletadas={leccionesCompletadas}
+                          totalLecciones={totalLecciones}
+                          titulo={titulo}
+                        />
 
                         <dl className="my-3 grid grid-cols-2 gap-2 border-y border-outline-light py-2 text-label-sm">
                           <div>
