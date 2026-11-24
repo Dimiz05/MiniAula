@@ -1,5 +1,10 @@
 import { Router } from 'express';
-import { actualizar, actualizarCuestionario, eliminar } from '../controllers/leccion.js';
+import {
+  actualizar,
+  actualizarCuestionario,
+  eliminar,
+  obtener,
+} from '../controllers/leccion.js';
 import { crear as crearPregunta } from '../controllers/pregunta.js';
 import { completar } from '../controllers/progreso.js';
 import { authenticate, authorize } from '../middlewares/auth.js';
@@ -15,6 +20,13 @@ import {
 
 const router = Router();
 
+router.get(
+  '/:id',
+  authenticate,
+  authorize('estudiante'),
+  validate({ params: leccionIdParamsSchema }),
+  obtener,
+);
 router.post(
   '/:id/completar',
   authenticate,

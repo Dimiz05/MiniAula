@@ -1,9 +1,16 @@
-import { Curso, Leccion, Pregunta, sequelize } from '../models/index.js';
+import {
+  Curso,
+  Inscripcion,
+  Leccion,
+  Pregunta,
+  sequelize,
+} from '../models/index.js';
 import { AppError } from '../utils/errors.js';
 import {
   asegurarPropiedadCurso,
   obtenerCursoBloqueado,
 } from './curso.service.js';
+import { asegurarLeccionDesbloqueada } from './progreso.service.js';
 import { toPreguntaDetalle } from './pregunta.service.js';
 
 export function toLeccionDetalle(leccion) {
@@ -38,6 +45,32 @@ export function toLeccionDetalle(leccion) {
   };
 }
 
+export function toLeccionEstudiante(leccion) {
+  const {
+    id,
+    titulo,
+    tipo,
+    contenido,
+    videoUrl,
+    orden,
+    notaMinima,
+    cursoId,
+  } = leccion.get({ plain: true });
+
+  // El estudiante nunca recibe las preguntas ni el índice correcto; la
+  // entrega del cuestionario se implementa en su propia fase.
+  return {
+    id,
+    titulo,
+    tipo,
+    contenido: tipo === 'contenido' ? contenido : null,
+    videoUrl: tipo === 'contenido' ? (videoUrl ?? null) : null,
+    orden,
+    notaMinima: notaMinima ?? null,
+    cursoId,
+  };
+}
+
 async function listarLeccionesDeCurso(cursoId, transaction) {
   const lecciones = await Leccion.findAll({
     where: { cursoId },
@@ -54,6 +87,34 @@ export async function listarLeccionesPropias(instructorId, cursoId) {
   asegurarPropiedadCurso(curso, instructorId);
 
   return listarLeccionesDeCurso(curso.id);
+}
+
+export async function obtenerLeccionEstudiante(estudianteId, leccionId) {
+  const leccion = await Leccion.findByPk(leccionId);
+
+  if (!leccion) {
+    throw new AppError(404, 'LECCION_NO_ENCONTRADA', 'La lección no existe.');
+  }
+
+  const inscripcion = await Inscripcion.findOne({
+    where: {
+      estudianteId,
+      cursoId: leccion.cursoId,
+    },
+  });
+
+  if (!inscripcion) {
+    throw new AppError(
+      403,
+      'NO_INSCRITO',
+      'Debes estar inscrito en el curso para acceder a sus lecciones.',
+    );
+  }
+
+  // RN-01: the previous lesson must be complete (or its quiz passed).
+  await asegurarLeccionDesbloqueada(leccion, inscripcion.id);
+
+  return toLeccionEstudiante(leccion);
 }
 
 export async function crearLeccionPropia(instructorId, cursoId, datos) {

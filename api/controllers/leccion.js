@@ -3,8 +3,17 @@ import {
   actualizarLeccionPropia,
   crearLeccionPropia,
   eliminarLeccionPropia,
+  obtenerLeccionEstudiante,
   reordenarLeccionesPropias,
 } from '../services/leccion.service.js';
+
+export async function obtener(request, response) {
+  const leccion = await obtenerLeccionEstudiante(
+    request.usuario.id,
+    request.validated.params.id,
+  );
+  response.status(200).json({ leccion });
+}
 
 export async function crear(request, response) {
   const leccion = await crearLeccionPropia(
