@@ -13,7 +13,9 @@ work. The React app includes login, registration, and profile screens, restores
 the session after a reload, and supports logout. The complete stack starts with
 one Docker command. The catalog, course management, enrollment, instructor
 lesson-editing, and student progress percentage endpoints and screens are
-implemented. Quizzes and the remaining student lesson screens are still pending.
+implemented. Students can request the content of an unlocked lesson; the API
+checks their enrollment and sequential progress first. Quiz attempts and the
+remaining student lesson screens are still pending.
 
 ## Repository structure
 
@@ -41,10 +43,20 @@ implemented. Quizzes and the remaining student lesson screens are still pending.
 
 ## How course progress works
 
-The API will unlock each lesson only after the previous one is complete. If the
-previous lesson is a quiz, the student must pass it to continue. The API grades
-quizzes without sending correct answers to the browser, limits each quiz to
-three attempts, and keeps the best score.
+The API unlocks each lesson only after the previous one is complete. If the
+previous lesson is a quiz, the student must pass it to continue (RN-01). A
+student can request a lesson through `GET /api/lecciones/:id`; the API checks
+that the authenticated student is enrolled and that the previous lesson is
+complete or passed before returning the content. A locked lesson returns
+`403 LECCION_BLOQUEADA` without its content, and a student outside the course
+returns `403 NO_INSCRITO`. The public course detail never includes lesson content
+or video links.
+
+The API grades quizzes without sending correct answers to the browser, limits
+each quiz to three attempts, and keeps the best score. The unlock check already
+reads the stored best grade against the quiz pass mark, so quiz approval can be
+connected without changing this rule. Quiz attempt and grading endpoints are
+still pending.
 
 ## Local API development
 
@@ -234,7 +246,7 @@ instructor screens use these routes through the "Editar preguntas" action on a
 quiz row: the question editor lists the questions, marks the correct option, and
 saves the passing grade. Quiz attempts and grading are out of this phase.
 
-## Student enrollment and progress API
+## Student enrollment, lesson access, and progress API
 
 These routes require a bearer token with the `estudiante` role. A student only
 receives their own enrollments, progress, and grades (RN-08); the student id
@@ -243,6 +255,7 @@ always comes from the session, never from the query string or body.
 | Method and path | Description |
 | --- | --- |
 | `GET /api/inscripciones/mias` | List the authenticated student's enrollments. Each item includes the enrollment fields, the public course summary, `porcentajeAvance`, `leccionesCompletadas`, and `totalLecciones`. |
+| `GET /api/lecciones/:id` | Return an unlocked lesson as `{ leccion }`. A content lesson includes `contenido`, `videoUrl`, `notaMinima`, and `cursoId`. The student must be enrolled (`403 NO_INSCRITO`) and the previous lesson must be complete, or the previous quiz passed with `mejorNota >= notaMinima` (`403 LECCION_BLOQUEADA`). A missing lesson returns `404 LECCION_NO_ENCONTRADA`. Quiz questions and correct answers are not returned by this route. |
 
 The percentage uses every lesson of the course as the denominator. Content
 lessons count when their progress row has `completada: true`; quizzes count when

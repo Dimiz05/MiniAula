@@ -68,7 +68,7 @@ export function calcularAvanceCurso(lecciones, progresos) {
   };
 }
 
-async function asegurarLeccionDesbloqueada(leccion, inscripcionId, transaction) {
+export async function asegurarLeccionDesbloqueada(leccion, inscripcionId, transaction) {
   const lecciones = await Leccion.findAll({
     where: { cursoId: leccion.cursoId },
     attributes: ['id', 'tipo', 'orden', 'notaMinima'],
@@ -98,7 +98,9 @@ async function asegurarLeccionDesbloqueada(leccion, inscripcionId, transaction) 
     throw new AppError(
       403,
       'LECCION_BLOQUEADA',
-      'Completa la lección anterior para desbloquear esta lección.',
+      anterior.tipo === 'cuestionario'
+        ? 'Aprueba el cuestionario anterior para desbloquear esta lección.'
+        : 'Completa la lección anterior para desbloquear esta lección.',
     );
   }
 }
