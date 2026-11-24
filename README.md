@@ -199,7 +199,7 @@ editor returns the full lesson content; the public course detail keeps hiding it
 
 | Method and path | Description |
 | --- | --- |
-| `GET /api/cursos/mios/:id` | Return an own course for editing with `{ curso, lecciones }`. Each lesson includes `id`, `titulo`, `tipo`, `contenido`, `videoUrl`, `orden`, `notaMinima`, and `cursoId`. |
+| `GET /api/cursos/mios/:id` | Return an own course for editing with `{ curso, lecciones }`. Each lesson includes `id`, `titulo`, `tipo`, `contenido`, `videoUrl`, `orden`, `notaMinima`, and `cursoId`. A quiz also includes `preguntas` ordered by `id`, each with `id`, `enunciado`, `opciones`, `indiceCorrecto`, and `leccionId`; the instructor editor needs the correct index. |
 | `POST /api/cursos/:id/lecciones` | Create a content lesson with `titulo`, `contenido`, and optional `videoUrl`. The server stores `tipo: "contenido"`, assigns the next `orden`, and returns `201 { leccion }`. |
 | `PUT /api/lecciones/:id` | Update `titulo`, `contenido`, and/or `videoUrl` of an own content lesson. At least one field is required. Returns `{ leccion }`; a quiz returns `409 LECCION_NO_ES_CONTENIDO`. |
 | `DELETE /api/lecciones/:id` | Delete an own lesson. Returns `204`. Deleting a lesson also removes its questions and student progress through the existing foreign-key cascade. |
@@ -211,6 +211,28 @@ course row locked. A foreign course or lesson returns
 `422 VALIDACION`, an order that does not match the course lessons returns
 `409 ORDEN_LECCIONES_INVALIDO`, and editing a quiz through the content route
 returns `409 LECCION_NO_ES_CONTENIDO`.
+
+## Quiz question API (instructor)
+
+These routes require a bearer token with the `instructor` role and work only on
+the authenticated instructor's own courses. Questions and their options are
+edited together: `opciones` is a JSON list stored on the question row, so there
+are no separate option endpoints. The correct index is returned only to the
+instructor; student-facing endpoints and the public outline never expose it.
+
+| Method and path | Description |
+| --- | --- |
+| `POST /api/lecciones/:id/preguntas` | Create a question in an own quiz with `enunciado`, `opciones` (at least two non-empty strings), and `indiceCorrecto` (zero-based index into `opciones`). Returns `201 { pregunta }`; a content lesson returns `409 LECCION_NO_ES_CUESTIONARIO`. |
+| `PUT /api/preguntas/:id` | Replace `enunciado`, `opciones`, and `indiceCorrecto` of an own question. The three fields are required so the correct index always points to an existing option. Returns `{ pregunta }`. |
+| `DELETE /api/preguntas/:id` | Delete an own question. Returns `204`. |
+| `PATCH /api/lecciones/:id/cuestionario` | Configure the passing grade of an own quiz with `{ "notaMinima": 70 }`, an integer from 1 to 100. Returns `{ leccion }`; a content lesson returns `409 LECCION_NO_ES_CUESTIONARIO`. |
+
+A foreign lesson or question returns `403 CURSO_NO_PROPIO`, a missing one
+returns `404 PREGUNTA_NO_ENCONTRADA` or `404 LECCION_NO_ENCONTRADA`, and an
+invalid body returns `422 VALIDACION` with the standard error envelope. The
+instructor screens use these routes through the "Editar preguntas" action on a
+quiz row: the question editor lists the questions, marks the correct option, and
+saves the passing grade. Quiz attempts and grading are out of this phase.
 
 ## Student enrollment and progress API
 
