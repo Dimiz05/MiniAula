@@ -258,6 +258,12 @@ export default function QuestionEditor({ leccion, onUpdate, onClose }) {
       const next = preguntas.filter((item) => item.id !== pregunta.id);
       setPreguntas(next);
       notificar(next);
+      if (editingId === pregunta.id) {
+        setFormOpen(false);
+        setEditingId(null);
+        setValues({ ...emptyPregunta, opciones: ['', ''] });
+        setErrors({});
+      }
       setNotice({ variant: 'success', message: 'Pregunta eliminada.' });
     } catch (err) {
       setNotice({ variant: 'error', message: err.message });
