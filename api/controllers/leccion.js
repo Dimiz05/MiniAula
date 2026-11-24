@@ -1,4 +1,5 @@
 import {
+  actualizarCuestionarioPropia,
   actualizarLeccionPropia,
   crearLeccionPropia,
   eliminarLeccionPropia,
@@ -16,6 +17,15 @@ export async function crear(request, response) {
 
 export async function actualizar(request, response) {
   const leccion = await actualizarLeccionPropia(
+    request.usuario.id,
+    request.validated.params.id,
+    request.validated.body,
+  );
+  response.status(200).json({ leccion });
+}
+
+export async function actualizarCuestionario(request, response) {
+  const leccion = await actualizarCuestionarioPropia(
     request.usuario.id,
     request.validated.params.id,
     request.validated.body,

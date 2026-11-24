@@ -515,11 +515,14 @@
                   "const contenido = lecciones.find(function (leccion) { return leccion.tipo === 'contenido'; });",
                   "const cuestionario = lecciones.find(function (leccion) { return leccion.tipo === 'cuestionario'; });",
                   "pm.test('las lecciones incluyen contenido', function () { pm.expect(contenido).to.have.property('contenido'); });",
+                  "pm.test('el cuestionario incluye sus preguntas para el editor', function () { pm.expect(cuestionario.preguntas).to.be.an('array'); });",
                   "const ids = lecciones.map(function (leccion) { return leccion.id; });",
                   "pm.collectionVariables.set('leccionIds', JSON.stringify(ids));",
                   "pm.collectionVariables.set('ordenPrueba', JSON.stringify(ids.slice().reverse()));",
                   "pm.collectionVariables.set('leccionId', contenido ? String(contenido.id) : '');",
-                  "pm.collectionVariables.set('quizLeccionId', cuestionario ? String(cuestionario.id) : '');"
+                  "pm.collectionVariables.set('contenidoLeccionId', contenido ? String(contenido.id) : '');",
+                  "pm.collectionVariables.set('quizLeccionId', cuestionario ? String(cuestionario.id) : '');",
+                  "pm.collectionVariables.set('quizNotaMinima', cuestionario && cuestionario.notaMinima != null ? String(cuestionario.notaMinima) : '70');"
                 ]
               }
             }
@@ -886,6 +889,221 @@
                 "exec": [
                   "pm.test('403 Forbidden', function () { pm.response.to.have.status(403); });",
                   "pm.test('código CURSO_NO_PROPIO', function () { pm.expect(pm.response.json().error.code).to.eql('CURSO_NO_PROPIO'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 · Preguntas (instructor)",
+      "item": [
+        {
+          "name": "Crear pregunta",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{seedInstructorToken}}", "type": "string" }]
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"enunciado\": \"Pregunta de Postman {{$timestamp}}\", \"opciones\": [\"Opción A\", \"Opción B\", \"Opción C\"], \"indiceCorrecto\": 1}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/lecciones/{{quizLeccionId}}/preguntas"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "pm.test('crea la pregunta con su índice correcto', function () {",
+                  "  pm.expect(body.pregunta.indiceCorrecto).to.eql(1);",
+                  "  pm.expect(body.pregunta.opciones).to.have.lengthOf(3);",
+                  "});",
+                  "pm.collectionVariables.set('preguntaId', String(body.pregunta.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar pregunta",
+          "request": {
+            "method": "PUT",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{seedInstructorToken}}", "type": "string" }]
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"enunciado\": \"Pregunta actualizada {{$timestamp}}\", \"opciones\": [\"Primera\", \"Segunda\"], \"indiceCorrecto\": 0}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/preguntas/{{preguntaId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('reemplaza las opciones y el índice correcto', function () {",
+                  "  pm.expect(body.pregunta.enunciado).to.include('Pregunta actualizada');",
+                  "  pm.expect(body.pregunta.opciones).to.eql(['Primera', 'Segunda']);",
+                  "  pm.expect(body.pregunta.indiceCorrecto).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar nota mínima",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{seedInstructorToken}}", "type": "string" }]
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"notaMinima\": {{quizNotaMinima}}}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/lecciones/{{quizLeccionId}}/cuestionario"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const esperado = Number(pm.collectionVariables.get('quizNotaMinima'));",
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('conserva la nota mínima configurada', function () { pm.expect(pm.response.json().leccion.notaMinima).to.eql(esperado); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nota mínima inválida",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{seedInstructorToken}}", "type": "string" }]
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"notaMinima\": 0}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/lecciones/{{quizLeccionId}}/cuestionario"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('422 Unprocessable Entity', function () { pm.response.to.have.status(422); });",
+                  "pm.test('detalla la nota mínima', function () {",
+                  "  const campos = body.error.details.map(function (detalle) { return detalle.campo; });",
+                  "  pm.expect(campos).to.include('notaMinima');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear pregunta en lección de contenido (rechazado)",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{seedInstructorToken}}", "type": "string" }]
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"enunciado\": \"No debería crearse\", \"opciones\": [\"A\", \"B\"], \"indiceCorrecto\": 0}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/lecciones/{{contenidoLeccionId}}/preguntas"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
+                  "pm.test('código LECCION_NO_ES_CUESTIONARIO', function () { pm.expect(pm.response.json().error.code).to.eql('LECCION_NO_ES_CUESTIONARIO'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar pregunta",
+          "request": {
+            "method": "DELETE",
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{seedInstructorToken}}", "type": "string" }]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/preguntas/{{preguntaId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', function () { pm.response.to.have.status(204); });",
+                  "pm.collectionVariables.set('preguntaId', '');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear pregunta sin token",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"enunciado\": \"Sin sesión\", \"opciones\": [\"A\", \"B\"], \"indiceCorrecto\": 0}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/lecciones/{{quizLeccionId}}/preguntas"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized', function () { pm.response.to.have.status(401); });",
+                  "pm.test('código NO_AUTENTICADO', function () { pm.expect(pm.response.json().error.code).to.eql('NO_AUTENTICADO'); });"
                 ]
               }
             }

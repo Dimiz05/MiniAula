@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { actualizar, eliminar } from '../controllers/leccion.js';
+import { actualizar, actualizarCuestionario, eliminar } from '../controllers/leccion.js';
+import { crear as crearPregunta } from '../controllers/pregunta.js';
 import { completar } from '../controllers/progreso.js';
 import { authenticate, authorize } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
@@ -7,6 +8,10 @@ import {
   actualizarLeccionSchema,
   leccionIdParamsSchema,
 } from '../schemas/leccion.js';
+import {
+  actualizarCuestionarioSchema,
+  crearPreguntaSchema,
+} from '../schemas/pregunta.js';
 
 const router = Router();
 
@@ -16,6 +21,20 @@ router.post(
   authorize('estudiante'),
   validate({ params: leccionIdParamsSchema }),
   completar,
+);
+router.post(
+  '/:id/preguntas',
+  authenticate,
+  authorize('instructor'),
+  validate({ params: leccionIdParamsSchema, body: crearPreguntaSchema }),
+  crearPregunta,
+);
+router.patch(
+  '/:id/cuestionario',
+  authenticate,
+  authorize('instructor'),
+  validate({ params: leccionIdParamsSchema, body: actualizarCuestionarioSchema }),
+  actualizarCuestionario,
 );
 router.put(
   '/:id',

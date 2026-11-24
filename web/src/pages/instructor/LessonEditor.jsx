@@ -11,6 +11,7 @@ import {
 } from '../../services/leccion.service.js';
 import { toFieldErrors } from '../../utils/validation.js';
 import { moverLeccion, reordenarLista, validarLeccion } from './lessonForm.js';
+import QuestionEditor from './QuestionEditor.jsx';
 
 const emptyForm = { titulo: '', contenido: '', videoUrl: '' };
 const controlClass = 'w-full rounded-control border border-outline bg-surface px-3.5 py-2.5 text-body-md text-secondary placeholder:text-on-surface-variant/70 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary aria-invalid:border-error';
@@ -84,6 +85,7 @@ function LessonRow({
   total,
   pending,
   onEdit,
+  onEditQuestions,
   onDelete,
   onMove,
   onDragStart,
@@ -93,11 +95,12 @@ function LessonRow({
 }) {
   const esCuestionario = leccion.tipo === 'cuestionario';
   const ocupada = pending !== null;
+  const totalPreguntas = Array.isArray(leccion.preguntas) ? leccion.preguntas.length : 0;
   const resumenContenido = leccion.contenido
     ? `${leccion.contenido.slice(0, 120)}${leccion.contenido.length > 120 ? '…' : ''}`
     : 'Sin contenido';
   const detalle = esCuestionario
-    ? `Nota mínima: ${leccion.notaMinima ?? 0}`
+    ? `${totalPreguntas} ${totalPreguntas === 1 ? 'pregunta configurada' : 'preguntas configuradas'} · Nota mínima: ${leccion.notaMinima ?? 0}`
     : leccion.videoUrl
       ? `Video: ${leccion.videoUrl}`
       : resumenContenido;
@@ -169,7 +172,18 @@ function LessonRow({
         >
           <Icon name="arrow_downward" className="text-[18px]" />
         </button>
-        {!esCuestionario && (
+        {esCuestionario ? (
+          <button
+            type="button"
+            onClick={() => onEditQuestions(leccion)}
+            disabled={ocupada}
+            aria-label={`Editar preguntas de ${leccion.titulo}`}
+            className="flex items-center gap-1 rounded border border-outline bg-surface px-3 py-1.5 text-label-sm font-semibold text-secondary transition-colors hover:bg-surface-variant disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Icon name="tune" className="text-[16px]" />
+            Editar preguntas
+          </button>
+        ) : (
           <>
             <button
               type="button"
@@ -207,11 +221,22 @@ export default function LessonEditor({ cursoId, lecciones = [] }) {
   const [notice, setNotice] = useState(null);
   const [saving, setSaving] = useState(false);
   const [pending, setPending] = useState(null);
+  const [quizId, setQuizId] = useState(null);
   const dragIndex = useRef(null);
 
   useEffect(() => {
     setItems(lecciones);
   }, [lecciones]);
+
+  const leccionCuestionario = items.find(
+    (item) => item.id === quizId && item.tipo === 'cuestionario',
+  ) ?? null;
+
+  function actualizarCuestionarioEnLista(leccionActualizada) {
+    setItems((previous) => previous.map((item) => (
+      item.id === leccionActualizada.id ? { ...item, ...leccionActualizada } : item
+    )));
+  }
 
   function abrirNueva() {
     setEditingId(null);
@@ -298,6 +323,9 @@ export default function LessonEditor({ cursoId, lecciones = [] }) {
     try {
       await eliminarLeccion(leccion.id);
       setItems((previous) => previous.filter((item) => item.id !== leccion.id));
+      if (quizId === leccion.id) {
+        setQuizId(null);
+      }
       setNotice({ variant: 'success', message: 'Lección eliminada.' });
     } catch (err) {
       setNotice({ variant: 'error', message: err.message });
@@ -398,6 +426,10 @@ export default function LessonEditor({ cursoId, lecciones = [] }) {
               total={items.length}
               pending={pending}
               onEdit={abrirEdicion}
+              onEditQuestions={(leccion) => {
+                setNotice(null);
+                setQuizId(leccion.id);
+              }}
               onDelete={borrar}
               onMove={mover}
               onDragStart={(event) => {
@@ -418,6 +450,15 @@ export default function LessonEditor({ cursoId, lecciones = [] }) {
             />
           ))}
         </ul>
+      )}
+
+      {leccionCuestionario && (
+        <QuestionEditor
+          key={leccionCuestionario.id}
+          leccion={leccionCuestionario}
+          onUpdate={actualizarCuestionarioEnLista}
+          onClose={() => setQuizId(null)}
+        />
       )}
     </section>
   );

@@ -173,7 +173,7 @@ test('lesson ids reject invalid values', () => {
   assert.equal(leccionIdParamsSchema.parse({ id: '7' }).id, 7);
 });
 
-test('the lesson presenter exposes the full editing shape without questions', () => {
+test('the lesson presenter keeps the existing shape when questions are not loaded', () => {
   const detalle = toLeccionDetalle(
     leccionFalsa({ tipo: 'cuestionario', notaMinima: 70 }),
   );

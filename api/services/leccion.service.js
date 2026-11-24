@@ -1,9 +1,10 @@
-import { Curso, Leccion, sequelize } from '../models/index.js';
+import { Curso, Leccion, Pregunta, sequelize } from '../models/index.js';
 import { AppError } from '../utils/errors.js';
 import {
   asegurarPropiedadCurso,
   obtenerCursoBloqueado,
 } from './curso.service.js';
+import { toPreguntaDetalle } from './pregunta.service.js';
 
 export function toLeccionDetalle(leccion) {
   const {
@@ -15,6 +16,7 @@ export function toLeccionDetalle(leccion) {
     orden,
     notaMinima,
     cursoId,
+    preguntas,
   } = leccion.get({ plain: true });
 
   return {
@@ -26,6 +28,13 @@ export function toLeccionDetalle(leccion) {
     orden,
     notaMinima,
     cursoId,
+    ...(tipo === 'cuestionario' && Array.isArray(preguntas)
+      ? {
+        preguntas: [...preguntas]
+          .sort((a, b) => Number(a.id) - Number(b.id))
+          .map(toPreguntaDetalle),
+      }
+      : {}),
   };
 }
 
@@ -33,6 +42,7 @@ async function listarLeccionesDeCurso(cursoId, transaction) {
   const lecciones = await Leccion.findAll({
     where: { cursoId },
     order: [['orden', 'ASC'], ['id', 'ASC']],
+    include: [{ model: Pregunta, as: 'preguntas' }],
     transaction,
   });
 
@@ -82,7 +92,8 @@ export async function actualizarLeccionPropia(instructorId, leccionId, cambios) 
   const curso = await Curso.findByPk(leccion.cursoId);
   asegurarPropiedadCurso(curso, instructorId);
 
-  // Los cuestionarios pertenecen a la Tarea 6. Esta fase solo edita contenido.
+  // Los cuestionarios se configuran por PATCH /lecciones/:id/cuestionario y sus
+  // preguntas por las rutas de /preguntas; esta ruta solo edita contenido.
   if (leccion.tipo !== 'contenido') {
     throw new AppError(
       409,
@@ -103,6 +114,30 @@ export async function actualizarLeccionPropia(instructorId, leccionId, cambios) 
     leccion.videoUrl = cambios.videoUrl || null;
   }
 
+  await leccion.save();
+
+  return toLeccionDetalle(leccion);
+}
+
+export async function actualizarCuestionarioPropia(instructorId, leccionId, { notaMinima }) {
+  const leccion = await Leccion.findByPk(leccionId);
+
+  if (!leccion) {
+    throw new AppError(404, 'LECCION_NO_ENCONTRADA', 'La lección no existe.');
+  }
+
+  const curso = await Curso.findByPk(leccion.cursoId);
+  asegurarPropiedadCurso(curso, instructorId);
+
+  if (leccion.tipo !== 'cuestionario') {
+    throw new AppError(
+      409,
+      'LECCION_NO_ES_CUESTIONARIO',
+      'Solo puedes configurar la nota mínima de un cuestionario.',
+    );
+  }
+
+  leccion.notaMinima = notaMinima;
   await leccion.save();
 
   return toLeccionDetalle(leccion);
