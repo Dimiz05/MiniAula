@@ -1,66 +1,72 @@
 # MiniAula
 
-MiniAula is a short-course learning platform for the Web Engineering 2 final
-project. Instructors create and publish courses, add lessons and quizzes, and
-track student progress. Students browse the catalog, enroll, and work through
-lessons in order.
+MiniAula es una plataforma de aprendizaje de cursos cortos para el proyecto
+final de Ingeniería Web 2. Los instructores crean y publican cursos, agregan
+lecciones y cuestionarios, y siguen el progreso de los estudiantes. Los
+estudiantes exploran el catálogo, se inscriben y avanzan por las lecciones en
+orden.
 
-**Current status:** the data layer and authentication are in place. Sequelize
-with MySQL models `Usuario`, `Curso`, `Leccion`, `Pregunta`, `Inscripcion`, and
-`Progreso`, their migrations, the demo seed, registration/login with JWT and
-bcrypt, Zod validation, centralized errors, and HTTP security middleware all
-work. The React app includes login, registration, and profile screens, restores
-the session after a reload, and supports logout. The complete stack starts with
-one Docker command. The catalog, course management, enrollment, instructor
-lesson-editing, and student progress percentage endpoints and screens are
-implemented. Students can request the content of an unlocked lesson; the API
-checks their enrollment and sequential progress first. Quiz attempts and the
-remaining student lesson screens are still pending.
+**Estado actual:** la capa de datos y la autenticación están listas. Los modelos
+de Sequelize con MySQL `Usuario`, `Curso`, `Leccion`, `Pregunta`, `Inscripcion`
+y `Progreso`, sus migraciones, el seed de demostración, el registro/inicio de
+sesión con JWT y bcrypt, la validación con Zod, los errores centralizados y el
+middleware de seguridad HTTP funcionan. La aplicación React incluye pantallas de
+inicio de sesión, registro y perfil, restaura la sesión tras una recarga y
+permite cerrar sesión. La pila completa se inicia con un solo comando de Docker.
+Los endpoints y pantallas de catálogo, gestión de cursos, inscripción, edición
+de lecciones del instructor y porcentaje de avance del estudiante están
+implementados. Los estudiantes pueden abrir una lección desbloqueada en el visor
+de lecciones, y el temario del curso muestra los estados completada, disponible
+y bloqueada que devuelve la API; el servidor sigue verificando la inscripción y
+el avance secuencial en cada solicitud de lección. Los intentos de cuestionario
+y las pantallas de resultados siguen pendientes.
 
-## Repository structure
+## Estructura del repositorio
 
-| Directory | Stack and purpose |
+| Directorio | Tecnologías y propósito |
 | --- | --- |
-| [`api/`](api/) | REST API with Node.js, Express, JavaScript ES modules, Sequelize, and MySQL. See [API guidelines](api/AGENTS.md). |
-| [`web/`](web/) | React single-page application with Vite, JavaScript, and JSX. See [frontend guidelines](web/AGENTS.md). |
-| [`docs/`](docs/) | API documentation, including the [Postman collection](docs/postman/MiniAula.postman_collection.json). |
+| [`api/`](api/) | API REST con Node.js, Express, módulos ES de JavaScript, Sequelize y MySQL. Consulta las [guías de la API](api/AGENTS.md). |
+| [`web/`](web/) | Aplicación de una sola página con React, Vite, JavaScript y JSX. Consulta las [guías del frontend](web/AGENTS.md). |
+| [`docs/`](docs/) | Documentación de la API, incluida la [colección de Postman](docs/postman/MiniAula.postman_collection.json). |
 
-## Data model
+## Modelo de datos
 
-| Table | Key fields | Constraints |
+| Tabla | Campos clave | Restricciones |
 | --- | --- | --- |
-| `usuarios` | `nombre`, `email`, `password_hash`, `rol`, `creado_en` | `email` unique. |
-| `cursos` | `titulo`, `descripcion`, `portada`, `categoria`, `nivel`, `estado`, `instructor_id`, `creado_en` | `instructor_id → usuarios.id` (`RESTRICT`). `portada` stores the cover location: `/uploads/portadas/...` for uploaded PNG/JPG/WebP files; demo seed data uses external placeholder URLs. Indexed by `estado`, `categoria`, and `instructor_id`. |
-| `lecciones` | `titulo`, `tipo`, `contenido`, `video_url`, `orden`, `nota_minima`, `curso_id` | `curso_id → cursos.id` (`CASCADE`). Index on `(curso_id, orden)`, not unique, because reordering swaps positions. |
-| `preguntas` | `enunciado`, `opciones` (JSON list), `indice_correcto`, `leccion_id` | `leccion_id → lecciones.id` (`CASCADE`). |
-| `inscripciones` | `estudiante_id`, `curso_id`, `fecha_inscripcion`, `completado` | `(estudiante_id, curso_id)` unique. `curso_id → cursos.id` (`RESTRICT`) so a course with enrollments cannot be deleted. |
-| `progresos` | `inscripcion_id`, `leccion_id`, `completada`, `intentos`, `mejor_nota`, `actualizado_en` | `(inscripcion_id, leccion_id)` unique. `leccion_id → lecciones.id` (`CASCADE`). |
+| `usuarios` | `nombre`, `email`, `password_hash`, `rol`, `creado_en` | `email` único. |
+| `cursos` | `titulo`, `descripcion`, `portada`, `categoria`, `nivel`, `estado`, `instructor_id`, `creado_en` | `instructor_id → usuarios.id` (`RESTRICT`). `portada` almacena la ubicación de la portada: `/uploads/portadas/...` para archivos PNG/JPG/WebP subidos; los datos del seed de demostración usan URL externas de marcador de posición. Indexado por `estado`, `categoria` e `instructor_id`. |
+| `lecciones` | `titulo`, `tipo`, `contenido`, `video_url`, `orden`, `nota_minima`, `curso_id` | `curso_id → cursos.id` (`CASCADE`). Índice en `(curso_id, orden)`, no único, porque el reordenamiento intercambia posiciones. |
+| `preguntas` | `enunciado`, `opciones` (lista JSON), `indice_correcto`, `leccion_id` | `leccion_id → lecciones.id` (`CASCADE`). |
+| `inscripciones` | `estudiante_id`, `curso_id`, `fecha_inscripcion`, `completado` | `(estudiante_id, curso_id)` único. `curso_id → cursos.id` (`RESTRICT`) para que un curso con inscripciones no pueda eliminarse. |
+| `progresos` | `inscripcion_id`, `leccion_id`, `completada`, `intentos`, `mejor_nota`, `actualizado_en` | `(inscripcion_id, leccion_id)` único. `leccion_id → lecciones.id` (`CASCADE`). |
 
-`nivel` accepts `basico`, `intermedio`, or `avanzado`; `estado` accepts
-`borrador`, `publicado`, or `archivado`; `tipo` accepts `contenido` or
-`cuestionario`. A content lesson requires `contenido`, and a quiz requires
-`nota_minima`; both rules are validated by the model.
+`nivel` acepta `basico`, `intermedio` o `avanzado`; `estado` acepta `borrador`,
+`publicado` o `archivado`; `tipo` acepta `contenido` o `cuestionario`. Una
+lección de contenido requiere `contenido` y un cuestionario requiere
+`nota_minima`; el modelo valida ambas reglas.
 
-## How course progress works
+## Cómo funciona el avance del curso
 
-The API unlocks each lesson only after the previous one is complete. If the
-previous lesson is a quiz, the student must pass it to continue (RN-01). A
-student can request a lesson through `GET /api/lecciones/:id`; the API checks
-that the authenticated student is enrolled and that the previous lesson is
-complete or passed before returning the content. A locked lesson returns
-`403 LECCION_BLOQUEADA` without its content, and a student outside the course
-returns `403 NO_INSCRITO`. The public course detail never includes lesson content
-or video links.
+La API desbloquea cada lección solo después de que la anterior esté completa. Si
+la lección anterior es un cuestionario, el estudiante debe aprobarlo para
+continuar (RN-01). Un estudiante puede solicitar una lección mediante
+`GET /api/lecciones/:id`; la API comprueba que el estudiante autenticado esté
+inscrito y que la lección anterior esté completa o aprobada antes de devolver el
+contenido. Una lección bloqueada devuelve `403 LECCION_BLOQUEADA` sin su
+contenido, y un estudiante fuera del curso recibe `403 NO_INSCRITO`. El detalle
+público del curso nunca incluye el contenido de las lecciones ni los enlaces de
+video.
 
-The API grades quizzes without sending correct answers to the browser, limits
-each quiz to three attempts, and keeps the best score. The unlock check already
-reads the stored best grade against the quiz pass mark, so quiz approval can be
-connected without changing this rule. Quiz attempt and grading endpoints are
-still pending.
+La API califica los cuestionarios sin enviar respuestas correctas al navegador,
+limita cada cuestionario a tres intentos y conserva la mejor nota. La
+comprobación de desbloqueo ya lee la mejor nota almacenada contra la nota mínima
+del cuestionario, por lo que la aprobación de cuestionarios puede conectarse sin
+cambiar esta regla. Los endpoints de intento y calificación de cuestionarios
+siguen pendientes.
 
-## Local API development
+## Desarrollo local de la API
 
-Requirements: Node.js 24, npm, and a running MySQL 8 server.
+Requisitos: Node.js 24, npm y un servidor MySQL 8 en ejecución.
 
 ```sh
 cd api
@@ -71,33 +77,34 @@ npm run db:seed
 npm start
 ```
 
-Then open `http://localhost:3000/api/health`. It should return
-`{"status":"ok"}`. This endpoint checks that the API responds; the API itself
-verifies the MySQL connection at startup.
+Luego abre `http://localhost:3000/api/health`. Debe devolver
+`{"status":"ok"}`. Este endpoint comprueba que la API responde; la API verifica
+la conexión con MySQL al iniciar.
 
-Adjust `api/.env` with your local MySQL credentials before starting. `JWT_SECRET`
-must have at least 32 characters. `api/.env` is ignored by Git; only
-`api/.env.example` is committed.
+Ajusta `api/.env` con tus credenciales locales de MySQL antes de iniciar.
+`JWT_SECRET` debe tener al menos 32 caracteres. `api/.env` está ignorado por Git;
+solo se versiona `api/.env.example`.
 
-### Database scripts
+### Scripts de base de datos
 
-| Command | Purpose |
+| Comando | Propósito |
 | --- | --- |
-| `npm run db:migrate` | Apply pending migrations from `api/migrations/`. |
-| `npm run db:migrate:undo` | Revert the latest migration. |
-| `npm run db:seed` | Run pending seeders from `api/seeders/`. |
-| `npm test` | Run unit and integration-style tests that do not need MySQL. |
+| `npm run db:migrate` | Aplicar las migraciones pendientes de `api/migrations/`. |
+| `npm run db:migrate:undo` | Revertir la última migración. |
+| `npm run db:seed` | Ejecutar los seeders pendientes de `api/seeders/`. |
+| `npm test` | Ejecutar pruebas unitarias y de integración que no necesitan MySQL. |
 
-Migrations and seeders run through Umzug and are recorded in the
-`sequelize_meta` and `sequelize_data` tables, so each file runs once.
+Las migraciones y los seeders se ejecutan mediante Umzug y quedan registrados en
+las tablas `sequelize_meta` y `sequelize_data`, de modo que cada archivo se
+ejecuta una sola vez.
 
-### Demo accounts
+### Cuentas de demostración
 
-The seed (automatic on the first Docker start, or `npm run db:seed` locally)
-creates two instructors and three students. All demo accounts use the password
-`Miniaula123!`.
+El seed (automático en el primer inicio con Docker, o con `npm run db:seed` en
+local) crea dos instructores y tres estudiantes. Todas las cuentas de
+demostración usan la contraseña `Miniaula123!`.
 
-| Email | Role |
+| Email | Rol |
 | --- | --- |
 | `ana.instructora@miniaula.test` | instructor |
 | `bruno.instructor@miniaula.test` | instructor |
@@ -105,27 +112,28 @@ creates two instructors and three students. All demo accounts use the password
 | `diego.estudiante@miniaula.test` | estudiante |
 | `elena.estudiante@miniaula.test` | estudiante |
 
-The same seed creates three published courses with five lessons each and at
-least one graded quiz per course:
+El mismo seed crea tres cursos publicados con cinco lecciones cada uno y al
+menos un cuestionario calificado por curso:
 
-| Course | Category | Level | Instructor | Lessons |
+| Curso | Categoría | Nivel | Instructor | Lecciones |
 | --- | --- | --- | --- | --- |
-| Fundamentos de JavaScript | Programación | basico | Ana | 4 content + quiz (pass mark 70) |
-| Diseño de interfaces web | Diseño | intermedio | Bruno | 3 content + quiz (pass mark 60) + 1 content |
-| Inglés técnico para desarrollo | Idiomas | intermedio | Ana | 4 content + quiz (pass mark 60) |
+| Fundamentos de JavaScript | Programación | basico | Ana | 4 de contenido + cuestionario (nota mínima 70) |
+| Diseño de interfaces web | Diseño | intermedio | Bruno | 3 de contenido + cuestionario (nota mínima 60) + 1 de contenido |
+| Inglés técnico para desarrollo | Idiomas | intermedio | Ana | 4 de contenido + cuestionario (nota mínima 60) |
 
-The quiz in "Diseño de interfaces web" sits in the middle of the course so the
-"a quiz must be passed before continuing" rule can be demonstrated.
+El cuestionario de «Diseño de interfaces web» está en medio del curso para poder
+demostrar la regla «hay que aprobar el cuestionario para continuar».
 
-## API response format
+## Formato de respuesta de la API
 
-Every successful single resource returns the resource under its own key:
+Cada recurso individual exitoso devuelve el recurso bajo su propia clave:
 
 ```json
 { "usuario": { "id": 1, "nombre": "Ana Torres", "email": "ana.instructora@miniaula.test", "rol": "instructor", "creadoEn": "2026-11-18T10:00:00.000Z" } }
 ```
 
-Every paginated collection returns the list plus its pagination metadata:
+Cada colección paginada devuelve la lista junto con sus metadatos de
+paginación:
 
 ```json
 {
@@ -134,225 +142,244 @@ Every paginated collection returns the list plus its pagination metadata:
 }
 ```
 
-Use `201` with the created resource, `200` with the resource or collection,
-`204` with an empty body for a successful delete, and `409` for duplicate or
-conflicting state such as a repeated enrollment. Every error keeps the single
-shape below, so the frontend can read `error.message` in any failure:
+Usa `201` con el recurso creado, `200` con el recurso o la colección, `204` con
+cuerpo vacío para una eliminación exitosa y `409` para duplicados o estados en
+conflicto, como una inscripción repetida. Todos los errores mantienen la forma
+única que aparece abajo, para que el frontend pueda leer `error.message` en
+cualquier fallo:
 
 ```json
 { "error": { "code": "VALIDACION", "message": "Los datos enviados no son válidos.", "details": [{ "campo": "email", "mensaje": "El email no es válido." }] } }
 ```
 
-`details` is `null` when there is nothing more to say.
+`details` es `null` cuando no hay nada más que indicar.
 
 
-## Authentication API
+## API de autenticación
 
-| Method and path | Access | Description |
+| Método y ruta | Acceso | Descripción |
 | --- | --- | --- |
-| `POST /api/auth/register` | Public | Create an account with `nombre`, `email`, `password`, and optional `rol` (`estudiante` by default). Returns `201` with `{ usuario, token }`. |
-| `POST /api/auth/login` | Public, rate limited | Sign in with `email` and `password`. Returns `200` with `{ usuario, token }`. |
-| `GET /api/users/me` | Bearer token | Return the authenticated profile. |
-| `PUT /api/users/me` | Bearer token | Update `nombre`, `email`, and/or `password`. |
+| `POST /api/auth/register` | Público | Crear una cuenta con `nombre`, `email`, `password` y `rol` opcional (`estudiante` por defecto). Devuelve `201` con `{ usuario, token }`. |
+| `POST /api/auth/login` | Público, con límite de solicitudes | Iniciar sesión con `email` y `password`. Devuelve `200` con `{ usuario, token }`. |
+| `GET /api/users/me` | Token bearer | Devolver el perfil autenticado. |
+| `PUT /api/users/me` | Token bearer | Actualizar `nombre`, `email` y/o `password`. |
 
-Send the token as `Authorization: Bearer <token>`. Errors always use:
+Envía el token como `Authorization: Bearer <token>`. Los errores siempre usan:
 
 ```json
 { "error": { "code": "VALIDACION", "message": "Los datos enviados no son válidos.", "details": [] } }
 ```
 
-Passwords are hashed with bcrypt and never returned. Protected routes verify the
-JWT signature, issuer, audience, and expiration; role middleware is available
-for instructor-only routes.
+Las contraseñas se almacenan con hash bcrypt y nunca se devuelven. Las rutas
+protegidas verifican la firma, el emisor, la audiencia y la expiración del JWT;
+el middleware de roles está disponible para las rutas exclusivas de instructores.
 
-Sessions are stateless JWTs: logging out discards the token on the client and
-there is no server-side logout endpoint. Changing your password does not revoke
-tokens that were already issued; tokens expire with `JWT_EXPIRES_IN`.
+Las sesiones son JWT sin estado: cerrar sesión descarta el token en el cliente y
+no existe un endpoint de cierre de sesión en el servidor. Cambiar la contraseña
+no revoca los tokens ya emitidos; los tokens expiran según `JWT_EXPIRES_IN`.
 
-## Course management API (instructor)
+## API de gestión de cursos (instructor)
 
-Instructor-only routes require a bearer token whose user has the `instructor`
-role. Every route below works only on the authenticated instructor's own
-courses; another instructor's course returns `403 CURSO_NO_PROPIO`.
+Las rutas exclusivas de instructores requieren un token bearer cuyo usuario
+tenga el rol `instructor`. Todas las rutas de abajo funcionan solo sobre los
+cursos del instructor autenticado; el curso de otro instructor devuelve
+`403 CURSO_NO_PROPIO`.
 
-| Method and path | Description |
+| Método y ruta | Descripción |
 | --- | --- |
-| `GET /api/cursos/mios` | List the authenticated instructor's courses in every state, with `totalLecciones` and `totalInscritos`. Returns `{ cursos }`. |
-| `GET /api/cursos/mios/:id` | Return one own course for editing. Returns `{ curso }`. |
-| `POST /api/cursos` | Create a course with `titulo`, `descripcion`, `categoria`, and optional `nivel`. The server always stores `estado: "borrador"` and the authenticated instructor as owner. Returns `201` with `{ curso }`. |
-| `PUT /api/cursos/:id` | Update `titulo`, `descripcion`, `categoria`, and/or `nivel` of an own course. `estado` and `instructorId` are not editable. Returns `{ curso }`. |
-| `POST /api/cursos/:id/portada` | Upload the course cover as the raw request body (`Content-Type: image/png`, `image/jpeg`, or `image/webp`), maximum 5 MB. The server validates the file signature, stores it under `/uploads/portadas`, replaces the previous image, and returns `{ curso }` with the new `portada`. |
-| `DELETE /api/cursos/:id/portada` | Remove the course cover and its stored file. Returns `{ curso }` with `portada: null`. |
-| `PATCH /api/cursos/:id/publicar` | Publish an own draft. Requires at least one lesson; otherwise returns `409 CURSO_SIN_LECCIONES`. Returns `{ curso }` with `estado: "publicado"`. |
-| `PATCH /api/cursos/:id/archivar` | Archive an own draft or published course. Works even when students are enrolled. Returns `{ curso }` with `estado: "archivado"`. |
-| `DELETE /api/cursos/:id` | Delete an own course only when it has no enrolled students; otherwise returns `409 CURSO_CON_INSCRIPCIONES` and the course must be archived. Returns `204` with no body. |
+| `GET /api/cursos/mios` | Listar los cursos del instructor autenticado en cualquier estado, con `totalLecciones` y `totalInscritos`. Devuelve `{ cursos }`. |
+| `GET /api/cursos/mios/:id` | Devolver un curso propio para editarlo. Devuelve `{ curso }`. |
+| `POST /api/cursos` | Crear un curso con `titulo`, `descripcion`, `categoria` y `nivel` opcional. El servidor siempre guarda `estado: "borrador"` y al instructor autenticado como propietario. Devuelve `201` con `{ curso }`. |
+| `PUT /api/cursos/:id` | Actualizar `titulo`, `descripcion`, `categoria` y/o `nivel` de un curso propio. `estado` e `instructorId` no son editables. Devuelve `{ curso }`. |
+| `POST /api/cursos/:id/portada` | Subir la portada del curso como cuerpo crudo de la solicitud (`Content-Type: image/png`, `image/jpeg` o `image/webp`), máximo 5 MB. El servidor valida la firma del archivo, lo guarda en `/uploads/portadas`, reemplaza la imagen anterior y devuelve `{ curso }` con la nueva `portada`. |
+| `DELETE /api/cursos/:id/portada` | Eliminar la portada del curso y su archivo almacenado. Devuelve `{ curso }` con `portada: null`. |
+| `PATCH /api/cursos/:id/publicar` | Publicar un borrador propio. Requiere al menos una lección; de lo contrario devuelve `409 CURSO_SIN_LECCIONES`. Devuelve `{ curso }` con `estado: "publicado"`. |
+| `PATCH /api/cursos/:id/archivar` | Archivar un curso propio en borrador o publicado. Funciona incluso cuando hay estudiantes inscritos. Devuelve `{ curso }` con `estado: "archivado"`. |
+| `DELETE /api/cursos/:id` | Eliminar un curso propio solo cuando no tiene estudiantes inscritos; de lo contrario devuelve `409 CURSO_CON_INSCRIPCIONES` y el curso debe archivarse. Devuelve `204` sin cuerpo. |
 
-The cover is uploaded from the instructor editor with a file picker. Only PNG,
-JPG/JPEG, and WebP images up to 5 MB are accepted; the API validates the file
-signature instead of trusting the extension. Files are served from
-`/uploads/portadas` and the path is returned in the public catalog, public
-course detail, and instructor course responses. Docker Compose persists the
-uploads volume so covers survive container restarts.
+La portada se sube desde el editor del instructor con un selector de archivos.
+Solo se aceptan imágenes PNG, JPG/JPEG y WebP de hasta 5 MB; la API valida la
+firma del archivo en lugar de confiar en la extensión. Los archivos se sirven
+desde `/uploads/portadas` y la ruta se devuelve en el catálogo público, el
+detalle público del curso y las respuestas de cursos del instructor. Docker
+Compose conserva el volumen de uploads para que las portadas sobrevivan a los
+reinicios de los contenedores.
 
-State transitions are enforced by the backend: `borrador → publicado` only
-after at least one lesson exists, and `borrador|publicado → archivado`.
-Publishing an already published course returns `409 CURSO_YA_PUBLICADO`;
-publishing an archived course or archiving an already archived course returns
-`409 TRANSICION_INVALIDA` / `409 CURSO_YA_ARCHIVADO`. State changes and
-deletion run in a transaction with the course row locked, so a failed rule
-never leaves a partial delete. Archived courses disappear from the public
-catalog because it only lists `publicado` courses.
+Las transiciones de estado las impone el backend: `borrador → publicado` solo
+después de que exista al menos una lección, y `borrador|publicado → archivado`.
+Publicar un curso ya publicado devuelve `409 CURSO_YA_PUBLICADO`; publicar un
+curso archivado o archivar uno ya archivado devuelve `409 TRANSICION_INVALIDA` /
+`409 CURSO_YA_ARCHIVADO`. Los cambios de estado y la eliminación se ejecutan en
+una transacción con la fila del curso bloqueada, de modo que una regla fallida
+nunca deja una eliminación parcial. Los cursos archivados desaparecen del
+catálogo público porque este solo lista cursos `publicado`.
 
-## Lesson management API (instructor)
+## API de gestión de lecciones (instructor)
 
-These routes require a bearer token with the `instructor` role and work only on
-the authenticated instructor's own courses. The course detail used by the
-editor returns the full lesson content; the public course detail keeps hiding it.
+Estas rutas requieren un token bearer con el rol `instructor` y funcionan solo
+sobre los cursos del instructor autenticado. El detalle del curso que usa el
+editor devuelve el contenido completo de las lecciones; el detalle público del
+curso lo sigue ocultando.
 
-| Method and path | Description |
+| Método y ruta | Descripción |
 | --- | --- |
-| `GET /api/cursos/mios/:id` | Return an own course for editing with `{ curso, lecciones }`. Each lesson includes `id`, `titulo`, `tipo`, `contenido`, `videoUrl`, `orden`, `notaMinima`, and `cursoId`. A quiz also includes `preguntas` ordered by `id`, each with `id`, `enunciado`, `opciones`, `indiceCorrecto`, and `leccionId`; the instructor editor needs the correct index. |
-| `POST /api/cursos/:id/lecciones` | Create a content lesson with `titulo`, `contenido`, and optional `videoUrl`. The server stores `tipo: "contenido"`, assigns the next `orden`, and returns `201 { leccion }`. |
-| `PUT /api/lecciones/:id` | Update `titulo`, `contenido`, and/or `videoUrl` of an own content lesson. At least one field is required. Returns `{ leccion }`; a quiz returns `409 LECCION_NO_ES_CONTENIDO`. |
-| `DELETE /api/lecciones/:id` | Delete an own lesson. Returns `204`. Deleting a lesson also removes its questions and student progress through the existing foreign-key cascade. |
-| `PATCH /api/cursos/:id/lecciones/orden` | Reorder an own course with `{ "orden": [lessonId, ...] }`. The list must contain every lesson of the course exactly once; an empty list is valid only when the course has no lessons. The server rewrites `orden` as `1..N` and returns `{ lecciones }`. |
+| `GET /api/cursos/mios/:id` | Devolver un curso propio para editarlo con `{ curso, lecciones }`. Cada lección incluye `id`, `titulo`, `tipo`, `contenido`, `videoUrl`, `orden`, `notaMinima` y `cursoId`. Un cuestionario también incluye `preguntas` ordenadas por `id`, cada una con `id`, `enunciado`, `opciones`, `indiceCorrecto` y `leccionId`; el editor del instructor necesita el índice correcto. |
+| `POST /api/cursos/:id/lecciones` | Crear una lección de contenido con `titulo`, `contenido` y `videoUrl` opcional. El servidor guarda `tipo: "contenido"`, asigna el siguiente `orden` y devuelve `201 { leccion }`. |
+| `PUT /api/lecciones/:id` | Actualizar `titulo`, `contenido` y/o `videoUrl` de una lección de contenido propia. Se requiere al menos un campo. Devuelve `{ leccion }`; un cuestionario devuelve `409 LECCION_NO_ES_CONTENIDO`. |
+| `DELETE /api/lecciones/:id` | Eliminar una lección propia. Devuelve `204`. Eliminar una lección también borra sus preguntas y el progreso del estudiante mediante la cascada de claves foráneas existente. |
+| `PATCH /api/cursos/:id/lecciones/orden` | Reordenar un curso propio con `{ "orden": [lessonId, ...] }`. La lista debe contener todas las lecciones del curso exactamente una vez; una lista vacía es válida solo cuando el curso no tiene lecciones. El servidor reescribe `orden` como `1..N` y devuelve `{ lecciones }`. |
 
-Creating, reordering, and deleting a lesson run inside a transaction with the
-course row locked. A foreign course or lesson returns
-`403 CURSO_NO_PROPIO`, a missing one returns `404`, an invalid body returns
-`422 VALIDACION`, an order that does not match the course lessons returns
-`409 ORDEN_LECCIONES_INVALIDO`, and editing a quiz through the content route
-returns `409 LECCION_NO_ES_CONTENIDO`.
+Crear, reordenar y eliminar una lección se ejecutan dentro de una transacción con
+la fila del curso bloqueada. Un curso o lección ajenos devuelven
+`403 CURSO_NO_PROPIO`, uno inexistente devuelve `404`, un cuerpo inválido
+devuelve `422 VALIDACION`, un orden que no coincide con las lecciones del curso
+devuelve `409 ORDEN_LECCIONES_INVALIDO`, y editar un cuestionario por la ruta de
+contenido devuelve `409 LECCION_NO_ES_CONTENIDO`.
 
-## Quiz question API (instructor)
+## API de preguntas de cuestionario (instructor)
 
-These routes require a bearer token with the `instructor` role and work only on
-the authenticated instructor's own courses. Questions and their options are
-edited together: `opciones` is a JSON list stored on the question row, so there
-are no separate option endpoints. The correct index is returned only to the
-instructor; student-facing endpoints and the public outline never expose it.
+Estas rutas requieren un token bearer con el rol `instructor` y funcionan solo
+sobre los cursos del instructor autenticado. Las preguntas y sus opciones se
+editan juntas: `opciones` es una lista JSON almacenada en la fila de la pregunta,
+por lo que no hay endpoints separados de opciones. El índice correcto se
+devuelve solo al instructor; los endpoints para estudiantes y el temario público
+nunca lo exponen.
 
-| Method and path | Description |
+| Método y ruta | Descripción |
 | --- | --- |
-| `POST /api/lecciones/:id/preguntas` | Create a question in an own quiz with `enunciado`, `opciones` (at least two non-empty strings), and `indiceCorrecto` (zero-based index into `opciones`). Returns `201 { pregunta }`; a content lesson returns `409 LECCION_NO_ES_CUESTIONARIO`. |
-| `PUT /api/preguntas/:id` | Replace `enunciado`, `opciones`, and `indiceCorrecto` of an own question. The three fields are required so the correct index always points to an existing option. Returns `{ pregunta }`. |
-| `DELETE /api/preguntas/:id` | Delete an own question. Returns `204`. |
-| `PATCH /api/lecciones/:id/cuestionario` | Configure the passing grade of an own quiz with `{ "notaMinima": 70 }`, an integer from 1 to 100. Returns `{ leccion }`; a content lesson returns `409 LECCION_NO_ES_CUESTIONARIO`. |
+| `POST /api/lecciones/:id/preguntas` | Crear una pregunta en un cuestionario propio con `enunciado`, `opciones` (al menos dos cadenas no vacías) e `indiceCorrecto` (índice basado en cero dentro de `opciones`). Devuelve `201 { pregunta }`; una lección de contenido devuelve `409 LECCION_NO_ES_CUESTIONARIO`. |
+| `PUT /api/preguntas/:id` | Reemplazar `enunciado`, `opciones` e `indiceCorrecto` de una pregunta propia. Los tres campos son obligatorios para que el índice correcto siempre apunte a una opción existente. Devuelve `{ pregunta }`. |
+| `DELETE /api/preguntas/:id` | Eliminar una pregunta propia. Devuelve `204`. |
+| `PATCH /api/lecciones/:id/cuestionario` | Configurar la nota mínima de un cuestionario propio con `{ "notaMinima": 70 }`, un entero de 1 a 100. Devuelve `{ leccion }`; una lección de contenido devuelve `409 LECCION_NO_ES_CUESTIONARIO`. |
 
-A foreign lesson or question returns `403 CURSO_NO_PROPIO`, a missing one
-returns `404 PREGUNTA_NO_ENCONTRADA` or `404 LECCION_NO_ENCONTRADA`, and an
-invalid body returns `422 VALIDACION` with the standard error envelope. The
-instructor screens use these routes through the "Editar preguntas" action on a
-quiz row: the question editor lists the questions, marks the correct option, and
-saves the passing grade. Quiz attempts and grading are out of this phase.
+Una lección o pregunta ajena devuelve `403 CURSO_NO_PROPIO`, una inexistente
+devuelve `404 PREGUNTA_NO_ENCONTRADA` o `404 LECCION_NO_ENCONTRADA`, y un cuerpo
+inválido devuelve `422 VALIDACION` con el sobre de error estándar. Las pantallas
+del instructor usan estas rutas mediante la acción «Editar preguntas» de una
+fila de cuestionario: el editor de preguntas lista las preguntas, marca la opción
+correcta y guarda la nota mínima. Los intentos y la calificación de cuestionarios
+quedan fuera de esta fase.
 
-## Student enrollment, lesson access, and progress API
+## API de inscripción, acceso a lecciones y progreso del estudiante
 
-These routes require a bearer token with the `estudiante` role. A student only
-receives their own enrollments, progress, and grades (RN-08); the student id
-always comes from the session, never from the query string or body.
+Estas rutas requieren un token bearer con el rol `estudiante`. Un estudiante solo
+recibe sus propias inscripciones, progreso y notas (RN-08); el id del estudiante
+siempre proviene de la sesión, nunca de la cadena de consulta ni del cuerpo.
 
-| Method and path | Description |
+| Método y ruta | Descripción |
 | --- | --- |
-| `GET /api/inscripciones/mias` | List the authenticated student's enrollments. Each item includes the enrollment fields, the public course summary, `porcentajeAvance`, `leccionesCompletadas`, and `totalLecciones`. |
-| `GET /api/lecciones/:id` | Return an unlocked lesson as `{ leccion }`. A content lesson includes `contenido`, `videoUrl`, `notaMinima`, and `cursoId`. The student must be enrolled (`403 NO_INSCRITO`) and the previous lesson must be complete, or the previous quiz passed with `mejorNota >= notaMinima` (`403 LECCION_BLOQUEADA`). A missing lesson returns `404 LECCION_NO_ENCONTRADA`. Quiz questions and correct answers are not returned by this route. |
+| `GET /api/inscripciones/mias` | Listar las inscripciones del estudiante autenticado. Cada elemento incluye los campos de la inscripción, el resumen público del curso, `porcentajeAvance`, `leccionesCompletadas` y `totalLecciones`. |
+| `GET /api/cursos/:id/temario` | Devolver el temario del curso para el estudiante inscrito como `{ curso, inscripcion, temario, porcentajeAvance, leccionesCompletadas, totalLecciones }`. Cada elemento del temario incluye `id`, `titulo`, `tipo`, `orden`, `notaMinima` y `estado` (`completada`, `disponible` o `bloqueada`). Un estudiante fuera del curso recibe `403 NO_INSCRITO`, y el temario nunca incluye el contenido de las lecciones ni enlaces de video. |
+| `GET /api/lecciones/:id` | Devolver una lección desbloqueada como `{ leccion }`. Una lección de contenido incluye `contenido`, `videoUrl`, `notaMinima` y `cursoId`. El estudiante debe estar inscrito (`403 NO_INSCRITO`) y la lección anterior debe estar completa, o el cuestionario anterior aprobado con `mejorNota >= notaMinima` (`403 LECCION_BLOQUEADA`). Una lección inexistente devuelve `404 LECCION_NO_ENCONTRADA`. Esta ruta no devuelve las preguntas ni las respuestas correctas del cuestionario. |
 
-The percentage uses every lesson of the course as the denominator. Content
-lessons count when their progress row has `completada: true`; quizzes count when
-their stored best grade reaches `nota_minima`, matching the lesson-unlock rule.
-The result is rounded to a whole number. A course without lessons returns `0`
-instead of dividing by zero. The "Mis cursos" screen shows the percentage and
-progress bar for each enrollment.
+El porcentaje usa todas las lecciones del curso como denominador. Las lecciones
+de contenido cuentan cuando su fila de progreso tiene `completada: true`; los
+cuestionarios cuentan cuando su mejor nota almacenada alcanza `nota_minima`,
+igual que la regla de desbloqueo de lecciones. El resultado se redondea a un
+número entero. Un curso sin lecciones devuelve `0` en lugar de dividir entre cero.
+La pantalla «Mis cursos» muestra el porcentaje y la barra de progreso de cada
+inscripción.
 
-## Frontend authentication
+## Autenticación del frontend
 
-| Route | Access | Screen |
+| Ruta | Acceso | Pantalla |
 | --- | --- | --- |
-| `/login` | Public | Sign in with email and password. |
-| `/registro` | Public | Create a student or instructor account. |
-| `/perfil` | Bearer token | Read and update name, email, and password; logout. |
+| `/login` | Público | Iniciar sesión con email y contraseña. |
+| `/registro` | Público | Crear una cuenta de estudiante o instructor. |
+| `/perfil` | Token bearer | Leer y actualizar nombre, email y contraseña; cerrar sesión. |
 
-The SPA keeps `{ token, usuario }` in `localStorage` under
-`miniaula.session.v1`, so the session survives a page reload. One configured
-fetch client (`web/src/config/http.js`) reads `VITE_API_URL`, attaches the
-bearer token, normalizes the `{ error: { code, message, details } }` envelope,
-and clears the session on an authenticated `401`. Logout discards the stored
-token and returns to `/login`, matching the stateless JWT behavior described
-above. Passwords, tokens, and API responses are never logged.
+La ruta de lección del estudiante `/cursos/:cursoId/lecciones/:leccionId` requiere
+un estudiante autenticado. Solo renderiza la lección cuando
+`GET /api/lecciones/:id` devuelve su contenido; un `403 LECCION_BLOQUEADA` o un
+`403 NO_INSCRITO` muestra el estado bloqueado y el temario informado por
+`GET /api/cursos/:id/temario` sin revelar contenido.
 
-## Postman collection
+La SPA guarda `{ token, usuario }` en `localStorage` bajo
+`miniaula.session.v1`, por lo que la sesión sobrevive a una recarga de página. Un
+cliente fetch configurado (`web/src/config/http.js`) lee `VITE_API_URL`, adjunta
+el token bearer, normaliza el sobre `{ error: { code, message, details } }` y
+borra la sesión ante un `401` autenticado. Cerrar sesión descarta el token
+almacenado y vuelve a `/login`, en línea con el comportamiento JWT sin estado
+descrito arriba. Las contraseñas, los tokens y las respuestas de la API nunca se
+registran en logs.
+
+## Colección de Postman
 
 [`docs/postman/MiniAula.postman_collection.json`](docs/postman/MiniAula.postman_collection.json)
-tests the implemented API: health, registration, login, profile, validation, and
-instructor lesson management. It captures tokens and course/lesson IDs
-automatically and asserts the status code and error code of each case.
+prueba la API implementada: health, registro, inicio de sesión, perfil,
+validación y gestión de lecciones del instructor. Captura automáticamente tokens
+e IDs de cursos/lecciones y comprueba el código de estado y el código de error de
+cada caso.
 
-1. Start the stack with `docker compose up --build` (or the local API).
-2. In Postman, choose **Import** and select the collection file.
-3. Run the whole collection with **Run** in the Collection Runner; requests are
-   ordered and share the collection variables.
+1. Inicia la pila con `docker compose up --build` (o la API local).
+2. En Postman, elige **Import** y selecciona el archivo de la colección.
+3. Ejecuta toda la colección con **Run** en el Collection Runner; las solicitudes
+   están ordenadas y comparten las variables de la colección.
 
-`baseUrl` defaults to `http://localhost:3000/api`; change it in the collection
-variables to test another host. Registration requests use `{{$timestamp}}`, so
-each run creates fresh accounts. Rate limits apply (registration: 5 per hour;
-login: 10 per 15 minutes); `docker compose restart api` clears the in-memory
-counters. The lesson folder uses the seeded instructors, creates a temporary
-lesson, restores the course order, and deletes that lesson at the end. Requests
-for course CRUD, enrollments, progress, and the instructor dashboard will be
-added later.
+`baseUrl` usa `http://localhost:3000/api` por defecto; cámbialo en las variables
+de la colección para probar otro host. Las solicitudes de registro usan
+`{{$timestamp}}`, por lo que cada ejecución crea cuentas nuevas. Se aplican
+límites de tasa (registro: 5 por hora; inicio de sesión: 10 por 15 minutos);
+`docker compose restart api` limpia los contadores en memoria. La carpeta de
+lecciones usa los instructores del seed, crea una lección temporal, restaura el
+orden del curso y elimina esa lección al final. Las solicitudes para el CRUD de
+cursos, inscripciones, progreso y el panel del instructor se agregarán más
+adelante.
 
-## Full stack with Docker
+## Pila completa con Docker
 
-Requirements: Docker with Compose v2. Nothing else is installed on the host.
-The stack is defined in `docker-compose.yml` at the repository root.
+Requisitos: Docker con Compose v2. No se instala nada más en el host. La pila se
+define en `docker-compose.yml` en la raíz del repositorio.
 
-From the repository root:
+Desde la raíz del repositorio:
 
 ```sh
 docker compose up --build
 ```
 
-The command builds the API and the frontend, starts MySQL, waits for it to be
-healthy, applies pending migrations, runs pending seeders, and then starts the
-API. The first start takes a couple of minutes; later starts reuse the images
-and the database volume. When it finishes booting:
+El comando construye la API y el frontend, inicia MySQL, espera a que esté
+saludable, aplica las migraciones pendientes, ejecuta los seeders pendientes y
+luego inicia la API. El primer inicio tarda un par de minutos; los siguientes
+reutilizan las imágenes y el volumen de la base de datos. Cuando termina de
+arrancar:
 
 - Frontend: `http://localhost:8080`
-- API health: `http://localhost:3000/api/health`
-- Demo accounts: see [Demo accounts](#demo-accounts). The seed runs
-  automatically the first time the database is created.
+- Estado de la API: `http://localhost:3000/api/health`
+- Cuentas de demostración: consulta [Cuentas de demostración](#cuentas-de-demostración).
+  El seed se ejecuta automáticamente la primera vez que se crea la base de datos.
 
-| Service | Container | Notes |
+| Servicio | Contenedor | Notas |
 | --- | --- | --- |
-| `api` | Node.js 24 + Express | Own `api/Dockerfile`; prepares the schema and seed before listening. |
-| `web` | Multi-stage Vite build served by Nginx | Own `web/Dockerfile`; SPA fallback for React Router. |
-| `mysql` | MySQL 8.4 | Data persists in the `mysql_data` volume. |
+| `api` | Node.js 24 + Express | `Dockerfile` propio en `api/Dockerfile`; prepara el esquema y el seed antes de escuchar. |
+| `web` | Compilación multi-etapa de Vite servida por Nginx | `Dockerfile` propio en `web/Dockerfile`; fallback de SPA para React Router. |
+| `mysql` | MySQL 8.4 | Los datos persisten en el volumen `mysql_data`. |
 
-Useful commands:
+Comandos útiles:
 
-| Command | Purpose |
+| Comando | Propósito |
 | --- | --- |
-| `docker compose up --build -d` | Run in the background. |
-| `docker compose logs -f api` | Follow API logs, including the startup migration and seed counts. |
-| `docker compose down` | Stop the stack and keep the database volume. |
-| `docker compose down -v` | Stop the stack and delete the database, so the next start is truly from zero. |
-| `docker compose run --rm api npm run db:migrate` | Run migrations manually. |
-| `docker compose run --rm api npm run db:seed` | Run pending seeders manually (already covered by startup). |
+| `docker compose up --build -d` | Ejecutar en segundo plano. |
+| `docker compose logs -f api` | Seguir los logs de la API, incluidos la migración de inicio y los conteos del seed. |
+| `docker compose down` | Detener la pila y conservar el volumen de la base de datos. |
+| `docker compose down -v` | Detener la pila y eliminar la base de datos, para que el siguiente inicio sea realmente desde cero. |
+| `docker compose run --rm api npm run db:migrate` | Ejecutar las migraciones manualmente. |
+| `docker compose run --rm api npm run db:seed` | Ejecutar manualmente los seeders pendientes (ya cubiertos por el arranque). |
 
-Compose has local-only defaults so the one-command start works without a
-`.env`. To change ports, credentials, the JWT secret, or the API URL:
+Compose tiene valores por defecto solo locales para que el inicio con un comando
+funcione sin un `.env`. Para cambiar puertos, credenciales, el secreto JWT o la
+URL de la API:
 
 ```sh
 cp .env.example .env
 ```
 
-`VITE_API_URL` is baked into the frontend at build time. If you change
-`API_PORT`, set `VITE_API_URL` to match and rebuild the frontend
-(`docker compose build web`). The defaults and secrets in `docker-compose.yml`
-are for local development only; override them in `.env` for any shared
-environment.
+`VITE_API_URL` se incrusta en el frontend en tiempo de compilación. Si cambias
+`API_PORT`, ajusta `VITE_API_URL` para que coincida y recompila el frontend
+(`docker compose build web`). Los valores por defecto y secretos de
+`docker-compose.yml` son solo para desarrollo local; sobreescríbelos en `.env`
+para cualquier entorno compartido.
 
-### Frontend local development
+### Desarrollo local del frontend
 
 ```sh
 cd web
@@ -361,19 +388,20 @@ npm ci
 npm run dev
 ```
 
-`VITE_API_URL` must point to the running API. Use `npm run build` to check the
-production build and `npm test` for the authentication client, session restore,
-and route rendering tests.
+`VITE_API_URL` debe apuntar a la API en ejecución. Usa `npm run build` para
+comprobar la compilación de producción y `npm test` para las pruebas del cliente
+de autenticación, la restauración de sesión y el renderizado de rutas.
 
-## Configuration and security
+## Configuración y seguridad
 
-- Copy `.env.example` to `.env` at the repository root for Compose, or
-  `api/.env.example` to `api/.env` for a local API process.
-- Helmet sets security headers, CORS allows only `CORS_ORIGIN` origins, login is
-  rate limited by `LOGIN_RATE_WINDOW_MINUTES` and `LOGIN_RATE_MAX`, and
-  registration by `REGISTER_RATE_WINDOW_MINUTES` and `REGISTER_RATE_MAX`.
-- Request logging uses Morgan (disabled during tests).
-- Validation uses Zod for bodies, route parameters, and query strings; handlers
-  read the parsed values from `request.validated`.
-- Centralized error handling returns `{ error: { code, message, details } }` and
-  never leaks internal error messages for unexpected failures.
+- Copia `.env.example` a `.env` en la raíz del repositorio para Compose, o
+  `api/.env.example` a `api/.env` para un proceso local de la API.
+- Helmet establece cabeceras de seguridad, CORS solo permite los orígenes de
+  `CORS_ORIGIN`, el inicio de sesión está limitado por
+  `LOGIN_RATE_WINDOW_MINUTES` y `LOGIN_RATE_MAX`, y el registro por
+  `REGISTER_RATE_WINDOW_MINUTES` y `REGISTER_RATE_MAX`.
+- El registro de solicitudes usa Morgan (deshabilitado durante las pruebas).
+- La validación usa Zod para cuerpos, parámetros de ruta y cadenas de consulta;
+  los handlers leen los valores analizados desde `request.validated`.
+- El manejo centralizado de errores devuelve `{ error: { code, message, details } }`
+  y nunca filtra mensajes internos en fallos inesperados.

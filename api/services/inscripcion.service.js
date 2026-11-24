@@ -7,12 +7,19 @@ import {
   Usuario,
   sequelize,
 } from '../models/index.js';
-import { toPublicCurso } from './curso.service.js';
-import { calcularAvanceCurso } from './progreso.service.js';
+import { toPublicCurso, toTemarioItem } from './curso.service.js';
+import { calcularAvanceCurso, leccionAprobada } from './progreso.service.js';
 import { AppError } from '../utils/errors.js';
 
 const ATRIBUTOS_INSTRUCTOR = ['id', 'nombre'];
-const ATRIBUTOS_LECCION_AVANCE = ['id', 'cursoId', 'tipo', 'notaMinima'];
+const ATRIBUTOS_LECCION_AVANCE = [
+  'id',
+  'cursoId',
+  'titulo',
+  'tipo',
+  'orden',
+  'notaMinima',
+];
 const ATRIBUTOS_PROGRESO_AVANCE = [
   'inscripcionId',
   'leccionId',
@@ -67,6 +74,86 @@ export function toInscripcionConAvance(inscripcion, lecciones, progresos) {
     completado,
     ...calcularAvanceCurso(lecciones, progresos),
     curso: inscripcion.curso ? toPublicCurso(inscripcion.curso) : null,
+  };
+}
+
+function progresoDeLeccion(progresosPorLeccion, leccion) {
+  return progresosPorLeccion.get(Number(leccion.id)) ?? null;
+}
+
+// El estado del temario refleja exactamente la regla de desbloqueo del
+// servidor: una lección se abre cuando la inmediatamente anterior está
+// completada o, si es un cuestionario, aprobada con la nota mínima.
+function estadoDeLeccion(leccion, indice, lecciones, progresosPorLeccion) {
+  const progreso = progresoDeLeccion(progresosPorLeccion, leccion);
+
+  if (leccionAprobada(leccion, progreso)) {
+    return 'completada';
+  }
+
+  if (indice === 0) {
+    return 'disponible';
+  }
+
+  const anterior = lecciones[indice - 1];
+  const progresoAnterior = progresoDeLeccion(progresosPorLeccion, anterior);
+
+  return leccionAprobada(anterior, progresoAnterior) ? 'disponible' : 'bloqueada';
+}
+
+export function construirTemarioEstudiante(lecciones, progresos) {
+  const progresosPorLeccion = new Map(
+    progresos.map((progreso) => [Number(progreso.leccionId), progreso]),
+  );
+
+  return lecciones.map((leccion, indice) => ({
+    ...toTemarioItem(leccion),
+    estado: estadoDeLeccion(leccion, indice, lecciones, progresosPorLeccion),
+  }));
+}
+
+export async function obtenerTemarioEstudiante(estudianteId, cursoId) {
+  const curso = await Curso.findByPk(cursoId, {
+    include: [{
+      model: Usuario,
+      as: 'instructor',
+      attributes: ATRIBUTOS_INSTRUCTOR,
+    }],
+  });
+
+  if (!curso) {
+    throw new AppError(404, 'CURSO_NO_ENCONTRADO', 'El curso no existe.');
+  }
+
+  const inscripcion = await Inscripcion.findOne({
+    where: { estudianteId, cursoId },
+  });
+
+  if (!inscripcion) {
+    throw new AppError(
+      403,
+      'NO_INSCRITO',
+      'Debes estar inscrito en el curso para consultar su temario.',
+    );
+  }
+
+  const [lecciones, progresos] = await Promise.all([
+    Leccion.findAll({
+      where: { cursoId },
+      attributes: ATRIBUTOS_LECCION_AVANCE,
+      order: [['orden', 'ASC'], ['id', 'ASC']],
+    }),
+    Progreso.findAll({
+      where: { inscripcionId: inscripcion.id },
+      attributes: ATRIBUTOS_PROGRESO_AVANCE,
+    }),
+  ]);
+
+  return {
+    curso: toPublicCurso(curso),
+    inscripcion: toInscripcion(inscripcion),
+    temario: construirTemarioEstudiante(lecciones, progresos),
+    ...calcularAvanceCurso(lecciones, progresos),
   };
 }
 

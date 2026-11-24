@@ -1,5 +1,15 @@
 import { apiRequest } from '../config/http.js';
 
+export function obtenerLeccion(id) {
+  return apiRequest(`/lecciones/${encodeURIComponent(id)}`, { auth: true });
+}
+
+export function obtenerTemarioEstudiante(cursoId) {
+  return apiRequest(`/cursos/${encodeURIComponent(cursoId)}/temario`, {
+    auth: true,
+  });
+}
+
 export function crearLeccion(cursoId, body) {
   return apiRequest(`/cursos/${encodeURIComponent(cursoId)}/lecciones`, {
     auth: true,
