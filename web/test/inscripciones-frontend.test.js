@@ -7,6 +7,7 @@ import {
   inscribirCurso,
   listarMisInscripciones,
   normalizarInscripciones,
+  porcentajeAvanceInscripcion,
 } from '../src/services/inscripcion.service.js';
 
 test('enrolling uses the published course endpoint with the student session', async (t) => {
@@ -67,6 +68,15 @@ test('the student courses screen calls the documented enrollment listing with au
 
   assert.deepEqual(call, ['/inscripciones/mias', 'GET', 'Bearer student-token']);
   assert.deepEqual(data.inscripciones, []);
+});
+
+test('progress percentages are safe for the UI and clamped to 0-100', () => {
+  assert.equal(porcentajeAvanceInscripcion({ porcentajeAvance: 60 }), 60);
+  assert.equal(porcentajeAvanceInscripcion({ porcentajeAvance: '33.4' }), 33);
+  assert.equal(porcentajeAvanceInscripcion({ porcentajeAvance: 150 }), 100);
+  assert.equal(porcentajeAvanceInscripcion({ porcentajeAvance: -10 }), 0);
+  assert.equal(porcentajeAvanceInscripcion({}), 0);
+  assert.equal(porcentajeAvanceInscripcion(null), 0);
 });
 
 test('the listing is normalized and the current course enrollment is detected', () => {

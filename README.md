@@ -11,9 +11,9 @@ with MySQL models `Usuario`, `Curso`, `Leccion`, `Pregunta`, `Inscripcion`, and
 bcrypt, Zod validation, centralized errors, and HTTP security middleware all
 work. The React app includes login, registration, and profile screens, restores
 the session after a reload, and supports logout. The complete stack starts with
-one Docker command. The catalog, course management, enrollment, and instructor
-lesson-editing endpoints and screens are implemented. Quiz, progress, and the
-remaining student lesson screens are still pending.
+one Docker command. The catalog, course management, enrollment, instructor
+lesson-editing, and student progress percentage endpoints and screens are
+implemented. Quizzes and the remaining student lesson screens are still pending.
 
 ## Repository structure
 
@@ -211,6 +211,23 @@ course row locked. A foreign course or lesson returns
 `422 VALIDACION`, an order that does not match the course lessons returns
 `409 ORDEN_LECCIONES_INVALIDO`, and editing a quiz through the content route
 returns `409 LECCION_NO_ES_CONTENIDO`.
+
+## Student enrollment and progress API
+
+These routes require a bearer token with the `estudiante` role. A student only
+receives their own enrollments, progress, and grades (RN-08); the student id
+always comes from the session, never from the query string or body.
+
+| Method and path | Description |
+| --- | --- |
+| `GET /api/inscripciones/mias` | List the authenticated student's enrollments. Each item includes the enrollment fields, the public course summary, `porcentajeAvance`, `leccionesCompletadas`, and `totalLecciones`. |
+
+The percentage uses every lesson of the course as the denominator. Content
+lessons count when their progress row has `completada: true`; quizzes count when
+their stored best grade reaches `nota_minima`, matching the lesson-unlock rule.
+The result is rounded to a whole number. A course without lessons returns `0`
+instead of dividing by zero. The "Mis cursos" screen shows the percentage and
+progress bar for each enrollment.
 
 ## Frontend authentication
 

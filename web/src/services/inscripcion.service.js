@@ -51,3 +51,13 @@ export function estaInscritoEn(inscripciones, cursoId) {
     (inscripcion) => String(inscripcion.cursoId ?? inscripcion.curso?.id) === String(cursoId),
   );
 }
+
+export function porcentajeAvanceInscripcion(inscripcion) {
+  const porcentaje = Number(inscripcion?.porcentajeAvance);
+
+  if (!Number.isFinite(porcentaje)) {
+    return 0;
+  }
+
+  return Math.min(100, Math.max(0, Math.round(porcentaje)));
+}
