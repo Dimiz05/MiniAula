@@ -10,6 +10,7 @@ import RegisterPage from '../pages/auth/RegisterPage.jsx';
 import CourseEditorPage from '../pages/instructor/CourseEditorPage.jsx';
 import MyCoursesPage from '../pages/instructor/MyCoursesPage.jsx';
 import DashboardPage from '../pages/student/DashboardPage.jsx';
+import LessonPage from '../pages/student/LessonPage.jsx';
 import StudentMyCoursesPage from '../pages/student/MyCoursesPage.jsx';
 import { GuestOnly, RequireAuth, RequireInstructor, RequireStudent } from './guards.jsx';
 
@@ -31,6 +32,10 @@ export default function AppRoutes() {
           <Route element={<RequireStudent />}>
             <Route path="panel" element={<DashboardPage />} />
             <Route path="mis-cursos" element={<StudentMyCoursesPage />} />
+            <Route
+              path="cursos/:cursoId/lecciones/:leccionId"
+              element={<LessonPage />}
+            />
           </Route>
           <Route element={<RequireInstructor />}>
             <Route path="instructor/cursos" element={<MyCoursesPage />} />

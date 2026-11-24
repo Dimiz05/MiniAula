@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import Alert from '../components/Alert.jsx';
 import Button from '../components/Button.jsx';
 import CourseCover from '../components/CourseCover.jsx';
 import Icon from '../components/Icon.jsx';
+import LessonOutline from '../components/LessonOutline.jsx';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { obtenerCurso } from '../services/curso.service.js';
 import {
@@ -12,7 +13,9 @@ import {
   inscribirCurso,
   listarMisInscripciones,
 } from '../services/inscripcion.service.js';
+import { obtenerTemarioEstudiante } from '../services/leccion.service.js';
 import { getInitials } from '../utils/initials.js';
+import { rutaLeccion, siguienteLeccion } from '../utils/lessonState.js';
 
 function nivelLabel(nivel) {
   const labels = {
@@ -33,6 +36,10 @@ export default function CourseDetailPage() {
   const [inscrito, setInscrito] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
   const [notice, setNotice] = useState(null);
+  const [conEstados, setConEstados] = useState(false);
+  const [avance, setAvance] = useState(null);
+  const [cargandoTemario, setCargandoTemario] = useState(false);
+  const conEstadosRef = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -46,7 +53,11 @@ export default function CourseDetailPage() {
           return;
         }
         setCurso(data?.curso ?? null);
-        setTemario(Array.isArray(data?.temario) ? data.temario : []);
+        // The student outline endpoint may have already replaced the public
+        // preview with API states; a late public response must not erase them.
+        if (!conEstadosRef.current) {
+          setTemario(Array.isArray(data?.temario) ? data.temario : []);
+        }
       })
       .catch((err) => {
         if (active) {
@@ -71,6 +82,9 @@ export default function CourseDetailPage() {
 
     let active = true;
     setInscrito(false);
+    setConEstados(false);
+    conEstadosRef.current = false;
+    setAvance(null);
 
     // The enrollment is confirmed by the server. If the listing endpoint is
     // unavailable, the detail page still offers the enrollment action.
@@ -88,6 +102,55 @@ export default function CourseDetailPage() {
       active = false;
     };
   }, [id, usuario?.rol]);
+
+  useEffect(() => {
+    if (!inscrito || usuario?.rol !== 'estudiante' || !id) {
+      return undefined;
+    }
+
+    let active = true;
+
+    setCargandoTemario(true);
+
+    // The outline states come from the server. The public preview is replaced
+    // only when the API confirms the enrollment and returns each lesson state.
+    obtenerTemarioEstudiante(id)
+      .then((data) => {
+        if (!active) {
+          return;
+        }
+
+        if (data?.curso) {
+          setCurso(data.curso);
+        }
+        if (Array.isArray(data?.temario)) {
+          conEstadosRef.current = true;
+          setTemario(data.temario);
+          setConEstados(true);
+        }
+        setAvance({
+          porcentajeAvance: Number(data?.porcentajeAvance) || 0,
+          leccionesCompletadas: Number(data?.leccionesCompletadas) || 0,
+          totalLecciones: Number(data?.totalLecciones) || 0,
+        });
+      })
+      .catch(() => {
+        if (active) {
+          conEstadosRef.current = false;
+          setConEstados(false);
+          setAvance(null);
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setCargandoTemario(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id, inscrito, usuario?.rol]);
 
   async function handleInscribir() {
     if (enrolling || inscrito) {
@@ -126,6 +189,7 @@ export default function CourseDetailPage() {
   }
 
   const puedeInscribirse = isAuthenticated && usuario?.rol === 'estudiante';
+  const siguiente = conEstados ? siguienteLeccion(temario) : null;
 
   function renderInscripcionCta() {
     if (inscrito) {
@@ -135,6 +199,11 @@ export default function CourseDetailPage() {
             <Icon name="check_circle" filled className="text-[18px]" />
             Ya estás inscrito
           </span>
+          {siguiente && (
+            <Link to={rutaLeccion(id, siguiente.id)} className="inline-flex">
+              <Button icon="play_arrow">Continuar curso</Button>
+            </Link>
+          )}
           <Link to="/mis-cursos" className="inline-flex">
             <Button variant="secondary" icon="arrow_forward">
               Ir a mis cursos
@@ -267,7 +336,7 @@ export default function CourseDetailPage() {
                   </span>
                   <span className="inline-flex items-center gap-1.5">
                     <Icon name="lock_open" className="text-[20px] text-primary" />
-                    Acceso al inscribirte
+                    {inscrito ? 'Acceso secuencial activo' : 'Acceso al inscribirte'}
                   </span>
                 </div>
 
@@ -291,26 +360,46 @@ export default function CourseDetailPage() {
             </CourseCover>
           </section>
 
-          <section className="flex items-start gap-3 rounded-panel border border-warning/40 bg-warning-light p-4">
-            <Icon name="info" className="mt-0.5 text-[24px] text-secondary" />
-            <div>
-              <h2 className="text-label-md font-bold text-secondary">
-                Vista previa del temario
-              </h2>
-              <p className="text-body-sm text-secondary">
-                Estás visualizando el temario estructurado del curso. Los
-                contenidos interactivos y las evaluaciones se desbloquean en
-                estricto orden secuencial cuando confirmes tu inscripción.
-              </p>
-            </div>
-          </section>
+          {inscrito ? (
+            <section className="flex items-start gap-3 rounded-panel border border-primary/20 bg-primary/5 p-4">
+              <Icon name="verified_user" className="mt-0.5 text-[24px] text-primary" />
+              <div>
+                <h2 className="text-label-md font-bold text-secondary">
+                  Tu avance lo valida el servidor
+                </h2>
+                <p className="text-body-sm text-on-surface-variant">
+                  Los estados completada, disponible y bloqueada provienen de la
+                  API. Las lecciones bloqueadas no permiten abrir su contenido,
+                  incluso si escribes la dirección directamente.
+                </p>
+              </div>
+            </section>
+          ) : (
+            <section className="flex items-start gap-3 rounded-panel border border-warning/40 bg-warning-light p-4">
+              <Icon name="info" className="mt-0.5 text-[24px] text-secondary" />
+              <div>
+                <h2 className="text-label-md font-bold text-secondary">
+                  Vista previa del temario
+                </h2>
+                <p className="text-body-sm text-secondary">
+                  Estás visualizando el temario estructurado del curso. Los
+                  contenidos interactivos y las evaluaciones se desbloquean en
+                  estricto orden secuencial cuando confirmes tu inscripción.
+                </p>
+              </div>
+            </section>
+          )}
 
           <section className="rounded-panel border border-outline bg-surface p-6 shadow-card md:p-8">
             <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <h2 className="text-headline-sm text-secondary">Temario del curso</h2>
                 <p className="text-body-sm text-on-surface-variant">
-                  {temario.length} {temario.length === 1 ? 'lección secuencial' : 'lecciones secuenciales'} para este curso.
+                  {conEstados
+                    ? `${avance?.leccionesCompletadas ?? 0} de ${temario.length} completadas`
+                    : cargandoTemario
+                      ? 'Cargando tu avance…'
+                      : `${temario.length} ${temario.length === 1 ? 'lección secuencial' : 'lecciones secuenciales'} para este curso.`}
                 </p>
               </div>
               <span className="text-label-sm font-semibold text-primary">
@@ -327,68 +416,11 @@ export default function CourseDetailPage() {
                 Este curso todavía no tiene lecciones publicadas.
               </p>
             ) : (
-              <ol className="space-y-3">
-                {temario.map((leccion, index) => {
-                  const esCuestionario = leccion.tipo === 'cuestionario';
-
-                  return (
-                    <li
-                      key={leccion.id}
-                      className={`flex flex-wrap items-center justify-between gap-3 rounded-control border p-4 ${
-                        index === 0
-                          ? 'border-outline bg-surface-variant/40'
-                          : 'border-outline bg-surface'
-                      }`}
-                    >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <span
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-label-sm font-bold ${
-                            esCuestionario
-                              ? 'bg-warning-light text-secondary'
-                              : index === 0
-                                ? 'bg-primary/10 text-primary'
-                                : 'bg-surface-variant text-secondary'
-                          }`}
-                        >
-                          {index + 1}
-                        </span>
-                        <div className="min-w-0">
-                          <h3 className="text-label-md font-semibold text-secondary">
-                            {leccion.titulo}
-                          </h3>
-                          <span className="mt-0.5 flex items-center gap-1 text-label-sm text-on-surface-variant">
-                            <Icon
-                              name={esCuestionario ? 'quiz' : 'article'}
-                              className="text-[16px]"
-                            />
-                            {esCuestionario
-                              ? `Cuestionario · nota mínima ${leccion.notaMinima ?? 0}`
-                              : 'Lección de contenido'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <span
-                        className={`inline-flex items-center gap-1 text-label-sm ${
-                          index === 0
-                            ? 'font-semibold text-secondary'
-                            : 'text-on-surface-variant'
-                        }`}
-                      >
-                        <Icon
-                          name={index === 0 ? 'lock_open' : 'lock'}
-                          className={`text-[18px] ${index === 0 ? 'text-primary' : ''}`}
-                        />
-                        {index === 0
-                          ? 'Disponible al inscribirte'
-                          : esCuestionario
-                            ? 'Requiere completar las lecciones'
-                            : 'Bloqueado secuencialmente'}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ol>
+              <LessonOutline
+                lecciones={temario}
+                cursoId={id}
+                conEstados={conEstados}
+              />
             )}
 
             <div className="mt-8 border-t border-outline pt-6 text-center">

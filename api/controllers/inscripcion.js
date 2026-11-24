@@ -1,6 +1,7 @@
 import {
   inscribirEstudiante,
   listarInscripcionesEstudiante,
+  obtenerTemarioEstudiante,
 } from '../services/inscripcion.service.js';
 
 export async function inscribir(request, response) {
@@ -14,4 +15,12 @@ export async function inscribir(request, response) {
 export async function listarMias(request, response) {
   const inscripciones = await listarInscripcionesEstudiante(request.usuario.id);
   response.status(200).json({ inscripciones });
+}
+
+export async function obtenerTemario(request, response) {
+  const resultado = await obtenerTemarioEstudiante(
+    request.usuario.id,
+    request.validated.params.id,
+  );
+  response.status(200).json(resultado);
 }

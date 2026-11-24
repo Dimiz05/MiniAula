@@ -10,7 +10,7 @@ import {
   misCursos,
   publicar,
 } from '../controllers/curso.js';
-import { inscribir } from '../controllers/inscripcion.js';
+import { inscribir, obtenerTemario } from '../controllers/inscripcion.js';
 import {
   crear as crearLeccion,
   reordenar as reordenarLecciones,
@@ -49,6 +49,13 @@ router.post(
   authorize('estudiante'),
   validate({ params: cursoIdParamsSchema }),
   inscribir,
+);
+router.get(
+  '/:id/temario',
+  authenticate,
+  authorize('estudiante'),
+  validate({ params: cursoIdParamsSchema }),
+  obtenerTemario,
 );
 router.post(
   '/:id/portada',
