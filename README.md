@@ -19,8 +19,10 @@ implementados. Los estudiantes pueden abrir una lección desbloqueada en el viso
 de lecciones, y el temario del curso muestra los estados completada, disponible
 y bloqueada que devuelve la API; el servidor sigue verificando la inscripción y
 el avance secuencial en cada solicitud de lección. La calificación de
-cuestionarios está implementada en la API; las pantallas para rendirlos y ver
-sus resultados siguen pendientes.
+cuestionarios está implementada en la API y la pantalla del estudiante permite
+rendir un cuestionario desbloqueado, ver la nota, el resultado
+aprobado/reprobado y los intentos restantes; la calificación siempre se calcula
+en el servidor.
 
 ## Estructura del repositorio
 
@@ -62,7 +64,9 @@ La API califica los cuestionarios sin enviar respuestas correctas al navegador,
 limita cada cuestionario a tres intentos y conserva la mejor nota. El endpoint
 `POST /api/lecciones/:id/intentos` recibe las respuestas del estudiante
 inscrito, califica en el servidor y devuelve la nota, la aprobación y los
-intentos disponibles. La comprobación de desbloqueo lee la mejor nota almacenada
+intentos disponibles. El estudiante obtiene las preguntas y su estado de
+intentos con `GET /api/lecciones/:id/cuestionario`; esa respuesta omite
+`indiceCorrecto`. La comprobación de desbloqueo lee la mejor nota almacenada
 contra la nota mínima del cuestionario, por lo que una aprobación desbloquea la
 siguiente lección sin cambiar esa regla.
 
@@ -273,6 +277,7 @@ siempre proviene de la sesión, nunca de la cadena de consulta ni del cuerpo.
 | `GET /api/inscripciones/mias` | Listar las inscripciones del estudiante autenticado. Cada elemento incluye los campos de la inscripción, el resumen público del curso, `porcentajeAvance`, `leccionesCompletadas` y `totalLecciones`. |
 | `GET /api/cursos/:id/temario` | Devolver el temario del curso para el estudiante inscrito como `{ curso, inscripcion, temario, porcentajeAvance, leccionesCompletadas, totalLecciones }`. Cada elemento del temario incluye `id`, `titulo`, `tipo`, `orden`, `notaMinima` y `estado` (`completada`, `disponible` o `bloqueada`). Un estudiante fuera del curso recibe `403 NO_INSCRITO`, y el temario nunca incluye el contenido de las lecciones ni enlaces de video. |
 | `GET /api/lecciones/:id` | Devolver una lección desbloqueada como `{ leccion }`. Una lección de contenido incluye `contenido`, `videoUrl`, `notaMinima` y `cursoId`. El estudiante debe estar inscrito (`403 NO_INSCRITO`) y la lección anterior debe estar completa, o el cuestionario anterior aprobado con `mejorNota >= notaMinima` (`403 LECCION_BLOQUEADA`). Una lección inexistente devuelve `404 LECCION_NO_ENCONTRADA`. Esta ruta no devuelve las preguntas ni las respuestas correctas del cuestionario. |
+| `GET /api/lecciones/:id/cuestionario` | Devolver un cuestionario desbloqueado para rendirlo como `{ leccion, intento }`. `leccion.preguntas` incluye `id`, `enunciado`, `opciones` y `leccionId`, sin `indiceCorrecto`. `intento` incluye `aprobada`, `mejorNota`, `notaMinima`, `intentos` e `intentosDisponibles`. Aplica las mismas reglas de inscripción y desbloqueo que `GET /api/lecciones/:id`; una lección de contenido devuelve `409 LECCION_NO_ES_CUESTIONARIO`. |
 | `POST /api/lecciones/:id/intentos` | Rendir un cuestionario desbloqueado con `{ "respuestas": [{ "preguntaId": 41, "opcion": 2 }] }`; `opcion` es el índice basado en cero dentro de `opciones`. La API exige todas las preguntas del cuestionario, califica solo en el servidor, cuenta un intento y conserva la mejor nota. Devuelve `{ intento }` con `nota`, `aprobada`, `mejorNota`, `notaMinima`, `intentos` e `intentosDisponibles`; nunca incluye las respuestas correctas. Un cuarto intento devuelve `409 INTENTOS_AGOTADOS` y un cuestionario sin preguntas `409 CUESTIONARIO_SIN_PREGUNTAS`. |
 
 En `POST /api/lecciones/:id/intentos`, `nota` es la del intento actual y
@@ -299,7 +304,13 @@ La ruta de lección del estudiante `/cursos/:cursoId/lecciones/:leccionId` requi
 un estudiante autenticado. Solo renderiza la lección cuando
 `GET /api/lecciones/:id` devuelve su contenido; un `403 LECCION_BLOQUEADA` o un
 `403 NO_INSCRITO` muestra el estado bloqueado y el temario informado por
-`GET /api/cursos/:id/temario` sin revelar contenido.
+`GET /api/cursos/:id/temario` sin revelar contenido. Si la lección es un
+cuestionario, la pantalla consume `GET /api/lecciones/:id/cuestionario`, muestra
+las preguntas y opciones sin respuestas correctas, envía los intentos a
+`POST /api/lecciones/:id/intentos` y presenta la nota, el resultado
+aprobado/reprobado y los intentos restantes que devuelve la API. El botón de
+envío se bloquea mientras la solicitud está en curso para evitar envíos
+duplicados, y la nota nunca se calcula en el navegador.
 
 La SPA guarda `{ token, usuario }` en `localStorage` bajo
 `miniaula.session.v1`, por lo que la sesión sobrevive a una recarga de página. Un

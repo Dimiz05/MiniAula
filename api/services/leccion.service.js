@@ -3,6 +3,7 @@ import {
   Inscripcion,
   Leccion,
   Pregunta,
+  Progreso,
   sequelize,
 } from '../models/index.js';
 import { AppError } from '../utils/errors.js';
@@ -10,8 +11,12 @@ import {
   asegurarPropiedadCurso,
   obtenerCursoBloqueado,
 } from './curso.service.js';
+import { toIntentoEstado } from './intento.service.js';
 import { asegurarLeccionDesbloqueada } from './progreso.service.js';
-import { toPreguntaDetalle } from './pregunta.service.js';
+import {
+  toPreguntaDetalle,
+  toPreguntaEstudiante,
+} from './pregunta.service.js';
 
 export function toLeccionDetalle(leccion) {
   const {
@@ -115,6 +120,64 @@ export async function obtenerLeccionEstudiante(estudianteId, leccionId) {
   await asegurarLeccionDesbloqueada(leccion, inscripcion.id);
 
   return toLeccionEstudiante(leccion);
+}
+
+export async function obtenerCuestionarioEstudiante(estudianteId, leccionId) {
+  const leccion = await Leccion.findByPk(leccionId);
+
+  if (!leccion) {
+    throw new AppError(404, 'LECCION_NO_ENCONTRADA', 'La lección no existe.');
+  }
+
+  const inscripcion = await Inscripcion.findOne({
+    where: {
+      estudianteId,
+      cursoId: leccion.cursoId,
+    },
+  });
+
+  if (!inscripcion) {
+    throw new AppError(
+      403,
+      'NO_INSCRITO',
+      'Debes estar inscrito en el curso para rendir este cuestionario.',
+    );
+  }
+
+  if (leccion.tipo !== 'cuestionario') {
+    throw new AppError(
+      409,
+      'LECCION_NO_ES_CUESTIONARIO',
+      'Solo puedes rendir lecciones de tipo cuestionario.',
+    );
+  }
+
+  // RN-01: el cuestionario solo se rinde si la lección anterior está completa
+  // o, si era otro cuestionario, aprobada.
+  await asegurarLeccionDesbloqueada(leccion, inscripcion.id);
+
+  const [preguntas, progreso] = await Promise.all([
+    Pregunta.findAll({
+      where: { leccionId: leccion.id },
+      // El índice correcto ni siquiera se lee para esta respuesta.
+      attributes: ['id', 'enunciado', 'opciones', 'leccionId'],
+      order: [['id', 'ASC']],
+    }),
+    Progreso.findOne({
+      where: {
+        inscripcionId: inscripcion.id,
+        leccionId: leccion.id,
+      },
+    }),
+  ]);
+
+  return {
+    leccion: {
+      ...toLeccionEstudiante(leccion),
+      preguntas: preguntas.map(toPreguntaEstudiante),
+    },
+    intento: toIntentoEstado(progreso, leccion),
+  };
 }
 
 export async function crearLeccionPropia(instructorId, cursoId, datos) {

@@ -5,6 +5,7 @@ import {
   actualizarCuestionario,
   eliminar,
   obtener,
+  obtenerCuestionario,
 } from '../controllers/leccion.js';
 import { crear as crearPregunta } from '../controllers/pregunta.js';
 import { completar } from '../controllers/progreso.js';
@@ -28,6 +29,13 @@ router.get(
   authorize('estudiante'),
   validate({ params: leccionIdParamsSchema }),
   obtener,
+);
+router.get(
+  '/:id/cuestionario',
+  authenticate,
+  authorize('estudiante'),
+  validate({ params: leccionIdParamsSchema }),
+  obtenerCuestionario,
 );
 router.post(
   '/:id/completar',

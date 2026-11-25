@@ -3,6 +3,7 @@ import {
   actualizarLeccionPropia,
   crearLeccionPropia,
   eliminarLeccionPropia,
+  obtenerCuestionarioEstudiante,
   obtenerLeccionEstudiante,
   reordenarLeccionesPropias,
 } from '../services/leccion.service.js';
@@ -13,6 +14,14 @@ export async function obtener(request, response) {
     request.validated.params.id,
   );
   response.status(200).json({ leccion });
+}
+
+export async function obtenerCuestionario(request, response) {
+  const cuestionario = await obtenerCuestionarioEstudiante(
+    request.usuario.id,
+    request.validated.params.id,
+  );
+  response.status(200).json(cuestionario);
 }
 
 export async function crear(request, response) {

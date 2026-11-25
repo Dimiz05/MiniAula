@@ -100,23 +100,29 @@ export function calificarRespuestas(preguntas, respuestas) {
   };
 }
 
-export function toIntentoResultado(progreso, leccion, nota) {
-  const intentos = Number(progreso.intentos);
-  const mejorNota = progreso.mejorNota === null
-    || progreso.mejorNota === undefined
+export function toIntentoEstado(progreso, leccion) {
+  const intentos = Number(progreso?.intentos ?? 0);
+  const mejorNota = progreso?.mejorNota === null
+    || progreso?.mejorNota === undefined
     ? null
     : Number(progreso.mejorNota);
   const notaMinima = Number(leccion.notaMinima);
 
-  // La aprobación del cuestionario depende de la mejor nota guardada, igual
-  // que la regla de desbloqueo de la siguiente lección.
   return {
-    nota,
+    // La aprobación depende de la mejor nota guardada, igual que la regla de
+    // desbloqueo de la siguiente lección.
     aprobada: mejorNota !== null && mejorNota >= notaMinima,
     mejorNota,
     notaMinima,
     intentos,
     intentosDisponibles: Math.max(INTENTOS_MAXIMOS - intentos, 0),
+  };
+}
+
+export function toIntentoResultado(progreso, leccion, nota) {
+  return {
+    nota,
+    ...toIntentoEstado(progreso, leccion),
   };
 }
 
