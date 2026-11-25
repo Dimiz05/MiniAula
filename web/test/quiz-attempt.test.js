@@ -22,9 +22,8 @@ const vite = await createServer({
   appType: 'custom',
 });
 
-const { QuizPreguntas, QuizResultado } = await vite.ssrLoadModule(
-  '/src/components/QuizAttempt.jsx',
-);
+const { QuizPreguntas, QuizResultado, ResumenIntento } = await vite
+  .ssrLoadModule('/src/components/QuizAttempt.jsx');
 const { MemoryRouter } = await import('react-router');
 
 after(() => vite.close());
@@ -35,6 +34,16 @@ function renderResultado(props) {
       MemoryRouter,
       { initialEntries: ['/'] },
       createElement(QuizResultado, props),
+    ),
+  );
+}
+
+function renderResumen(props) {
+  return renderToStaticMarkup(
+    createElement(
+      MemoryRouter,
+      { initialEntries: ['/'] },
+      createElement(ResumenIntento, props),
     ),
   );
 }
@@ -238,6 +247,55 @@ test('the result panel shows grade, pass state and remaining attempts', () => {
   assert.match(reprobado, /50/);
   assert.match(reprobado, /0 de 3/);
   assert.equal(reprobado.includes('Reintentar para mejorar nota'), false);
+});
+
+test('an approved quiz summary offers the next unlocked lesson when revisited', () => {
+  const aprobado = renderResumen({
+    intento: {
+      aprobada: true,
+      mejorNota: 85,
+      notaMinima: 70,
+      intentos: 1,
+      intentosDisponibles: 2,
+    },
+    siguiente: { id: 13, titulo: 'Siguiente lección' },
+    cursoId: 5,
+  });
+
+  assert.match(aprobado, /Aprobado/);
+  assert.match(aprobado, /La siguiente lección ya está desbloqueada/);
+  assert.match(aprobado, /Continuar al siguiente tema/);
+  assert.match(aprobado, /href="\/cursos\/5\/lecciones\/13"/);
+
+  const reprobado = renderResumen({
+    intento: {
+      aprobada: false,
+      mejorNota: 50,
+      notaMinima: 70,
+      intentos: 2,
+      intentosDisponibles: 1,
+    },
+    siguiente: { id: 13, titulo: 'Siguiente lección' },
+    cursoId: 5,
+  });
+
+  assert.match(reprobado, /Aún no aprobado/);
+  assert.equal(reprobado.includes('Continuar al siguiente tema'), false);
+  assert.equal(reprobado.includes('/cursos/5/lecciones/13'), false);
+
+  const aprobadoSinSiguiente = renderResumen({
+    intento: {
+      aprobada: true,
+      mejorNota: 85,
+      notaMinima: 70,
+      intentos: 1,
+      intentosDisponibles: 2,
+    },
+    siguiente: null,
+    cursoId: 5,
+  });
+
+  assert.equal(aprobadoSinSiguiente.includes('Continuar al siguiente tema'), false);
 });
 
 test('only an approved result offers the next unlocked lesson', () => {

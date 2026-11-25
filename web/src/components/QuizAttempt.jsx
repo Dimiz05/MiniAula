@@ -41,7 +41,9 @@ function MensajeError({ error, title = 'No pudimos registrar el intento' }) {
   );
 }
 
-export function ResumenIntento({ intento }) {
+export function ResumenIntento({ intento, siguiente = null, cursoId = null }) {
+  const aprobada = intento?.aprobada === true;
+
   return (
     <section
       aria-label="Estado actual del cuestionario"
@@ -75,6 +77,19 @@ export function ResumenIntento({ intento }) {
           </p>
         </div>
       </div>
+
+      {aprobada && siguiente && cursoId && (
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-control border border-success/30 bg-success-light p-4">
+          <p className="text-body-sm text-secondary">
+            La siguiente lección ya está desbloqueada.
+          </p>
+          <Link to={rutaLeccion(cursoId, siguiente.id)} className="inline-flex">
+            <Button variant="secondary" icon="arrow_forward">
+              Continuar al siguiente tema
+            </Button>
+          </Link>
+        </div>
+      )}
     </section>
   );
 }
@@ -558,7 +573,11 @@ export default function QuizAttempt({
       ) : (
         <>
           {intentoActual.intentos > 0 && !resultado && (
-            <ResumenIntento intento={intentoActual} />
+            <ResumenIntento
+              intento={intentoActual}
+              siguiente={siguiente}
+              cursoId={cursoId}
+            />
           )}
 
           {errorEnvio && !mostrarFormulario && (
