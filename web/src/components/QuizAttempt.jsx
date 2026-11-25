@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router';
 import Alert from './Alert.jsx';
 import Button from './Button.jsx';
 import Icon from './Icon.jsx';
@@ -6,6 +7,10 @@ import {
   enviarIntento,
   obtenerCuestionarioEstudiante,
 } from '../services/leccion.service.js';
+import {
+  rutaLeccion,
+  siguienteLeccionDespuesDe,
+} from '../utils/lessonState.js';
 import {
   aRespuestas,
   crearSeleccionInicial,
@@ -78,6 +83,8 @@ export function QuizResultado({
   intento,
   onReintentar,
   puedeReintentar = false,
+  siguiente = null,
+  cursoId = null,
 }) {
   const aprobada = intento?.aprobada === true;
   const tieneNota = intento?.nota !== null && intento?.nota !== undefined;
@@ -176,16 +183,46 @@ export function QuizResultado({
         </div>
       </dl>
 
-      {puedeReintentar && typeof onReintentar === 'function' && (
+      {aprobada && siguiente && cursoId && (
+        <div className="mt-6 flex items-start gap-3 rounded-control border border-success/30 bg-success-light p-4">
+          <Icon
+            name="check_circle"
+            filled
+            className="mt-0.5 text-[20px] text-success"
+          />
+          <p className="text-body-md text-secondary">
+            ¡Felicitaciones! Superaste la nota mínima requerida. La siguiente
+            lección del curso fue desbloqueada automáticamente en tu cuenta.
+          </p>
+        </div>
+      )}
+
+      {(puedeReintentar || (aprobada && siguiente && cursoId)) && (
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
           <p className="text-label-sm text-on-surface-variant">
             {aprobada
-              ? 'Puedes repetir el cuestionario para mejorar tu mejor nota.'
+              ? siguiente
+                ? 'La siguiente lección ya está disponible.'
+                : 'Puedes repetir el cuestionario para mejorar tu mejor nota.'
               : 'La calificación y los intentos los valida el servidor.'}
           </p>
-          <Button variant="secondary" icon="replay" onClick={onReintentar}>
-            {aprobada ? 'Reintentar para mejorar nota' : 'Volver a intentarlo'}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {puedeReintentar && typeof onReintentar === 'function' && (
+              <Button variant="secondary" icon="replay" onClick={onReintentar}>
+                {aprobada
+                  ? 'Reintentar para mejorar nota'
+                  : 'Volver a intentarlo'}
+              </Button>
+            )}
+            {aprobada && siguiente && cursoId && (
+              <Link
+                to={rutaLeccion(cursoId, siguiente.id)}
+                className="inline-flex"
+              >
+                <Button icon="arrow_forward">Continuar al siguiente tema</Button>
+              </Link>
+            )}
+          </div>
         </div>
       )}
     </section>
@@ -300,7 +337,12 @@ export function QuizPreguntas({
   );
 }
 
-export default function QuizAttempt({ leccion, onIntentoRegistrado }) {
+export default function QuizAttempt({
+  leccion,
+  onIntentoRegistrado,
+  cursoId = null,
+  temario = [],
+}) {
   const [cuestionario, setCuestionario] = useState(null);
   const [intento, setIntento] = useState(null);
   const [seleccion, setSeleccion] = useState({});
@@ -467,6 +509,10 @@ export default function QuizAttempt({ leccion, onIntentoRegistrado }) {
   }
 
   const total = totalIntentos(intentoActual);
+  const intentoMostrado = resultado ?? intentoActual;
+  const siguiente = intentoMostrado.aprobada && cursoId
+    ? siguienteLeccionDespuesDe(temario, leccion.id)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -524,12 +570,16 @@ export default function QuizAttempt({ leccion, onIntentoRegistrado }) {
               intento={resultado}
               onReintentar={reintentar}
               puedeReintentar={resultado.intentosDisponibles > 0}
+              siguiente={siguiente}
+              cursoId={cursoId}
             />
           ) : !puedeRendir ? (
             <QuizResultado
               intento={intentoActual}
               onReintentar={null}
               puedeReintentar={false}
+              siguiente={siguiente}
+              cursoId={cursoId}
             />
           ) : (
             <QuizPreguntas

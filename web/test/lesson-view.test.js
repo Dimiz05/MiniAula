@@ -13,6 +13,7 @@ import {
   ESTADOS_LECCION,
   normalizarEstadoLeccion,
   puedeAbrirLeccion,
+  siguienteLeccionDespuesDe,
 } from '../src/utils/lessonState.js';
 
 const vite = await createServer({
@@ -143,6 +144,25 @@ test('the lesson error classifier separates locked, enrollment and server errors
   assert.equal(noEncontrada.tipo, 'no-encontrada');
 
   assert.equal(clasificarErrorLeccion({ status: 500 }).tipo, 'error');
+});
+
+test('the next lesson helper returns only an available lesson after the current one', () => {
+  const temario = [
+    { id: 10, titulo: 'Introducción', estado: 'completada' },
+    { id: 12, titulo: 'Cuestionario', estado: 'disponible' },
+    { id: 13, titulo: 'Siguiente lección', estado: 'bloqueada' },
+  ];
+
+  assert.equal(siguienteLeccionDespuesDe(temario, 12), null);
+  assert.equal(siguienteLeccionDespuesDe(temario, 10)?.id, 12);
+
+  const desbloqueado = temario.map((leccion) => (
+    leccion.id === 12 ? { ...leccion, estado: 'completada' } : (
+      leccion.id === 13 ? { ...leccion, estado: 'disponible' } : leccion
+    )
+  ));
+  assert.equal(siguienteLeccionDespuesDe(desbloqueado, 12)?.id, 13);
+  assert.equal(siguienteLeccionDespuesDe([], 12), null);
 });
 
 test('the outline renders API states and only links available or completed lessons', () => {

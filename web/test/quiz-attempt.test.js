@@ -25,8 +25,19 @@ const vite = await createServer({
 const { QuizPreguntas, QuizResultado } = await vite.ssrLoadModule(
   '/src/components/QuizAttempt.jsx',
 );
+const { MemoryRouter } = await import('react-router');
 
 after(() => vite.close());
+
+function renderResultado(props) {
+  return renderToStaticMarkup(
+    createElement(
+      MemoryRouter,
+      { initialEntries: ['/'] },
+      createElement(QuizResultado, props),
+    ),
+  );
+}
 
 test('quiz operations use the authenticated student endpoints', async (t) => {
   const calls = [];
@@ -227,4 +238,44 @@ test('the result panel shows grade, pass state and remaining attempts', () => {
   assert.match(reprobado, /50/);
   assert.match(reprobado, /0 de 3/);
   assert.equal(reprobado.includes('Reintentar para mejorar nota'), false);
+});
+
+test('only an approved result offers the next unlocked lesson', () => {
+  const intentoAprobado = {
+    nota: 85,
+    aprobada: true,
+    mejorNota: 85,
+    notaMinima: 70,
+    intentos: 1,
+    intentosDisponibles: 2,
+  };
+  const siguiente = { id: 13, titulo: 'Siguiente lección' };
+  const aprobado = renderResultado({
+    intento: intentoAprobado,
+    onReintentar: () => {},
+    puedeReintentar: true,
+    siguiente,
+    cursoId: 5,
+  });
+
+  assert.match(aprobado, /desbloqueada automáticamente/);
+  assert.match(aprobado, /Continuar al siguiente tema/);
+  assert.match(aprobado, /href="\/cursos\/5\/lecciones\/13"/);
+
+  const reprobado = renderResultado({
+    intento: {
+      ...intentoAprobado,
+      nota: 50,
+      aprobada: false,
+      mejorNota: 50,
+    },
+    onReintentar: () => {},
+    puedeReintentar: true,
+    siguiente,
+    cursoId: 5,
+  });
+
+  assert.equal(reprobado.includes('desbloqueada automáticamente'), false);
+  assert.equal(reprobado.includes('Continuar al siguiente tema'), false);
+  assert.equal(reprobado.includes('/cursos/5/lecciones/13'), false);
 });

@@ -71,3 +71,18 @@ export function siguienteLeccion(temario) {
     (leccion) => normalizarEstadoLeccion(leccion.estado) === ESTADOS_LECCION.COMPLETADA,
   ) ?? null;
 }
+
+// Devuelve la primera lección disponible después de la indicada. La usa el
+// resultado del cuestionario para ofrecer el avance recién desbloqueado sin
+// enlazar de vuelta a la lección actual.
+export function siguienteLeccionDespuesDe(temario, leccionId) {
+  const lecciones = Array.isArray(temario) ? temario : [];
+  const indice = lecciones.findIndex(
+    (leccion) => String(leccion.id) === String(leccionId),
+  );
+  const posteriores = indice >= 0 ? lecciones.slice(indice + 1) : lecciones;
+
+  return posteriores.find(
+    (leccion) => normalizarEstadoLeccion(leccion.estado) === ESTADOS_LECCION.DISPONIBLE,
+  ) ?? null;
+}
