@@ -198,6 +198,8 @@ export default function LessonPage() {
               {leccion.tipo === 'cuestionario' ? (
                 <QuizAttempt
                   leccion={leccion}
+                  cursoId={cursoId}
+                  temario={temario}
                   onIntentoRegistrado={actualizarTemario}
                 />
               ) : leccion.contenido ? (

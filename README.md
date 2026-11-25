@@ -22,7 +22,9 @@ el avance secuencial en cada solicitud de lección. La calificación de
 cuestionarios está implementada en la API y la pantalla del estudiante permite
 rendir un cuestionario desbloqueado, ver la nota, el resultado
 aprobado/reprobado y los intentos restantes; la calificación siempre se calcula
-en el servidor.
+en el servidor. Solo un cuestionario aprobado desbloquea la siguiente lección: el
+resultado persistido alimenta el avance secuencial y la pantalla ofrece continuar
+al siguiente tema, mientras que un intento reprobado mantiene el bloqueo.
 
 ## Estructura del repositorio
 

@@ -6,7 +6,10 @@ import {
   sequelize,
 } from '../models/index.js';
 import { AppError } from '../utils/errors.js';
-import { asegurarLeccionDesbloqueada } from './progreso.service.js';
+import {
+  asegurarLeccionDesbloqueada,
+  leccionAprobada,
+} from './progreso.service.js';
 
 export const INTENTOS_MAXIMOS = 3;
 
@@ -109,9 +112,9 @@ export function toIntentoEstado(progreso, leccion) {
   const notaMinima = Number(leccion.notaMinima);
 
   return {
-    // La aprobación depende de la mejor nota guardada, igual que la regla de
-    // desbloqueo de la siguiente lección.
-    aprobada: mejorNota !== null && mejorNota >= notaMinima,
+    // La aprobación usa la misma regla que el desbloqueo secuencial para que
+    // ambos cálculos no puedan divergir.
+    aprobada: leccionAprobada(leccion, progreso),
     mejorNota,
     notaMinima,
     intentos,
