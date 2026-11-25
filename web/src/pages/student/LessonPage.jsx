@@ -5,6 +5,7 @@ import Button from '../../components/Button.jsx';
 import CourseProgress from '../../components/CourseProgress.jsx';
 import Icon from '../../components/Icon.jsx';
 import LessonOutline from '../../components/LessonOutline.jsx';
+import QuizAttempt from '../../components/QuizAttempt.jsx';
 import {
   obtenerLeccion,
   obtenerTemarioEstudiante,
@@ -33,6 +34,17 @@ export default function LessonPage() {
   const cargar = useCallback(() => {
     setReintento((valor) => valor + 1);
   }, []);
+
+  const actualizarTemario = useCallback(() => {
+    obtenerTemarioEstudiante(cursoId)
+      .then((data) => {
+        setTemarioData(data ?? null);
+        setOutlineError(null);
+      })
+      .catch((error) => {
+        setOutlineError(error);
+      });
+  }, [cursoId]);
 
   useEffect(() => {
     let active = true;
@@ -184,10 +196,10 @@ export default function LessonPage() {
               </header>
 
               {leccion.tipo === 'cuestionario' ? (
-                <Alert variant="info" title="Cuestionario disponible">
-                  Este cuestionario está desbloqueado. La entrega de respuestas y
-                  sus resultados se habilitan en la fase de cuestionarios.
-                </Alert>
+                <QuizAttempt
+                  leccion={leccion}
+                  onIntentoRegistrado={actualizarTemario}
+                />
               ) : leccion.contenido ? (
                 <article className="rounded-panel border border-outline bg-surface p-6 shadow-card md:p-8">
                   <div className="whitespace-pre-line text-body-lg leading-8 text-on-surface">

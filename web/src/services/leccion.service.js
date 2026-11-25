@@ -4,6 +4,20 @@ export function obtenerLeccion(id) {
   return apiRequest(`/lecciones/${encodeURIComponent(id)}`, { auth: true });
 }
 
+export function obtenerCuestionarioEstudiante(id) {
+  return apiRequest(`/lecciones/${encodeURIComponent(id)}/cuestionario`, {
+    auth: true,
+  });
+}
+
+export function enviarIntento(id, respuestas) {
+  return apiRequest(`/lecciones/${encodeURIComponent(id)}/intentos`, {
+    auth: true,
+    method: 'POST',
+    body: { respuestas },
+  });
+}
+
 export function obtenerTemarioEstudiante(cursoId) {
   return apiRequest(`/cursos/${encodeURIComponent(cursoId)}/temario`, {
     auth: true,

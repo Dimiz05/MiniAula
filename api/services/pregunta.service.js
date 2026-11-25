@@ -24,6 +24,27 @@ export function toPreguntaDetalle(pregunta) {
   };
 }
 
+export function toPreguntaEstudiante(pregunta) {
+  const datos = typeof pregunta.get === 'function'
+    ? pregunta.get({ plain: true })
+    : pregunta;
+
+  const {
+    id,
+    enunciado,
+    opciones,
+    leccionId,
+  } = datos;
+
+  // El estudiante recibe el enunciado y las opciones, nunca el índice correcto.
+  return {
+    id,
+    enunciado,
+    opciones: Array.isArray(opciones) ? opciones : [],
+    leccionId,
+  };
+}
+
 async function obtenerLeccionPropia(instructorId, leccionId) {
   const leccion = await Leccion.findByPk(leccionId);
 
