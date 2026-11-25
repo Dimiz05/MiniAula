@@ -18,8 +18,9 @@ de lecciones del instructor y porcentaje de avance del estudiante están
 implementados. Los estudiantes pueden abrir una lección desbloqueada en el visor
 de lecciones, y el temario del curso muestra los estados completada, disponible
 y bloqueada que devuelve la API; el servidor sigue verificando la inscripción y
-el avance secuencial en cada solicitud de lección. Los intentos de cuestionario
-y las pantallas de resultados siguen pendientes.
+el avance secuencial en cada solicitud de lección. La calificación de
+cuestionarios está implementada en la API; las pantallas para rendirlos y ver
+sus resultados siguen pendientes.
 
 ## Estructura del repositorio
 
@@ -58,11 +59,12 @@ público del curso nunca incluye el contenido de las lecciones ni los enlaces de
 video.
 
 La API califica los cuestionarios sin enviar respuestas correctas al navegador,
-limita cada cuestionario a tres intentos y conserva la mejor nota. La
-comprobación de desbloqueo ya lee la mejor nota almacenada contra la nota mínima
-del cuestionario, por lo que la aprobación de cuestionarios puede conectarse sin
-cambiar esta regla. Los endpoints de intento y calificación de cuestionarios
-siguen pendientes.
+limita cada cuestionario a tres intentos y conserva la mejor nota. El endpoint
+`POST /api/lecciones/:id/intentos` recibe las respuestas del estudiante
+inscrito, califica en el servidor y devuelve la nota, la aprobación y los
+intentos disponibles. La comprobación de desbloqueo lee la mejor nota almacenada
+contra la nota mínima del cuestionario, por lo que una aprobación desbloquea la
+siguiente lección sin cambiar esa regla.
 
 ## Desarrollo local de la API
 
@@ -257,8 +259,8 @@ devuelve `404 PREGUNTA_NO_ENCONTRADA` o `404 LECCION_NO_ENCONTRADA`, y un cuerpo
 inválido devuelve `422 VALIDACION` con el sobre de error estándar. Las pantallas
 del instructor usan estas rutas mediante la acción «Editar preguntas» de una
 fila de cuestionario: el editor de preguntas lista las preguntas, marca la opción
-correcta y guarda la nota mínima. Los intentos y la calificación de cuestionarios
-quedan fuera de esta fase.
+correcta y guarda la nota mínima. La calificación del estudiante se documenta en
+la sección de progreso.
 
 ## API de inscripción, acceso a lecciones y progreso del estudiante
 
@@ -271,6 +273,11 @@ siempre proviene de la sesión, nunca de la cadena de consulta ni del cuerpo.
 | `GET /api/inscripciones/mias` | Listar las inscripciones del estudiante autenticado. Cada elemento incluye los campos de la inscripción, el resumen público del curso, `porcentajeAvance`, `leccionesCompletadas` y `totalLecciones`. |
 | `GET /api/cursos/:id/temario` | Devolver el temario del curso para el estudiante inscrito como `{ curso, inscripcion, temario, porcentajeAvance, leccionesCompletadas, totalLecciones }`. Cada elemento del temario incluye `id`, `titulo`, `tipo`, `orden`, `notaMinima` y `estado` (`completada`, `disponible` o `bloqueada`). Un estudiante fuera del curso recibe `403 NO_INSCRITO`, y el temario nunca incluye el contenido de las lecciones ni enlaces de video. |
 | `GET /api/lecciones/:id` | Devolver una lección desbloqueada como `{ leccion }`. Una lección de contenido incluye `contenido`, `videoUrl`, `notaMinima` y `cursoId`. El estudiante debe estar inscrito (`403 NO_INSCRITO`) y la lección anterior debe estar completa, o el cuestionario anterior aprobado con `mejorNota >= notaMinima` (`403 LECCION_BLOQUEADA`). Una lección inexistente devuelve `404 LECCION_NO_ENCONTRADA`. Esta ruta no devuelve las preguntas ni las respuestas correctas del cuestionario. |
+| `POST /api/lecciones/:id/intentos` | Rendir un cuestionario desbloqueado con `{ "respuestas": [{ "preguntaId": 41, "opcion": 2 }] }`; `opcion` es el índice basado en cero dentro de `opciones`. La API exige todas las preguntas del cuestionario, califica solo en el servidor, cuenta un intento y conserva la mejor nota. Devuelve `{ intento }` con `nota`, `aprobada`, `mejorNota`, `notaMinima`, `intentos` e `intentosDisponibles`; nunca incluye las respuestas correctas. Un cuarto intento devuelve `409 INTENTOS_AGOTADOS` y un cuestionario sin preguntas `409 CUESTIONARIO_SIN_PREGUNTAS`. |
+
+En `POST /api/lecciones/:id/intentos`, `nota` es la del intento actual y
+`aprobada` se calcula con `mejorNota >= notaMinima`; un reintento con nota menor
+no revierte una aprobación anterior.
 
 El porcentaje usa todas las lecciones del curso como denominador. Las lecciones
 de contenido cuentan cuando su fila de progreso tiene `completada: true`; los
