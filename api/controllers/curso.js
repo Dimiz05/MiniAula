@@ -10,7 +10,10 @@ import {
   publicarCursoPropio,
 } from '../services/curso.service.js';
 import { listarLeccionesPropias } from '../services/leccion.service.js';
-import { obtenerMetricasCursos } from '../services/metrica.service.js';
+import {
+  obtenerMetricaCurso,
+  obtenerMetricasCursos,
+} from '../services/metrica.service.js';
 import { AppError } from '../utils/errors.js';
 
 export async function listar(request, response) {
@@ -40,6 +43,15 @@ export async function misCursos(request, response) {
 export async function metricas(request, response) {
   const resultado = await obtenerMetricasCursos(request.usuario.id);
   response.status(200).json(resultado);
+}
+
+// Alias per-curso: GET /api/instructor/cursos/:id/resumen.
+export async function resumen(request, response) {
+  const resumen = await obtenerMetricaCurso(
+    request.usuario.id,
+    request.validated.params.id,
+  );
+  response.status(200).json({ resumen });
 }
 
 export async function detallePropio(request, response) {
@@ -81,6 +93,16 @@ export async function archivar(request, response) {
     request.usuario.id,
     request.validated.params.id,
   );
+  response.status(200).json({ curso });
+}
+
+// Alias compatible con PATCH /api/cursos/:id/estado.
+export async function actualizarEstado(request, response) {
+  const publicarCurso = request.validated.body.estado === 'publicado';
+  const curso = publicarCurso
+    ? await publicarCursoPropio(request.usuario.id, request.validated.params.id)
+    : await archivarCursoPropio(request.usuario.id, request.validated.params.id);
+
   response.status(200).json({ curso });
 }
 

@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
 import { API_URL, setAccessToken } from '../src/config/http.js';
 import {
+  completarLeccion,
   obtenerLeccion,
   obtenerTemarioEstudiante,
 } from '../src/services/leccion.service.js';
@@ -107,6 +108,27 @@ test('lesson access uses the authenticated student endpoints', async (t) => {
     ['/lecciones/10', 'GET', 'Bearer student-token'],
     ['/cursos/5/temario', 'GET', 'Bearer student-token'],
   ]);
+});
+
+test('marking a content lesson complete uses the authenticated student endpoint', async (t) => {
+  const calls = [];
+  setAccessToken('student-token');
+  t.after(() => setAccessToken(null));
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    calls.push([
+      url.slice(API_URL.length),
+      options.method,
+      options.headers.Authorization,
+    ]);
+    return Response.json({ progreso: { completada: true } });
+  });
+
+  const resultado = await completarLeccion(10);
+
+  assert.deepEqual(calls, [
+    ['/lecciones/10/completar', 'POST', 'Bearer student-token'],
+  ]);
+  assert.equal(resultado.progreso.completada, true);
 });
 
 test('the lesson state helpers treat missing or unknown states as locked', () => {

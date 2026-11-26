@@ -175,7 +175,7 @@ export default function LoginPage() {
             <p>
               Estudiante:{' '}
               <span className="font-medium text-secondary">
-                carla.estudiante@miniaula.test
+                sofia.estudiante@miniaula.test
               </span>
             </p>
             <p>

@@ -24,3 +24,12 @@ export async function obtenerTemario(request, response) {
   );
   response.status(200).json(resultado);
 }
+
+// Alias del contrato del proyecto: mismo avance y temario que /temario.
+export async function obtenerProgreso(request, response) {
+  const resultado = await obtenerTemarioEstudiante(
+    request.usuario.id,
+    request.validated.params.id,
+  );
+  response.status(200).json(resultado);
+}

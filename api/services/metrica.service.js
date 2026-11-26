@@ -6,6 +6,7 @@ import {
   Progreso,
 } from '../models/index.js';
 import { leccionAprobada } from './progreso.service.js';
+import { asegurarPropiedadCurso } from './curso.service.js';
 
 const ATRIBUTOS_CURSO = ['id', 'titulo', 'estado'];
 const ATRIBUTOS_LECCION = [
@@ -215,6 +216,10 @@ export async function obtenerMetricasCursos(instructorId) {
     raw: true,
   });
 
+  return calcularMetricasDeCursos(cursos);
+}
+
+async function calcularMetricasDeCursos(cursos) {
   if (cursos.length === 0) {
     return {
       resumen: {
@@ -274,4 +279,18 @@ export async function obtenerMetricasCursos(instructorId) {
     resumen: construirResumen(metricas),
     cursos: metricas.map(toMetricaPublica),
   };
+}
+
+// Alias per-curso: GET /api/instructor/cursos/:id/resumen.
+export async function obtenerMetricaCurso(instructorId, cursoId) {
+  const curso = await Curso.findByPk(cursoId);
+  asegurarPropiedadCurso(curso, instructorId);
+
+  const { cursos } = await calcularMetricasDeCursos([{
+    id: curso.id,
+    titulo: curso.titulo,
+    estado: curso.estado,
+  }]);
+
+  return cursos[0];
 }

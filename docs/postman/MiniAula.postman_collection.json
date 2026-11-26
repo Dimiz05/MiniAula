@@ -1,22 +1,22 @@
 {
   "info": {
     "name": "MiniAula API",
-    "description": "Colección para probar la API de MiniAula. Cubre los endpoints implementados hoy: salud, registro, login y perfil. Ejecútala en orden con el Collection Runner. Requiere la API en http://localhost:3000/api con el seed aplicado (`docker compose up --build`). Las variables viven en la colección; no hace falta importar un environment. El registro usa {{$timestamp}} para generar emails únicos. Límites: registro 5 por hora y login 10 cada 15 minutos por IP; si agotas el límite, `docker compose restart api` reinicia los contadores. La prueba de email ocupado depende del usuario del seed. La carpeta 05 usa al instructor del seed para probar la gestión de lecciones: crea una lección temporal, la actualiza, reordena el curso y restaura el orden original antes de eliminarla. Requiere el seed aplicado. Inscripciones, progreso y panel se agregarán cuando esos endpoints existan.",
+    "description": "Colección para probar la API de MiniAula. Cubre salud, autenticación, perfil, cursos propios, lecciones y preguntas. Ejecútala en orden con el Collection Runner. Requiere la API en http://localhost:3000/api con el seed aplicado (`docker compose up --build`). Las variables viven en la colección; no hace falta importar un environment. El registro usa {{$timestamp}} para generar emails únicos. Límites: registro 5 por hora y login 10 cada 15 minutos por IP; si agotas el límite, `docker compose restart api` reinicia los contadores. La prueba de email ocupado depende del usuario del seed. La carpeta 05 usa al instructor del seed para probar la gestión de lecciones: crea una lección temporal, la actualiza, reordena el curso y restaura el orden original antes de eliminarla. Requiere el seed aplicado. La carpeta 07 cubre los alias de compatibilidad; el panel agregado y el avance completo se demuestran desde la app.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:3000/api" },
-    { "key": "email", "value": "carla.estudiante@miniaula.test" },
+    { "key": "email", "value": "sofia.estudiante@miniaula.test" },
     { "key": "password", "value": "Miniaula123!" },
     { "key": "token", "value": "" },
     { "key": "instructorEmail", "value": "" },
     { "key": "instructorToken", "value": "" },
-    { "key": "seedEmail", "value": "carla.estudiante@miniaula.test" },
+    { "key": "seedEmail", "value": "sofia.estudiante@miniaula.test" },
     { "key": "seedPassword", "value": "Miniaula123!" },
-    { "key": "seedInstructorEmail", "value": "ana.instructora@miniaula.test" },
+    { "key": "seedInstructorEmail", "value": "lucia.instructora@miniaula.test" },
     { "key": "seedInstructorPassword", "value": "Miniaula123!" },
     { "key": "seedInstructorToken", "value": "" },
-    { "key": "brunoInstructorEmail", "value": "bruno.instructor@miniaula.test" },
+    { "key": "brunoInstructorEmail", "value": "mateo.instructor@miniaula.test" },
     { "key": "brunoInstructorPassword", "value": "Miniaula123!" },
     { "key": "brunoInstructorToken", "value": "" },
     { "key": "cursoId", "value": "" },
@@ -811,7 +811,7 @@
           ]
         },
         {
-          "name": "Login instructor Bruno",
+          "name": "Login instructor Mateo",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -838,7 +838,7 @@
           ]
         },
         {
-          "name": "Listar cursos de Bruno",
+          "name": "Listar cursos de Mateo",
           "request": {
             "method": "GET",
             "auth": {
@@ -858,7 +858,7 @@
                   "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
                   "const cursos = Array.isArray(body.cursos) ? body.cursos : [];",
                   "const curso = cursos[0] || null;",
-                  "pm.test('Bruno tiene un curso', function () { pm.expect(curso).to.be.an('object'); });",
+                  "pm.test('Mateo tiene un curso', function () { pm.expect(curso).to.be.an('object'); });",
                   "if (curso) { pm.collectionVariables.set('brunoCursoId', String(curso.id)); }"
                 ]
               }
@@ -1104,6 +1104,339 @@
                 "exec": [
                   "pm.test('401 Unauthorized', function () { pm.response.to.have.status(401); });",
                   "pm.test('código NO_AUTENTICADO', function () { pm.expect(pm.response.json().error.code).to.eql('NO_AUTENTICADO'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 · Alias de compatibilidad",
+      "item": [
+        {
+          "name": "Listar cursos del instructor (alias)",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{seedInstructorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/instructor/cursos"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('devuelve cursos', function () { pm.expect(body.cursos).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resumen de un curso (alias)",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{seedInstructorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/instructor/cursos/{{cursoId}}/resumen"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('resumen del curso pedido', function () { pm.expect(body.resumen.id).to.eql(Number(pm.collectionVariables.get('cursoId'))); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Inscribir al estudiante en el curso del seed",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/cursos/{{cursoId}}/inscripcion"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('inscripción creada o ya existente', function () { pm.expect([201, 409]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Progreso del estudiante (alias)",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/cursos/{{cursoId}}/progreso"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('incluye el porcentaje de avance', function () { pm.expect(body.porcentajeAvance).to.be.a('number'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear curso temporal para el alias de estado",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{seedInstructorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"titulo\": \"Curso temporal {{$timestamp}}\", \"descripcion\": \"Curso temporal para probar el alias de estado.\", \"categoria\": \"Programación\", \"nivel\": \"basico\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/cursos"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('tempCursoId', String(body.curso.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Agregar lección al curso temporal",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{seedInstructorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"titulo\": \"Lección temporal\", \"contenido\": \"Contenido temporal para publicar el curso de prueba.\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/cursos/{{tempCursoId}}/lecciones"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Publicar por el alias de estado",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{seedInstructorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"estado\": \"publicado\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/cursos/{{tempCursoId}}/estado"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('estado publicado', function () { pm.expect(pm.response.json().curso.estado).to.eql('publicado'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Archivar por el alias de estado",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{seedInstructorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"estado\": \"archivado\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/cursos/{{tempCursoId}}/estado"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('estado archivado', function () { pm.expect(pm.response.json().curso.estado).to.eql('archivado'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar el curso temporal",
+          "request": {
+            "method": "DELETE",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{seedInstructorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/cursos/{{tempCursoId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', function () { pm.response.to.have.status(204); });",
+                  "pm.collectionVariables.unset('tempCursoId');"
                 ]
               }
             }
