@@ -11,6 +11,7 @@ import {
 } from '../services/curso.service.js';
 import { listarLeccionesPropias } from '../services/leccion.service.js';
 import {
+  obtenerAnaliticasCurso,
   obtenerMetricaCurso,
   obtenerMetricasCursos,
 } from '../services/metrica.service.js';
@@ -43,6 +44,14 @@ export async function misCursos(request, response) {
 export async function metricas(request, response) {
   const resultado = await obtenerMetricasCursos(request.usuario.id);
   response.status(200).json(resultado);
+}
+
+export async function analiticas(request, response) {
+  const analiticas = await obtenerAnaliticasCurso(
+    request.usuario.id,
+    request.validated.params.id,
+  );
+  response.status(200).json({ analiticas });
 }
 
 // Alias per-curso: GET /api/instructor/cursos/:id/resumen.

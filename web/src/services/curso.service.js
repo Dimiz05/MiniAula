@@ -57,6 +57,10 @@ export function obtenerCursoPropio(id) {
   return apiRequest(`/cursos/mios/${encodeURIComponent(id)}`, { auth: true });
 }
 
+export function obtenerAnaliticasCurso(id) {
+  return apiRequest(`/cursos/mios/${encodeURIComponent(id)}/analiticas`, { auth: true });
+}
+
 export function crearCurso(body) {
   return apiRequest('/cursos', { auth: true, method: 'POST', body });
 }

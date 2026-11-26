@@ -2,6 +2,7 @@ import { Router, raw } from 'express';
 import {
   actualizar,
   actualizarEstado,
+  analiticas,
   archivar,
   crear,
   detalle,
@@ -13,6 +14,7 @@ import {
   publicar,
 } from '../controllers/curso.js';
 import {
+  estudiantesCurso,
   inscribir,
   obtenerProgreso,
   obtenerTemario,
@@ -44,6 +46,20 @@ const router = Router();
 // Own-course routes must be registered before the public /:id route.
 router.get('/mios', authenticate, authorize('instructor'), misCursos);
 router.get('/mios/metricas', authenticate, authorize('instructor'), metricas);
+router.get(
+  '/mios/:id/analiticas',
+  authenticate,
+  authorize('instructor'),
+  validate({ params: cursoIdParamsSchema }),
+  analiticas,
+);
+router.get(
+  '/mios/:id/estudiantes',
+  authenticate,
+  authorize('instructor'),
+  validate({ params: cursoIdParamsSchema }),
+  estudiantesCurso,
+);
 router.get(
   '/mios/:id',
   authenticate,

@@ -32,11 +32,14 @@ export default function SiteLayout() {
     links.push({ to: '/mis-cursos', label: 'Mis cursos' });
   }
 
-  links.push({ to: '/catalog', label: 'Explorar cursos' });
+  if (!isInstructor) {
+    links.push({ to: '/catalog', label: 'Explorar cursos' });
+  }
 
   if (isInstructor) {
     links.push({ to: '/instructor/cursos', label: 'Panel principal', end: true });
     links.push({ to: '/instructor/cursos/nuevo', label: 'Crear curso' });
+    links.push({ to: '/instructor/analiticas', label: 'Analíticas' });
   }
 
   function handleLogout() {
@@ -56,46 +59,68 @@ export default function SiteLayout() {
       <header className="sticky top-0 z-30 border-b border-paper-line bg-paper">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="relative flex h-16 items-center justify-between gap-3 lg:h-20">
-            {isInstructor ? (
-              <Link
-                to="/instructor/cursos"
-                aria-label="MiniAula para instructores"
-                className="flex shrink-0 items-center gap-2.5"
-              >
-                <span className="flex h-9 w-9 items-center justify-center rounded-control bg-primary text-on-primary">
-                  <Icon name="co_present" className="text-[22px]" />
-                </span>
-                <span className="leading-tight">
-                  <span className="block text-headline-sm tracking-tight text-secondary">
-                    MiniAula
-                  </span>
-                  <span className="block text-[9px] font-semibold uppercase tracking-[0.22em] text-primary">
-                    Instructor
-                  </span>
-                </span>
-              </Link>
-            ) : (
-              <Logo
-                size="sm"
-                to={isAuthenticated && !isInstructor ? '/panel' : '/'}
-              />
-            )}
-
-            <nav
-              aria-label="Navegación principal"
-              className="absolute inset-y-0 left-1/2 hidden -translate-x-1/2 items-center gap-8 lg:flex"
-            >
-              {links.map((link) => (
-                <NavLink
-                  key={link.to}
-                  to={link.to}
-                  end={link.end}
-                  className={navClass}
+            <div className="flex min-w-0 items-center gap-4 lg:gap-8">
+              {isInstructor ? (
+                <Link
+                  to="/instructor/cursos"
+                  aria-label="MiniAula para instructores"
+                  className="flex shrink-0 items-center gap-2.5"
                 >
-                  {link.label}
-                </NavLink>
-              ))}
-            </nav>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-control bg-primary text-on-primary">
+                    <Icon name="co_present" className="text-[22px]" />
+                  </span>
+                  <span className="leading-tight">
+                    <span className="block text-headline-sm tracking-tight text-secondary">
+                      MiniAula
+                    </span>
+                    <span className="block text-[9px] font-semibold uppercase tracking-[0.22em] text-primary">
+                      Instructor
+                    </span>
+                  </span>
+                </Link>
+              ) : (
+                <Logo
+                  size="sm"
+                  to={isAuthenticated && !isInstructor ? '/panel' : '/'}
+                />
+              )}
+
+              {isInstructor && (
+                <nav
+                  aria-label="Navegación principal"
+                  className="hidden items-center gap-6 lg:flex"
+                >
+                  {links.map((link) => (
+                    <NavLink
+                      key={link.to}
+                      to={link.to}
+                      end={link.end}
+                      className={navClass}
+                    >
+                      {link.label}
+                    </NavLink>
+                  ))}
+                </nav>
+              )}
+            </div>
+
+            {!isInstructor && (
+              <nav
+                aria-label="Navegación principal"
+                className="absolute inset-y-0 left-1/2 hidden -translate-x-1/2 items-center gap-8 lg:flex"
+              >
+                {links.map((link) => (
+                  <NavLink
+                    key={link.to}
+                    to={link.to}
+                    end={link.end}
+                    className={navClass}
+                  >
+                    {link.label}
+                  </NavLink>
+                ))}
+              </nav>
+            )}
 
             <div className="flex shrink-0 items-center gap-3 sm:gap-5">
               {isAuthenticated && usuario ? (

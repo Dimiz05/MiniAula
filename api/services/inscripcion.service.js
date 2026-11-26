@@ -7,7 +7,11 @@ import {
   Usuario,
   sequelize,
 } from '../models/index.js';
-import { toPublicCurso, toTemarioItem } from './curso.service.js';
+import {
+  asegurarPropiedadCurso,
+  toPublicCurso,
+  toTemarioItem,
+} from './curso.service.js';
 import { calcularAvanceCurso, leccionAprobada } from './progreso.service.js';
 import { AppError } from '../utils/errors.js';
 
@@ -26,6 +30,7 @@ const ATRIBUTOS_PROGRESO_AVANCE = [
   'completada',
   'mejorNota',
 ];
+const ATRIBUTOS_ESTUDIANTE = ['id', 'nombre', 'email'];
 
 export function toInscripcion(inscripcion) {
   const {
@@ -205,6 +210,36 @@ export async function listarInscripcionesEstudiante(estudianteId) {
     leccionesPorCurso.get(Number(inscripcion.cursoId)) ?? [],
     progresosPorInscripcion.get(Number(inscripcion.id)) ?? [],
   ));
+}
+
+export async function listarEstudiantesCurso(instructorId, cursoId) {
+  const curso = await Curso.findByPk(cursoId);
+  asegurarPropiedadCurso(curso, instructorId);
+
+  const inscripciones = await Inscripcion.findAll({
+    where: { cursoId: curso.id },
+    include: [{
+      model: Usuario,
+      as: 'estudiante',
+      attributes: ATRIBUTOS_ESTUDIANTE,
+    }],
+    order: [['fechaInscripcion', 'ASC'], ['id', 'ASC']],
+  });
+
+  return {
+    curso: {
+      id: Number(curso.id),
+      titulo: curso.titulo,
+      estado: curso.estado,
+    },
+    estudiantes: inscripciones.map((inscripcion) => ({
+      id: Number(inscripcion.id),
+      estudianteId: Number(inscripcion.estudianteId),
+      nombre: inscripcion.estudiante?.nombre ?? null,
+      email: inscripcion.estudiante?.email ?? null,
+      fechaInscripcion: inscripcion.fechaInscripcion,
+    })),
+  };
 }
 
 export async function inscribirEstudiante(estudianteId, cursoId) {

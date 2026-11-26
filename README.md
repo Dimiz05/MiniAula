@@ -202,6 +202,8 @@ cursos del instructor autenticado; el curso de otro instructor devuelve
 | --- | --- |
 | `GET /api/cursos/mios` | Listar los cursos del instructor autenticado en cualquier estado, con `totalLecciones` y `totalInscritos`. Devuelve `{ cursos }`. |
 | `GET /api/cursos/mios/:id` | Devolver un curso propio para editarlo. Devuelve `{ curso }`. |
+| `GET /api/cursos/mios/:id/analiticas` | Devolver el resumen detallado de un curso propio: inscritos, progreso, completados, embudo por lección, distribución de progreso y desempeño del cuestionario final. Un curso ajeno devuelve `403 CURSO_NO_PROPIO`. |
+| `GET /api/cursos/mios/:id/estudiantes` | Devolver los estudiantes inscritos en un curso propio con su nombre, correo y fecha de inscripción. Un curso ajeno devuelve `403 CURSO_NO_PROPIO`. |
 | `POST /api/cursos` | Crear un curso con `titulo`, `descripcion`, `categoria` y `nivel` opcional. El servidor siempre guarda `estado: "borrador"` y al instructor autenticado como propietario. Devuelve `201` con `{ curso }`. |
 | `PUT /api/cursos/:id` | Actualizar `titulo`, `descripcion`, `categoria` y/o `nivel` de un curso propio. `estado` e `instructorId` no son editables. Devuelve `{ curso }`. |
 | `POST /api/cursos/:id/portada` | Subir la portada del curso como cuerpo crudo de la solicitud (`Content-Type: image/png`, `image/jpeg` o `image/webp`), máximo 5 MB. El servidor valida la firma del archivo, lo guarda en `/uploads/portadas`, reemplaza la imagen anterior y devuelve `{ curso }` con la nueva `portada`. |
@@ -299,12 +301,103 @@ null`. Las métricas se calculan con cuatro consultas en total (cursos,
 lecciones, inscripciones y progresos), sin una consulta por curso.
 
 La pantalla del panel del instructor (`/instructor/cursos`) consume este
-endpoint y muestra el resumen del panel junto con las cuatro métricas de cada
-curso: inscritos, progreso promedio, nota promedio y la lección con mayor
-deserción. Mientras llegan los datos muestra un estado de carga; si la solicitud
-falla, conserva el mensaje del servidor y ofrece reintentar; los valores sin
-datos se muestran como «Sin datos» en lugar de inventar cifras. La cuadrícula es
-responsive desde 375 px.
+endpoint para mostrar el resumen general del panel. Cada curso ya no repite sus
+métricas en la tarjeta: en su lugar ofrece «Ver métricas del curso», que abre la
+pantalla de analíticas con ese curso seleccionado. Mientras llegan los datos
+muestra un estado de carga; si
+la solicitud falla, conserva el mensaje del servidor y ofrece reintentar; los
+valores sin datos se muestran como «Sin datos» en lugar de inventar cifras. La
+cuadrícula es responsive desde 375 px.
+
+### Analíticas detalladas por curso
+
+`GET /api/cursos/mios/:id/analiticas` requiere un token bearer con el rol
+`instructor` y devuelve el detalle de un curso propio; un curso ajeno responde
+`403 CURSO_NO_PROPIO` y uno inexistente `404 CURSO_NO_ENCONTRADO`. La respuesta
+incluye el resumen del curso, el embudo de retención por lección, la distribución
+de progreso y el desempeño del último cuestionario:
+
+```json
+{
+  "analiticas": {
+    "curso": {
+      "id": 3,
+      "titulo": "React desde cero",
+      "estado": "publicado",
+      "totalLecciones": 5,
+      "totalInscritos": 74,
+      "progresoPromedio": 58.4,
+      "notaPromedio": 81.6,
+      "estudiantesCompletados": 32,
+      "tasaCompletado": 43.2,
+      "leccionMayorDesercion": {
+        "leccionId": 18,
+        "titulo": "Manejo de estado",
+        "orden": 3,
+        "estudiantesDetenidos": 26
+      }
+    },
+    "embudo": [
+      {
+        "id": 16,
+        "titulo": "Introducción",
+        "tipo": "contenido",
+        "orden": 1,
+        "estudiantesAprobados": 74,
+        "porcentajeAprobados": 100,
+        "estudiantesDetenidos": 0
+      }
+    ],
+    "distribucionProgreso": [
+      { "rango": "0% - 25%", "etiqueta": "Iniciando", "estudiantes": 12, "porcentaje": 16.2 }
+    ],
+    "cuestionario": {
+      "leccionId": 20,
+      "titulo": "Cuestionario final",
+      "orden": 5,
+      "notaMinima": 70,
+      "totalAprobados": 32,
+      "intentos": [
+        { "intento": 1, "estudiantes": 21, "notaPromedio": 88 }
+      ]
+    }
+  }
+}
+```
+
+`embudo` cuenta a los estudiantes que aprobaron cada lección con la misma regla
+del temario: contenido con `completada` y cuestionarios con una mejor nota igual
+o superior a `notaMinima`. `distribucionProgreso` agrupa el porcentaje de avance
+de cada inscripción en cuatro tramos sobre el total de inscritos.
+`cuestionario` analiza el último cuestionario del curso y agrupa a quienes lo
+aprobaron según los intentos registrados (1, 2 o 3), con el promedio de su mejor
+nota por tramo; si el curso no tiene cuestionarios, devuelve `null`. Los valores
+sin datos se devuelven como `null` en lugar de inventar cifras.
+`estudiantesCompletados` cuenta a quienes aprobaron todas las lecciones o la
+última lección del curso. Aprobar la última es evidencia suficiente de
+finalización porque el desbloqueo secuencial impide llegar a ella sin completar
+las anteriores; también cubre datos históricos que no conservan todas las filas
+de progreso.
+
+La pantalla `/instructor/analiticas` consume este endpoint y permite cambiar de
+curso con un selector dentro de una tarjeta. Muestra el embudo con la lección de
+mayor deserción destacada, la distribución de progreso, el desempeño del
+cuestionario y un cuadro con la lista de estudiantes inscritos. El botón «Ver
+métricas del curso» del panel abre esta pantalla con `?curso=<id>`. La navegación
+del instructor muestra «Panel principal», «Crear curso» y «Analíticas» junto a la
+marca; «Explorar cursos» permanece solo en la navegación de estudiantes y
+visitantes.
+
+### Estudiantes inscritos por curso
+
+`GET /api/cursos/mios/:id/estudiantes` requiere un token bearer con el rol
+`instructor` y devuelve `{ curso, estudiantes }` de un curso propio. Cada
+estudiante incluye `id` de la inscripción, `estudianteId`, `nombre`, `email` y
+`fechaInscripcion`; nunca se expone el hash de contraseña. Un curso ajeno
+devuelve `403 CURSO_NO_PROPIO`.
+
+La pantalla `/instructor/analiticas` muestra esta lista en un cuadro con el
+nombre, correo y fecha de inscripción de cada estudiante del curso seleccionado.
 
 ## API de gestión de lecciones (instructor)
 

@@ -13,7 +13,7 @@ import {
   publicarCurso,
 } from '../../services/curso.service.js';
 import { accionesCurso, estados, niveles } from './courseForm.js';
-import { MetricasCurso, ResumenMetricas } from './InstructorMetrics.jsx';
+import { ResumenMetricas } from './InstructorMetrics.jsx';
 
 const operations = {
   publicar: { request: publicarCurso, success: 'Curso publicado.' },
@@ -64,9 +64,6 @@ export default function MyCoursesPage() {
   const cursos = data?.cursos ?? [];
   const publicados = cursos.filter((curso) => curso.estado === 'publicado').length;
   const borradores = cursos.filter((curso) => curso.estado === 'borrador').length;
-  const metricasPorCurso = new Map(
-    (metricas.data?.cursos ?? []).map((metrica) => [metrica.id, metrica]),
-  );
   const visibles = filtro === 'todos' ? cursos : cursos.filter((curso) => curso.estado === filtro);
 
   function contar(valor) {
@@ -195,7 +192,6 @@ export default function MyCoursesPage() {
                 const disabled = pending !== null;
                 const busy = (action) => pending?.id === curso.id && pending.action === action;
                 const style = estadoStyles[curso.estado] ?? estadoStyles.borrador;
-                const metrica = metricasPorCurso.get(curso.id);
 
                 return (
                   <li
@@ -242,11 +238,13 @@ export default function MyCoursesPage() {
                           </div>
                         </dl>
 
-                        <MetricasCurso
-                          metrica={metrica}
-                          cargando={metricas.loading}
-                          inscritos={curso.totalInscritos}
-                        />
+                        <Link
+                          to={`/instructor/analiticas?curso=${curso.id}`}
+                          className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-control bg-primary px-3 py-2 text-label-md font-semibold text-on-primary transition-opacity hover:opacity-95"
+                        >
+                          <Icon name="insights" className="text-[18px]" />
+                          Ver métricas del curso
+                        </Link>
                       </div>
                     </div>
 
