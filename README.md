@@ -222,6 +222,65 @@ una transacción con la fila del curso bloqueada, de modo que una regla fallida
 nunca deja una eliminación parcial. Los cursos archivados desaparecen del
 catálogo público porque este solo lista cursos `publicado`.
 
+## API de métricas del panel (instructor)
+
+`GET /api/cursos/mios/metricas` requiere un token bearer con el rol
+`instructor` y devuelve las métricas de los cursos del instructor autenticado,
+en cualquier estado. El `instructorId` siempre proviene de la sesión: no se
+acepta un id de curso ni de instructor por parámetro, de modo que un instructor
+nunca recibe métricas de cursos ajenos.
+
+La respuesta incluye un resumen del panel y una entrada por curso:
+
+```json
+{
+  "resumen": {
+    "totalCursos": 2,
+    "totalInscritos": 74,
+    "progresoPromedio": 58.4,
+    "notaPromedio": 81.6
+  },
+  "cursos": [
+    {
+      "id": 3,
+      "titulo": "React desde cero",
+      "estado": "publicado",
+      "totalLecciones": 5,
+      "totalInscritos": 74,
+      "progresoPromedio": 58.4,
+      "notaPromedio": 81.6,
+      "leccionMayorDesercion": {
+        "leccionId": 18,
+        "titulo": "Manejo de estado",
+        "orden": 3,
+        "estudiantesDetenidos": 26
+      }
+    }
+  ]
+}
+```
+
+`progresoPromedio` es el promedio del porcentaje de avance de cada inscripción;
+cada porcentaje usa la misma regla del temario: una lección de contenido cuenta
+cuando `completada` es `true` y un cuestionario cuando su mejor nota alcanza
+`notaMinima`. `notaPromedio` es el promedio de las mejores notas almacenadas en
+los cuestionarios del curso. `leccionMayorDesercion` es la lección donde más
+estudiantes se detienen: por cada estudiante se busca la primera lección que
+todavía no aprueba después de aprobar todas las anteriores. En un empate se
+informa la lección de menor `orden`; la última lección también puede ser la de
+mayor detención cuando los estudiantes no aprueban el cuestionario final. Los
+estudiantes que nunca registraron actividad no se atribuyen a una lección. Si
+nadie registró actividad, se devuelve `null` para no atribuir deserción a un
+curso sin actividad.
+
+Un curso sin inscripciones devuelve `totalInscritos: 0`, `progresoPromedio:
+null`, `notaPromedio: null` y `leccionMayorDesercion: null`. Un curso con
+inscripciones pero sin actividad devuelve `progresoPromedio: 0` y deja en
+`null` las métricas que no tienen datos, sin inventar cifras. Un curso sin
+lecciones tampoco tiene un progreso calculable y devuelve `progresoPromedio:
+null`. Las métricas se calculan con cuatro consultas en total (cursos,
+lecciones, inscripciones y progresos), sin una consulta por curso.
+
 ## API de gestión de lecciones (instructor)
 
 Estas rutas requieren un token bearer con el rol `instructor` y funcionan solo
