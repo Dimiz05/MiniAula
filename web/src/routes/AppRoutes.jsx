@@ -7,6 +7,7 @@ import NotFoundPage from '../pages/NotFoundPage.jsx';
 import LoginPage from '../pages/auth/LoginPage.jsx';
 import ProfilePage from '../pages/auth/ProfilePage.jsx';
 import RegisterPage from '../pages/auth/RegisterPage.jsx';
+import AnalyticsPage from '../pages/instructor/AnalyticsPage.jsx';
 import CourseEditorPage from '../pages/instructor/CourseEditorPage.jsx';
 import MyCoursesPage from '../pages/instructor/MyCoursesPage.jsx';
 import DashboardPage from '../pages/student/DashboardPage.jsx';
@@ -35,6 +36,7 @@ export default function AppRoutes() {
             <Route path="instructor/cursos" element={<MyCoursesPage />} />
             <Route path="instructor/cursos/nuevo" element={<CourseEditorPage />} />
             <Route path="instructor/cursos/:id/editar" element={<CourseEditorPage />} />
+            <Route path="instructor/analiticas" element={<AnalyticsPage />} />
           </Route>
         </Route>
         <Route path="*" element={<NotFoundPage />} />

@@ -147,11 +147,19 @@ test('ignores a malformed stored session', () => {
 });
 
 test('only instructors see course management routes and navigation', () => {
-  const paths = ['/instructor/cursos', '/instructor/cursos/nuevo', '/instructor/cursos/7/editar'];
+  const paths = [
+    '/instructor/cursos',
+    '/instructor/cursos/nuevo',
+    '/instructor/cursos/7/editar',
+    '/instructor/analiticas',
+  ];
   for (const usuario of [null, demoUsuario]) {
     if (usuario) session.writeSession({ token: 'stored-token', usuario });
     for (const path of paths) {
-      assert.doesNotMatch(render(path), /Nuevo curso|Cargando curso|name="titulo"|href="\/instructor\/cursos"/);
+      assert.doesNotMatch(
+        render(path),
+        /Nuevo curso|Cargando curso|name="titulo"|href="\/instructor\/cursos"|Analíticas detalladas/,
+      );
     }
   }
 
@@ -164,6 +172,26 @@ test('only instructors see course management routes and navigation', () => {
   const editar = render(paths[2]);
   assert.match(editar, /Cargando curso/);
   assert.doesNotMatch(editar, /name="titulo"/);
+});
+
+test('instructor navigation shows the three management links and analytics route', () => {
+  session.writeSession({ token: 'stored-token', usuario: { ...demoUsuario, rol: 'instructor' } });
+  const panel = render('/instructor/cursos');
+  assert.match(panel, /Panel principal/);
+  assert.match(panel, /Crear curso/);
+  assert.match(panel, /Analíticas/);
+  assert.match(panel, /href="\/instructor\/analiticas"/);
+  assert.doesNotMatch(panel, /Explorar cursos/);
+
+  const analiticas = render('/instructor/analiticas');
+  assert.match(analiticas, /Analíticas detalladas del curso/);
+  assert.match(analiticas, /Cargando tus cursos…/);
+
+  session.writeSession({ token: 'stored-token', usuario: demoUsuario });
+  assert.match(render('/panel'), /Explorar cursos/);
+
+  session.clearSession();
+  assert.match(render('/'), /Explorar cursos/);
 });
 
 test('renders the student panel only for students', () => {

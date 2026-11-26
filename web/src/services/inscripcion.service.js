@@ -12,6 +12,12 @@ export function listarMisInscripciones() {
   return apiRequest('/inscripciones/mias', { auth: true });
 }
 
+export function listarEstudiantesCurso(cursoId) {
+  return apiRequest(`/cursos/mios/${encodeURIComponent(cursoId)}/estudiantes`, {
+    auth: true,
+  });
+}
+
 export function esInscripcionDuplicada(error) {
   return error?.status === 409 && error?.code === 'INSCRIPCION_DUPLICADA';
 }
