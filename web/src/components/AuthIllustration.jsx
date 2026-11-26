@@ -1,3 +1,6 @@
+import loginIllustration from '../assets/login-illustration.svg';
+import signupIllustration from '../assets/signup-illustration.svg';
+
 const palette = {
   deep: '#0A5C41',
   mid: '#0D7A57',
@@ -390,11 +393,11 @@ function InstructorScene() {
 const scenes = {
   login: {
     title: 'Inicio de sesión seguro',
-    scene: LoginScene,
+    image: loginIllustration,
   },
   estudiante: {
     title: 'Estudiante con laptop, libros y birrete',
-    scene: StudentScene,
+    image: signupIllustration,
   },
   instructor: {
     title: 'Instructor creando un curso',
@@ -404,6 +407,17 @@ const scenes = {
 
 export default function AuthIllustration({ variant = 'login', className = '' }) {
   const entry = scenes[variant] ?? scenes.login;
+
+  if (entry.image) {
+    return (
+      <img
+        src={entry.image}
+        alt={entry.title}
+        className={`block h-auto w-full ${className}`}
+      />
+    );
+  }
+
   const Scene = entry.scene;
 
   return (
