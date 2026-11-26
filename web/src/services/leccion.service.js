@@ -24,6 +24,13 @@ export function obtenerTemarioEstudiante(cursoId) {
   });
 }
 
+export function completarLeccion(id) {
+  return apiRequest(`/lecciones/${encodeURIComponent(id)}/completar`, {
+    auth: true,
+    method: 'POST',
+  });
+}
+
 export function crearLeccion(cursoId, body) {
   return apiRequest(`/cursos/${encodeURIComponent(cursoId)}/lecciones`, {
     auth: true,

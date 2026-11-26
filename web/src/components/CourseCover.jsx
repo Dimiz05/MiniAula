@@ -1,26 +1,8 @@
 import { useEffect, useState } from 'react';
-import { API_URL } from '../config/http.js';
 import Icon from './Icon.jsx';
+import { resolverRecurso } from '../utils/media.js';
 
-function origenApi() {
-  try {
-    return new URL(API_URL).origin;
-  } catch {
-    return '';
-  }
-}
-
-export function resolverPortada(portada) {
-  if (!portada) {
-    return null;
-  }
-
-  if (/^[a-z][a-z0-9+.-]*:/i.test(portada)) {
-    return portada;
-  }
-
-  return `${origenApi()}${portada.startsWith('/') ? '' : '/'}${portada}`;
-}
+export const resolverPortada = resolverRecurso;
 
 export default function CourseCover({
   portada,

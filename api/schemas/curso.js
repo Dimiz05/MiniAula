@@ -61,6 +61,15 @@ export const actualizarCursoSchema = z
     'Envía al menos un campo para actualizar.',
   );
 
+// Alias compatible con el contrato del proyecto: PATCH /cursos/:id/estado.
+export const actualizarEstadoCursoSchema = z
+  .object({
+    estado: z.enum(['publicado', 'archivado'], {
+      message: 'El estado debe ser publicado o archivado.',
+    }),
+  })
+  .strict();
+
 export const catalogoQuerySchema = z
   .object({
     q: textoOpcional(120, 'La búsqueda no puede superar los 120 caracteres.'),

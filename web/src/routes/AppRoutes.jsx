@@ -20,13 +20,7 @@ export default function AppRoutes() {
       <Route element={<SiteLayout />}>
         <Route index element={<HomePage />} />
         <Route path="catalog" element={<CatalogPage />} />
-        <Route path="catalogo" element={<CatalogPage />} />
         <Route path="catalog/:id" element={<CourseDetailPage />} />
-        <Route path="catalogo/:id" element={<CourseDetailPage />} />
-        <Route path="cursos" element={<CatalogPage />} />
-        <Route path="cursos/:id" element={<CourseDetailPage />} />
-        <Route path="curso/:id" element={<CourseDetailPage />} />
-        <Route path="course/:id" element={<CourseDetailPage />} />
         <Route element={<RequireAuth />}>
           <Route path="perfil" element={<ProfilePage />} />
           <Route element={<RequireStudent />}>

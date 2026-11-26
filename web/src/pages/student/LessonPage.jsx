@@ -5,8 +5,10 @@ import Button from '../../components/Button.jsx';
 import CourseProgress from '../../components/CourseProgress.jsx';
 import Icon from '../../components/Icon.jsx';
 import LessonOutline from '../../components/LessonOutline.jsx';
+import LessonVideo from '../../components/LessonVideo.jsx';
 import QuizAttempt from '../../components/QuizAttempt.jsx';
 import {
+  completarLeccion,
   obtenerLeccion,
   obtenerTemarioEstudiante,
 } from '../../services/leccion.service.js';
@@ -14,6 +16,8 @@ import {
   clasificarErrorLeccion,
   ESTADOS_LECCION,
   normalizarEstadoLeccion,
+  rutaLeccion,
+  siguienteLeccionDespuesDe,
 } from '../../utils/lessonState.js';
 
 function tipoLabel(leccion) {
@@ -30,21 +34,43 @@ export default function LessonPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [reintento, setReintento] = useState(0);
+  const [completando, setCompletando] = useState(false);
+  const [completarError, setCompletarError] = useState(null);
+  const [completadaAhora, setCompletadaAhora] = useState(false);
 
   const cargar = useCallback(() => {
     setReintento((valor) => valor + 1);
   }, []);
 
-  const actualizarTemario = useCallback(() => {
-    obtenerTemarioEstudiante(cursoId)
-      .then((data) => {
-        setTemarioData(data ?? null);
-        setOutlineError(null);
-      })
-      .catch((error) => {
-        setOutlineError(error);
-      });
-  }, [cursoId]);
+  const actualizarTemario = useCallback(() => obtenerTemarioEstudiante(cursoId)
+    .then((data) => {
+      setTemarioData(data ?? null);
+      setOutlineError(null);
+      return data;
+    })
+    .catch((error) => {
+      setOutlineError(error);
+      return null;
+    }), [cursoId]);
+
+  const marcarCompletada = useCallback(async () => {
+    if (!leccion?.id || completando) {
+      return;
+    }
+
+    setCompletando(true);
+    setCompletarError(null);
+
+    try {
+      await completarLeccion(leccion.id);
+      setCompletadaAhora(true);
+      await actualizarTemario();
+    } catch (error) {
+      setCompletarError(error);
+    } finally {
+      setCompletando(false);
+    }
+  }, [actualizarTemario, completando, leccion?.id]);
 
   useEffect(() => {
     let active = true;
@@ -54,6 +80,9 @@ export default function LessonPage() {
     setOutlineError(null);
     setLeccion(null);
     setTemarioData(null);
+    setCompletadaAhora(false);
+    setCompletarError(null);
+    setCompletando(false);
 
     Promise.allSettled([
       obtenerLeccion(leccionId),
@@ -101,6 +130,12 @@ export default function LessonPage() {
       temario.find((item) => String(item.id) === String(leccion.id))?.estado
       ?? ESTADOS_LECCION.DISPONIBLE,
     )
+    : null;
+  const esContenido = leccion?.tipo === 'contenido';
+  const estaCompletada = estadoActual === ESTADOS_LECCION.COMPLETADA
+    || completadaAhora;
+  const siguiente = estaCompletada && esContenido
+    ? siguienteLeccionDespuesDe(temario, leccion.id)
     : null;
 
   return (
@@ -181,19 +216,23 @@ export default function LessonPage() {
                     <span className="inline-flex items-center gap-1 rounded-full bg-success-light px-3 py-1 text-label-sm font-semibold text-success">
                       <Icon
                         name={
-                          estadoActual === ESTADOS_LECCION.COMPLETADA
+                          estaCompletada
                             ? 'check_circle'
                             : 'lock_open'
                         }
                         className="text-[16px]"
                       />
-                      {estadoActual === ESTADOS_LECCION.COMPLETADA
+                      {estaCompletada
                         ? 'Completada'
                         : 'Disponible'}
                     </span>
                   )}
                 </div>
               </header>
+
+              {leccion.videoUrl && (
+                <LessonVideo videoUrl={leccion.videoUrl} titulo={leccion.titulo} />
+              )}
 
               {leccion.tipo === 'cuestionario' ? (
                 <QuizAttempt
@@ -214,32 +253,53 @@ export default function LessonPage() {
                 </Alert>
               )}
 
-              {leccion.videoUrl && (
-                <section className="rounded-panel border border-outline bg-surface p-6 shadow-card">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                        <Icon name="play_circle" className="text-[24px]" />
-                      </span>
+              {esContenido && (
+                <section
+                  aria-label="Avance de la lección"
+                  aria-live="polite"
+                  className="rounded-panel border border-outline bg-surface p-5 shadow-card"
+                >
+                  {completarError && (
+                    <Alert variant="error" title="No pudimos marcar la lección">
+                      <p>{completarError.message}</p>
+                    </Alert>
+                  )}
+
+                  {estaCompletada ? (
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-success/30 bg-success-light p-4">
+                      <p className="text-body-sm text-secondary">
+                        Lección completada. Tu avance quedó guardado.
+                      </p>
+                      {siguiente && (
+                        <Link
+                          to={rutaLeccion(cursoId, siguiente.id)}
+                          className="inline-flex"
+                        >
+                          <Button variant="secondary" icon="arrow_forward">
+                            Continuar al siguiente tema
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <h2 className="text-headline-sm text-secondary">
-                          Video de la lección
+                          ¿Terminaste esta lección?
                         </h2>
                         <p className="text-body-sm text-on-surface-variant">
-                          Recurso complementario del contenido.
+                          Márcala como completada para desbloquear el siguiente tema.
                         </p>
                       </div>
+                      <Button
+                        onClick={marcarCompletada}
+                        loading={completando}
+                        icon="check_circle"
+                      >
+                        Marcar como completada
+                      </Button>
                     </div>
-                    <a
-                      href={leccion.videoUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-control border border-outline bg-surface px-4 py-2 text-label-md text-secondary transition-colors hover:bg-surface-variant"
-                    >
-                      <Icon name="open_in_new" className="text-[18px]" />
-                      Abrir video
-                    </a>
-                  </div>
+                  )}
                 </section>
               )}
 

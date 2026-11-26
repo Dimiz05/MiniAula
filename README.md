@@ -24,7 +24,11 @@ rendir un cuestionario desbloqueado, ver la nota, el resultado
 aprobado/reprobado y los intentos restantes; la calificación siempre se calcula
 en el servidor. Solo un cuestionario aprobado desbloquea la siguiente lección: el
 resultado persistido alimenta el avance secuencial y la pantalla ofrece continuar
-al siguiente tema, mientras que un intento reprobado mantiene el bloqueo.
+al siguiente tema, mientras que un intento reprobado mantiene el bloqueo. El
+estudiante marca cada lección de contenido como completada desde la vista de la
+lección, y el video se reproduce dentro de la misma página, siempre encima del
+texto del contenido; YouTube, Vimeo y los archivos MP4/WebM usan un reproductor
+embebido, no un botón que saque al estudiante de MiniAula.
 
 ## Estructura del repositorio
 
@@ -114,30 +118,31 @@ demostración usan la contraseña `Miniaula123!`.
 
 | Email | Rol |
 | --- | --- |
-| `ana.instructora@miniaula.test` | instructor |
-| `bruno.instructor@miniaula.test` | instructor |
-| `carla.estudiante@miniaula.test` | estudiante |
-| `diego.estudiante@miniaula.test` | estudiante |
-| `elena.estudiante@miniaula.test` | estudiante |
+| `lucia.instructora@miniaula.test` | instructor |
+| `mateo.instructor@miniaula.test` | instructor |
+| `sofia.estudiante@miniaula.test` | estudiante |
+| `tomas.estudiante@miniaula.test` | estudiante |
+| `valeria.estudiante@miniaula.test` | estudiante |
 
-El mismo seed crea tres cursos publicados con cinco lecciones cada uno y al
-menos un cuestionario calificado por curso:
+El mismo seed crea tres cursos publicados con cinco lecciones cada uno, portada
+y al menos un cuestionario calificado por curso. Cada lección de contenido tiene
+un video reproducible dentro de la página:
 
 | Curso | Categoría | Nivel | Instructor | Lecciones |
 | --- | --- | --- | --- | --- |
-| Fundamentos de JavaScript | Programación | basico | Ana | 4 de contenido + cuestionario (nota mínima 70) |
-| Diseño de interfaces web | Diseño | intermedio | Bruno | 3 de contenido + cuestionario (nota mínima 60) + 1 de contenido |
-| Inglés técnico para desarrollo | Idiomas | intermedio | Ana | 4 de contenido + cuestionario (nota mínima 60) |
+| React desde cero | Programación | intermedio | Lucía | 4 de contenido + cuestionario final (nota mínima 70) |
+| Diseño de interfaces accesibles | Diseño | intermedio | Mateo | 2 de contenido + cuestionario (nota mínima 60) + 2 de contenido |
+| Inglés técnico para equipos | Idiomas | intermedio | Lucía | 4 de contenido + cuestionario (nota mínima 60) |
 
-El cuestionario de «Diseño de interfaces web» está en medio del curso para poder
-demostrar la regla «hay que aprobar el cuestionario para continuar».
+El cuestionario de «Diseño de interfaces accesibles» está en medio del curso para
+poder demostrar la regla «hay que aprobar el cuestionario para continuar».
 
 ## Formato de respuesta de la API
 
 Cada recurso individual exitoso devuelve el recurso bajo su propia clave:
 
 ```json
-{ "usuario": { "id": 1, "nombre": "Ana Torres", "email": "ana.instructora@miniaula.test", "rol": "instructor", "creadoEn": "2026-11-18T10:00:00.000Z" } }
+{ "usuario": { "id": 1, "nombre": "Lucía Ferrer", "email": "lucia.instructora@miniaula.test", "rol": "instructor", "creadoEn": "2026-11-25T10:00:00.000Z" } }
 ```
 
 Cada colección paginada devuelve la lista junto con sus metadatos de
@@ -145,7 +150,7 @@ paginación:
 
 ```json
 {
-  "cursos": [{ "id": 1, "titulo": "Fundamentos de JavaScript" }],
+  "cursos": [{ "id": 1, "titulo": "React desde cero" }],
   "paginacion": { "page": 1, "limit": 10, "total": 23, "totalPaginas": 3 }
 }
 ```
@@ -204,6 +209,18 @@ cursos del instructor autenticado; el curso de otro instructor devuelve
 | `PATCH /api/cursos/:id/publicar` | Publicar un borrador propio. Requiere al menos una lección; de lo contrario devuelve `409 CURSO_SIN_LECCIONES`. Devuelve `{ curso }` con `estado: "publicado"`. |
 | `PATCH /api/cursos/:id/archivar` | Archivar un curso propio en borrador o publicado. Funciona incluso cuando hay estudiantes inscritos. Devuelve `{ curso }` con `estado: "archivado"`. |
 | `DELETE /api/cursos/:id` | Eliminar un curso propio solo cuando no tiene estudiantes inscritos; de lo contrario devuelve `409 CURSO_CON_INSCRIPCIONES` y el curso debe archivarse. Devuelve `204` sin cuerpo. |
+
+### Alias de compatibilidad
+
+Estas rutas mantienen los nombres del contrato del proyecto sin duplicar la
+lógica: delegan en los mismos servicios que las rutas principales.
+
+| Método y ruta | Acceso | Equivalente |
+| --- | --- | --- |
+| `GET /api/cursos/:id/progreso` | Estudiante inscrito | Mismo contrato que `GET /api/cursos/:id/temario`: devuelve `{ curso, inscripcion, temario, porcentajeAvance, leccionesCompletadas, totalLecciones }`. |
+| `PATCH /api/cursos/:id/estado` | Instructor dueño | Recibe `{ "estado": "publicado" }` o `{ "estado": "archivado" }` y aplica las mismas reglas que `/publicar` y `/archivar`. Un valor distinto devuelve `422 VALIDACION`. |
+| `GET /api/instructor/cursos` | Instructor | Mismo resultado que `GET /api/cursos/mios`. |
+| `GET /api/instructor/cursos/:id/resumen` | Instructor dueño | Devuelve `{ resumen }` con las métricas de ese curso: inscritos, progreso promedio, nota promedio y lección con mayor deserción. Un curso ajeno devuelve `403 CURSO_NO_PROPIO`. |
 
 La portada se sube desde el editor del instructor con un selector de archivos.
 Solo se aceptan imágenes PNG, JPG/JPEG y WebP de hasta 5 MB; la API valida la
@@ -381,6 +398,15 @@ aprobado/reprobado y los intentos restantes que devuelve la API. El botón de
 envío se bloquea mientras la solicitud está en curso para evitar envíos
 duplicados, y la nota nunca se calcula en el navegador.
 
+Si la lección tiene `videoUrl`, la vista lo reproduce antes del texto de
+contenido: YouTube y Vimeo se embeben como `iframe` y los archivos directos usan
+`<video controls>`. No hay un botón que abra el video en otro sitio. En las
+lecciones de contenido, el estudiante pulsa «Marcar como completada»; la pantalla
+llama a `POST /api/lecciones/:id/completar`, refresca el temario con
+`GET /api/cursos/:id/temario` y muestra la siguiente lección desbloqueada. El
+botón no aparece en cuestionarios ni en lecciones ya completadas, y el servidor
+vuelve a validar la inscripción y el avance.
+
 La SPA guarda `{ token, usuario }` en `localStorage` bajo
 `miniaula.session.v1`, por lo que la sesión sobrevive a una recarga de página. Un
 cliente fetch configurado (`web/src/config/http.js`) lee `VITE_API_URL`, adjunta
@@ -394,9 +420,9 @@ registran en logs.
 
 [`docs/postman/MiniAula.postman_collection.json`](docs/postman/MiniAula.postman_collection.json)
 prueba la API implementada: health, registro, inicio de sesión, perfil,
-validación y gestión de lecciones del instructor. Captura automáticamente tokens
-e IDs de cursos/lecciones y comprueba el código de estado y el código de error de
-cada caso.
+validación, cursos propios, lecciones y preguntas del instructor. Captura
+automáticamente tokens e IDs de cursos/lecciones y comprueba el código de estado
+y el código de error de cada caso. Las variables usan las cuentas del seed nuevo.
 
 1. Inicia la pila con `docker compose up --build` (o la API local).
 2. En Postman, elige **Import** y selecciona el archivo de la colección.
@@ -409,9 +435,10 @@ de la colección para probar otro host. Las solicitudes de registro usan
 límites de tasa (registro: 5 por hora; inicio de sesión: 10 por 15 minutos);
 `docker compose restart api` limpia los contadores en memoria. La carpeta de
 lecciones usa los instructores del seed, crea una lección temporal, restaura el
-orden del curso y elimina esa lección al final. Las solicitudes para el CRUD de
-cursos, inscripciones, progreso y el panel del instructor se agregarán más
-adelante.
+orden del curso y elimina esa lección al final. La carpeta 07 cubre los alias
+de compatibilidad: cursos del instructor, resumen por curso, inscripción,
+progreso y cambio de estado. El panel agregado y el avance completo se
+demuestran desde la aplicación.
 
 ## Pila completa con Docker
 

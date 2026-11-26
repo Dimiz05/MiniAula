@@ -1,6 +1,7 @@
 import { Router, raw } from 'express';
 import {
   actualizar,
+  actualizarEstado,
   archivar,
   crear,
   detalle,
@@ -11,7 +12,11 @@ import {
   misCursos,
   publicar,
 } from '../controllers/curso.js';
-import { inscribir, obtenerTemario } from '../controllers/inscripcion.js';
+import {
+  inscribir,
+  obtenerProgreso,
+  obtenerTemario,
+} from '../controllers/inscripcion.js';
 import {
   crear as crearLeccion,
   reordenar as reordenarLecciones,
@@ -24,6 +29,7 @@ import { authenticate, authorize } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
 import {
   actualizarCursoSchema,
+  actualizarEstadoCursoSchema,
   catalogoQuerySchema,
   crearCursoSchema,
   cursoIdParamsSchema,
@@ -58,6 +64,13 @@ router.get(
   authorize('estudiante'),
   validate({ params: cursoIdParamsSchema }),
   obtenerTemario,
+);
+router.get(
+  '/:id/progreso',
+  authenticate,
+  authorize('estudiante'),
+  validate({ params: cursoIdParamsSchema }),
+  obtenerProgreso,
 );
 router.post(
   '/:id/portada',
@@ -115,6 +128,16 @@ router.patch(
   authorize('instructor'),
   validate({ params: cursoIdParamsSchema }),
   archivar,
+);
+router.patch(
+  '/:id/estado',
+  authenticate,
+  authorize('instructor'),
+  validate({
+    params: cursoIdParamsSchema,
+    body: actualizarEstadoCursoSchema,
+  }),
+  actualizarEstado,
 );
 router.delete(
   '/:id',
