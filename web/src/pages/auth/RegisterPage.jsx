@@ -137,7 +137,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <AuthShell variant={form.rol}>
+    <AuthShell variant={form.rol} illustrationVariant="estudiante">
       <div>
         <header className="mb-6 flex items-center justify-between gap-4">
           <Logo />
@@ -240,7 +240,7 @@ export default function RegisterPage() {
             onChange={(event) => updateField('email', event.target.value)}
           />
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-4">
             <FormField
               id="register-password"
               name="password"

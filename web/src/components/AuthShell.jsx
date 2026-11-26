@@ -24,8 +24,9 @@ const copy = {
   },
 };
 
-export default function AuthShell({ variant = 'login', children }) {
+export default function AuthShell({ variant = 'login', illustrationVariant, children }) {
   const content = copy[variant] ?? copy.login;
+  const illustration = illustrationVariant ?? variant;
 
   return (
     <div className="flex min-h-screen justify-center bg-background p-4 md:p-8">
@@ -37,7 +38,7 @@ export default function AuthShell({ variant = 'login', children }) {
         <aside className="hidden flex-col justify-center border-l border-outline bg-surface-variant/70 p-8 md:flex lg:p-12">
           <div className="my-auto text-center">
             <div className="mx-auto mb-6 w-full max-w-72 overflow-hidden rounded-panel border border-outline bg-surface shadow-card">
-              <AuthIllustration variant={variant} />
+              <AuthIllustration variant={illustration} />
             </div>
 
             <h2 className="mb-2 text-headline-sm text-secondary">

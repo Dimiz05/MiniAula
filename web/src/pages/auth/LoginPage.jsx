@@ -161,29 +161,6 @@ export default function LoginPage() {
             {submitting ? 'Iniciando sesión…' : 'Iniciar sesión'}
           </Button>
         </form>
-
-        <p className="mt-4 text-center text-body-sm text-on-surface-variant">
-          Tu sesión se mantendrá iniciada en este dispositivo hasta que cierres
-          sesión o el token expire.
-        </p>
-
-        <details className="mt-6 rounded-control border border-dashed border-outline bg-background p-3 text-body-sm text-on-surface-variant">
-          <summary className="cursor-pointer font-semibold text-secondary">
-            Usar una cuenta de demostración
-          </summary>
-          <div className="mt-2 space-y-1">
-            <p>
-              Estudiante:{' '}
-              <span className="font-medium text-secondary">
-                sofia.estudiante@miniaula.test
-              </span>
-            </p>
-            <p>
-              Contraseña:{' '}
-              <span className="font-medium text-secondary">Miniaula123!</span>
-            </p>
-          </div>
-        </details>
       </div>
 
       <footer className="mt-8 border-t border-outline-light pt-5 text-center">
@@ -193,7 +170,7 @@ export default function LoginPage() {
             to="/registro"
             className="font-semibold text-primary hover:underline"
           >
-            Crear cuenta gratis
+            Crear cuenta
           </Link>
         </p>
       </footer>
