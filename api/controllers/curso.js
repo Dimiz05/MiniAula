@@ -10,6 +10,7 @@ import {
   publicarCursoPropio,
 } from '../services/curso.service.js';
 import { listarLeccionesPropias } from '../services/leccion.service.js';
+import { obtenerMetricasCursos } from '../services/metrica.service.js';
 import { AppError } from '../utils/errors.js';
 
 export async function listar(request, response) {
@@ -34,6 +35,11 @@ export async function detalle(request, response) {
 export async function misCursos(request, response) {
   const cursos = await listarCursosPropios(request.usuario.id);
   response.status(200).json({ cursos });
+}
+
+export async function metricas(request, response) {
+  const resultado = await obtenerMetricasCursos(request.usuario.id);
+  response.status(200).json(resultado);
 }
 
 export async function detallePropio(request, response) {

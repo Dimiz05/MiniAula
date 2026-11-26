@@ -7,6 +7,7 @@ import {
   detallePropio,
   eliminar,
   listar,
+  metricas,
   misCursos,
   publicar,
 } from '../controllers/curso.js';
@@ -36,6 +37,7 @@ const router = Router();
 
 // Own-course routes must be registered before the public /:id route.
 router.get('/mios', authenticate, authorize('instructor'), misCursos);
+router.get('/mios/metricas', authenticate, authorize('instructor'), metricas);
 router.get(
   '/mios/:id',
   authenticate,
