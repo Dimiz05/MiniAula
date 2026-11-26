@@ -5,8 +5,15 @@ import Button from '../../components/Button.jsx';
 import CourseCover from '../../components/CourseCover.jsx';
 import Icon from '../../components/Icon.jsx';
 import { useFetch } from '../../hooks/useFetch.js';
-import { archivarCurso, eliminarCurso, listarCursosPropios, publicarCurso } from '../../services/curso.service.js';
+import {
+  archivarCurso,
+  eliminarCurso,
+  listarCursosPropios,
+  obtenerMetricasPanel,
+  publicarCurso,
+} from '../../services/curso.service.js';
 import { accionesCurso, estados, niveles } from './courseForm.js';
+import { MetricasCurso, ResumenMetricas } from './InstructorMetrics.jsx';
 
 const operations = {
   publicar: { request: publicarCurso, success: 'Curso publicado.' },
@@ -49,6 +56,7 @@ const filtros = [
 
 export default function MyCoursesPage() {
   const { data, loading, error, refetch } = useFetch(listarCursosPropios);
+  const metricas = useFetch(obtenerMetricasPanel);
   const [pending, setPending] = useState(null);
   const [notice, setNotice] = useState(null);
   const [filtro, setFiltro] = useState('todos');
@@ -56,8 +64,9 @@ export default function MyCoursesPage() {
   const cursos = data?.cursos ?? [];
   const publicados = cursos.filter((curso) => curso.estado === 'publicado').length;
   const borradores = cursos.filter((curso) => curso.estado === 'borrador').length;
-  const archivados = cursos.filter((curso) => curso.estado === 'archivado').length;
-  const inscritos = cursos.reduce((total, curso) => total + (curso.totalInscritos ?? 0), 0);
+  const metricasPorCurso = new Map(
+    (metricas.data?.cursos ?? []).map((metrica) => [metrica.id, metrica]),
+  );
   const visibles = filtro === 'todos' ? cursos : cursos.filter((curso) => curso.estado === filtro);
 
   function contar(valor) {
@@ -104,54 +113,39 @@ export default function MyCoursesPage() {
       </header>
 
       {notice && <Alert variant={notice.variant}>{notice.message}</Alert>}
+      {metricas.loading && (
+        <p role="status" className="text-body-md text-on-surface-variant">
+          Cargando métricas del panel…
+        </p>
+      )}
+      {metricas.error && (
+        <Alert variant="error" title="No se pudieron cargar las métricas">
+          <p>{metricas.error.message}</p>
+          <Button variant="secondary" className="mt-2" onClick={metricas.refetch}>
+            Reintentar
+          </Button>
+        </Alert>
+      )}
+      {!metricas.loading && !metricas.error && (metricas.data?.cursos?.length ?? 0) > 0 && (
+        <ResumenMetricas
+          resumen={metricas.data.resumen}
+          publicados={publicados}
+          borradores={borradores}
+        />
+      )}
+      {!loading && !error && !metricas.loading && !metricas.error && cursos.length > 0
+        && (metricas.data?.cursos?.length ?? 0) === 0 && (
+          <Alert title="Sin métricas disponibles">
+            Aún no hay datos de rendimiento para tus cursos.
+          </Alert>
+        )}
+
       {loading && <p role="status" className="text-body-md text-on-surface-variant">Cargando tus cursos…</p>}
       {error && (
         <Alert variant="error" title="No se pudieron cargar tus cursos">
           <p>{error.message}</p>
           <Button variant="secondary" className="mt-2" onClick={refetch}>Reintentar</Button>
         </Alert>
-      )}
-
-      {!loading && !error && cursos.length > 0 && (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <article className="rounded-card border border-outline bg-surface p-5 shadow-card">
-            <div className="mb-2 flex items-center justify-between text-on-surface-variant">
-              <span className="text-label-sm">Total de cursos</span>
-              <Icon name="auto_stories" className="text-[22px] text-primary" />
-            </div>
-            <p className="text-headline-md tabular-nums text-secondary">{cursos.length}</p>
-            <span className="text-label-sm text-success">
-              {publicados} publicados · {borradores} borradores
-            </span>
-          </article>
-
-          <article className="rounded-card border border-outline bg-surface p-5 shadow-card">
-            <div className="mb-2 flex items-center justify-between text-on-surface-variant">
-              <span className="text-label-sm">Estudiantes inscritos</span>
-              <Icon name="group" className="text-[22px] text-secondary" />
-            </div>
-            <p className="text-headline-md tabular-nums text-secondary">{inscritos}</p>
-            <span className="text-label-sm font-medium text-primary">En todos tus cursos</span>
-          </article>
-
-          <article className="rounded-card border border-outline bg-surface p-5 shadow-card">
-            <div className="mb-2 flex items-center justify-between text-on-surface-variant">
-              <span className="text-label-sm">Cursos archivados</span>
-              <Icon name="inventory_2" className="text-[22px] text-on-surface-variant" />
-            </div>
-            <p className="text-headline-md tabular-nums text-secondary">{archivados}</p>
-            <span className="text-label-sm text-on-surface-variant">Fuera del catálogo</span>
-          </article>
-
-          <article className="rounded-card border border-outline bg-surface p-5 shadow-card">
-            <div className="mb-2 flex items-center justify-between text-on-surface-variant">
-              <span className="text-label-sm">Borradores</span>
-              <Icon name="edit_note" className="text-[22px] text-warning" />
-            </div>
-            <p className="text-headline-md tabular-nums text-secondary">{borradores}</p>
-            <span className="text-label-sm text-on-surface-variant">En preparación</span>
-          </article>
-        </div>
       )}
 
       {!loading && !error && cursos.length === 0 && (
@@ -201,6 +195,7 @@ export default function MyCoursesPage() {
                 const disabled = pending !== null;
                 const busy = (action) => pending?.id === curso.id && pending.action === action;
                 const style = estadoStyles[curso.estado] ?? estadoStyles.borrador;
+                const metrica = metricasPorCurso.get(curso.id);
 
                 return (
                   <li
@@ -232,7 +227,7 @@ export default function MyCoursesPage() {
                           {curso.descripcion}
                         </p>
 
-                        <dl className="my-3 grid grid-cols-2 gap-2 border-y border-outline-light py-2 text-label-sm">
+                        <dl className="my-3 grid grid-cols-2 gap-2 border-y border-outline-light py-2 text-label-sm sm:grid-cols-3">
                           <div>
                             <dt className="text-on-surface-variant">Categoría:</dt>
                             <dd className="font-semibold text-secondary">{curso.categoria}</dd>
@@ -245,11 +240,13 @@ export default function MyCoursesPage() {
                             <dt className="text-on-surface-variant">Lecciones:</dt>
                             <dd className="font-semibold tabular-nums text-secondary">{curso.totalLecciones}</dd>
                           </div>
-                          <div>
-                            <dt className="text-on-surface-variant">Inscritos:</dt>
-                            <dd className="font-semibold tabular-nums text-secondary">{curso.totalInscritos}</dd>
-                          </div>
                         </dl>
+
+                        <MetricasCurso
+                          metrica={metrica}
+                          cargando={metricas.loading}
+                          inscritos={curso.totalInscritos}
+                        />
                       </div>
                     </div>
 

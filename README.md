@@ -281,6 +281,14 @@ lecciones tampoco tiene un progreso calculable y devuelve `progresoPromedio:
 null`. Las métricas se calculan con cuatro consultas en total (cursos,
 lecciones, inscripciones y progresos), sin una consulta por curso.
 
+La pantalla del panel del instructor (`/instructor/cursos`) consume este
+endpoint y muestra el resumen del panel junto con las cuatro métricas de cada
+curso: inscritos, progreso promedio, nota promedio y la lección con mayor
+deserción. Mientras llegan los datos muestra un estado de carga; si la solicitud
+falla, conserva el mensaje del servidor y ofrece reintentar; los valores sin
+datos se muestran como «Sin datos» en lugar de inventar cifras. La cuadrícula es
+responsive desde 375 px.
+
 ## API de gestión de lecciones (instructor)
 
 Estas rutas requieren un token bearer con el rol `instructor` y funcionan solo

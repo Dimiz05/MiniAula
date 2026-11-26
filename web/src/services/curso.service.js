@@ -49,6 +49,10 @@ export function listarCursosPropios() {
   return apiRequest('/cursos/mios', { auth: true });
 }
 
+export function obtenerMetricasPanel() {
+  return apiRequest('/cursos/mios/metricas', { auth: true });
+}
+
 export function obtenerCursoPropio(id) {
   return apiRequest(`/cursos/mios/${encodeURIComponent(id)}`, { auth: true });
 }
