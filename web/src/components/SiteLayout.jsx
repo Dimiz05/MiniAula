@@ -56,7 +56,7 @@ export default function SiteLayout() {
         Saltar al contenido
       </a>
 
-      <header className="sticky top-0 z-30 border-b border-paper-line bg-paper">
+      <header className="sticky top-0 z-30 border-b border-paper-line bg-paper shadow-nav">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="relative flex h-16 items-center justify-between gap-3 lg:h-20">
             <div className="flex min-w-0 items-center gap-4 lg:gap-8">
