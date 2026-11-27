@@ -151,7 +151,7 @@ paginación:
 ```json
 {
   "cursos": [{ "id": 1, "titulo": "React desde cero" }],
-  "paginacion": { "page": 1, "limit": 10, "total": 23, "totalPaginas": 3 }
+  "paginacion": { "pagina": 1, "limite": 6, "total": 23, "totalPaginas": 4 }
 }
 ```
 
@@ -224,7 +224,8 @@ lógica: delegan en los mismos servicios que las rutas principales.
 | `GET /api/instructor/cursos` | Instructor | Mismo resultado que `GET /api/cursos/mios`. |
 | `GET /api/instructor/cursos/:id/resumen` | Instructor dueño | Devuelve `{ resumen }` con las métricas de ese curso: inscritos, progreso promedio, nota promedio y lección con mayor deserción. Un curso ajeno devuelve `403 CURSO_NO_PROPIO`. |
 
-La portada se sube desde el editor del instructor con un selector de archivos.
+La portada se sube desde el editor del instructor con un selector de archivos o
+arrastrando una imagen sobre el campo de portada (una sola imagen por vez).
 Solo se aceptan imágenes PNG, JPG/JPEG y WebP de hasta 5 MB; la API valida la
 firma del archivo en lugar de confiar en la extensión. Los archivos se sirven
 desde `/uploads/portadas` y la ruta se devuelve en el catálogo público, el
