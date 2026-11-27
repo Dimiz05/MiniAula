@@ -1,16 +1,16 @@
 import { Link } from 'react-router';
 import Icon from '../components/Icon.jsx';
 import { useAuth } from '../hooks/useAuth.jsx';
-import heroIllustration from '../assets/hero-learning.jpg';
+import heroStudent from '../assets/hero-student.png';
 
 const primaryLink =
   'group inline-flex items-center justify-center gap-2 rounded-control bg-primary px-5 py-3 text-label-lg text-on-primary shadow-card transition-[background-color,box-shadow,transform] duration-200 ease-out-quint hover:bg-primary-dark hover:shadow-hover active:scale-[0.98] motion-reduce:active:scale-100';
 const secondaryLink =
   'group inline-flex items-center justify-center gap-2 rounded-control border border-outline bg-surface px-5 py-3 text-label-lg text-secondary shadow-xs transition-[background-color,border-color,transform] duration-200 ease-out-quint hover:border-primary/30 hover:bg-surface-variant active:scale-[0.98] motion-reduce:active:scale-100';
 const lightLink =
-  'group inline-flex items-center justify-center gap-2 rounded-control bg-surface px-5 py-3 text-label-lg text-primary shadow-card transition-[background-color,transform] duration-200 ease-out-quint hover:bg-white active:scale-[0.98] motion-reduce:active:scale-100';
+  'group inline-flex items-center justify-center gap-2 rounded-control bg-surface px-5 py-3 text-label-lg text-primary shadow-card transition-[background-color,transform] duration-200 ease-out-quint hover:bg-white active:scale-[0.98] focus-visible:outline-white motion-reduce:active:scale-100';
 const outlineLightLink =
-  'group inline-flex items-center justify-center gap-2 rounded-control border border-white/30 bg-white/5 px-5 py-3 text-label-lg text-white transition-[background-color,border-color,transform] duration-200 ease-out-quint hover:border-white/50 hover:bg-white/10 active:scale-[0.98] motion-reduce:active:scale-100';
+  'group inline-flex items-center justify-center gap-2 rounded-control border border-white/30 bg-white/5 px-5 py-3 text-label-lg text-white transition-[background-color,border-color,transform] duration-200 ease-out-quint hover:border-white/50 hover:bg-white/10 active:scale-[0.98] focus-visible:outline-white motion-reduce:active:scale-100';
 
 const reassurances = [
   'Cursos estructurados',
@@ -204,8 +204,8 @@ function RoutePanel() {
 
 function HeroCopy({ isAuthenticated, firstName }) {
   return (
-    <div className="hero-rise">
-      <span className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/[0.06] px-3 py-1 text-label-sm font-semibold text-primary">
+    <div>
+      <span className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/[0.06] px-3 py-1.5 text-label-sm font-semibold text-primary">
         <span className="h-1.5 w-1.5 rounded-full bg-success" />
         {isAuthenticated && firstName ? `Hola, ${firstName}` : 'Plataforma educativa'}
       </span>
@@ -266,38 +266,50 @@ export default function HomePage() {
 
   return (
     <div className="space-y-14 sm:space-y-16 lg:space-y-20">
-      <section className="relative isolate -mt-2 overflow-hidden pb-4 pt-4 sm:pt-8 lg:pt-12">
+      <section
+        aria-label={
+          isAuthenticated
+            ? 'Tu espacio de aprendizaje'
+            : 'Presentación de MiniAula'
+        }
+        className="hero-rise relative isolate -mt-2 overflow-hidden rounded-panel border border-paper-line bg-paper text-on-surface shadow-card"
+      >
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-10"
+          className="pointer-events-none absolute inset-0"
         >
-          <div className="absolute -right-24 -top-32 h-[420px] w-[420px] rounded-full bg-primary/[0.06] blur-3xl" />
+          <span className="absolute -right-28 -top-32 h-[420px] w-[420px] rounded-full border border-primary/10" />
+          <span className="absolute -right-8 top-12 h-[300px] w-[300px] rounded-full border border-primary/10" />
+          <span className="absolute -bottom-44 -left-36 h-[460px] w-[460px] rounded-full bg-primary/[0.04]" />
         </div>
 
-        <div className="grid items-center gap-12 lg:grid-cols-[1.02fr_0.98fr] lg:gap-16">
+        <div className="relative grid items-center gap-8 px-5 py-8 sm:px-8 sm:py-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-12 lg:px-12 lg:py-12">
           <HeroCopy
             isAuthenticated={isAuthenticated}
             firstName={firstName}
           />
 
-          <div className="hero-rise [animation-delay:120ms]">
+          <div className="relative flex justify-center lg:justify-end">
             {isAuthenticated ? (
               <RoutePanel />
             ) : (
-              <div className="relative mx-auto w-full max-w-[540px]">
-                <div
+              <div className="relative w-full max-w-[460px]">
+                <span
                   aria-hidden="true"
-                  className="absolute inset-x-8 -bottom-3 top-8 -z-10 rounded-[28px] border border-primary/10 bg-primary/[0.04]"
+                  className="absolute bottom-6 left-1/2 h-[300px] w-[300px] -translate-x-1/2 rounded-full border border-primary/15 sm:h-[380px] sm:w-[380px] lg:left-auto lg:right-4 lg:h-[420px] lg:w-[420px] lg:translate-x-0"
                 />
-                <div className="relative overflow-hidden rounded-panel border border-outline bg-surface shadow-modal">
-                  <img
-                    src={heroIllustration}
-                    alt="Ilustración de una persona estudiando en línea con laptop, café y apuntes"
-                    width="1200"
-                    height="900"
-                    className="block h-auto w-full object-cover"
-                  />
-                </div>
+                <span
+                  aria-hidden="true"
+                  className="absolute bottom-2 left-1/2 h-[250px] w-[250px] -translate-x-1/2 rounded-full bg-gradient-to-br from-primary to-primary-dark sm:h-[320px] sm:w-[320px] lg:left-auto lg:right-0 lg:h-[360px] lg:w-[360px] lg:translate-x-0"
+                />
+                <img
+                  src={heroStudent}
+                  alt="Estudiante trabajando en su laptop durante una lección en línea"
+                  width="760"
+                  height="710"
+                  fetchPriority="high"
+                  className="relative z-10 mx-auto h-[280px] w-auto max-w-full object-contain object-bottom drop-shadow-[0_28px_38px_rgba(3,32,23,0.35)] sm:h-[350px] lg:ml-auto lg:mr-0 lg:h-[430px]"
+                />
               </div>
             )}
           </div>

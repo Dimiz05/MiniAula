@@ -74,11 +74,11 @@ test('shows a themed illustration on each authentication screen', async () => {
     '/src/components/AuthIllustration.jsx',
   );
 
-  assert.match(render('/login'), /Inicio de sesión seguro/);
-  assert.match(render('/registro'), /Estudiante con laptop, libros y birrete/);
+  assert.match(render('/login'), /estudiante celebrando con los brazos abiertos/i);
+  assert.match(render('/registro'), /estudiante con lentes y una libreta/i);
   assert.match(
     renderToStaticMarkup(createElement(AuthIllustration, { variant: 'instructor' })),
-    /Instructor creando un curso/,
+    /instructora con un libro y una credencial/i,
   );
 });
 

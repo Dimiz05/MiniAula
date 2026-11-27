@@ -137,7 +137,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <AuthShell variant={form.rol} illustrationVariant="estudiante">
+    <AuthShell variant={form.rol} illustrationVariant={form.rol}>
       <div>
         <header className="mb-6 flex items-center justify-between gap-4">
           <Logo />

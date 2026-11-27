@@ -1,22 +1,34 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router';
 import Alert from '../components/Alert.jsx';
 import CourseCover from '../components/CourseCover.jsx';
 import Icon from '../components/Icon.jsx';
 import { listarCursos } from '../services/curso.service.js';
 import { getInitials } from '../utils/initials.js';
 
-const CATEGORIAS = ['Todas', 'Programación', 'Diseño', 'Idiomas'];
 const LIMITE = 12;
 
-const niveles = {
-  basico: 'Principiante',
-  intermedio: 'Intermedio',
-  avanzado: 'Avanzado',
+const CATEGORIAS = [
+  { value: '', label: 'Todas' },
+  { value: 'Programación', label: 'Programación' },
+  { value: 'Diseño', label: 'Diseño' },
+  { value: 'Idiomas', label: 'Idiomas' },
+];
+
+const NIVELES = {
+  basico: { label: 'Principiante', dot: 'bg-success' },
+  intermedio: { label: 'Intermedio', dot: 'bg-warning' },
+  avanzado: { label: 'Avanzado', dot: 'bg-error' },
 };
 
-function nivelLabel(nivel) {
-  return niveles[nivel] ?? nivel ?? 'Sin nivel';
+const ICONO_CATEGORIA = {
+  Programación: 'code',
+  Diseño: 'palette',
+  Idiomas: 'translate',
+};
+
+function nivelInfo(nivel) {
+  return NIVELES[nivel] ?? { label: nivel ?? 'Sin nivel', dot: 'bg-on-surface-variant/50' };
 }
 
 function pageNumbers(current, totalPages) {
@@ -30,15 +42,35 @@ function pageNumbers(current, totalPages) {
     .sort((a, b) => a - b);
 }
 
+function parsePage(value) {
+  const parsed = Number.parseInt(value ?? '1', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+const chipActive =
+  'inline-flex min-h-10 items-center gap-1.5 rounded-full border border-primary bg-primary px-3.5 py-1.5 text-label-sm font-semibold text-on-primary transition-colors duration-200';
+const chipIdle =
+  'inline-flex min-h-10 items-center gap-1.5 rounded-full border border-outline bg-surface px-3.5 py-1.5 text-label-sm text-secondary transition-colors duration-200 hover:border-primary/30 hover:bg-primary/[0.06] hover:text-primary';
+
 export default function CatalogPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const search = searchParams.get('q') ?? '';
+  const categoria = searchParams.get('categoria') ?? '';
+  const page = parsePage(searchParams.get('page'));
+
   const [cursos, setCursos] = useState([]);
   const [paginacion, setPaginacion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  const [categoria, setCategoria] = useState('');
-  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState(search);
+  const [retryKey, setRetryKey] = useState(0);
+  const searchRef = useRef(null);
+  const resultsHeadingRef = useRef(null);
+
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
 
   useEffect(() => {
     let active = true;
@@ -73,198 +105,474 @@ export default function CatalogPage() {
     return () => {
       active = false;
     };
-  }, [search, categoria, page]);
-
-  function handleSearch(event) {
-    event.preventDefault();
-    setPage(1);
-    setSearch(searchInput.trim());
-  }
-
-  function handleCategory(nextCategory) {
-    setPage(1);
-    setCategoria(nextCategory === 'Todas' ? '' : nextCategory);
-  }
-
-  function handlePage(nextPage) {
-    setPage(nextPage);
-  }
+  }, [search, categoria, page, retryKey]);
 
   const totalPages = paginacion?.totalPaginas ?? 0;
   const total = paginacion?.total ?? cursos.length;
   const limite = paginacion?.limite ?? LIMITE;
+
+  // A shared URL can point past the last page once the results are known.
+  useEffect(() => {
+    if (!loading && !error && totalPages > 0 && page > totalPages) {
+      const params = new URLSearchParams();
+      if (search) params.set('q', search);
+      if (categoria) params.set('categoria', categoria);
+      setSearchParams(params, { replace: true });
+    }
+  }, [loading, error, totalPages, page, search, categoria, setSearchParams]);
+
   const desde = total === 0 ? 0 : (page - 1) * limite + 1;
   const hasta = Math.min(page * limite, total);
+  const hayFiltros = Boolean(search || categoria);
+  const categoriaActiva = CATEGORIAS.find((item) => item.value === categoria);
+
+  function actualizarParams(next, { replace = false } = {}) {
+    const params = new URLSearchParams();
+    if (next.q) params.set('q', next.q);
+    if (next.categoria) params.set('categoria', next.categoria);
+    if (next.page && next.page > 1) params.set('page', String(next.page));
+    setSearchParams(params, { replace });
+  }
+
+  function actualizarFiltros({ q = search, categoria: nextCategoria = categoria, page: nextPage = 1 }) {
+    actualizarParams({ q, categoria: nextCategoria, page: nextPage });
+  }
+
+  function handleSearch(event) {
+    event.preventDefault();
+    actualizarFiltros({ q: searchInput.trim() });
+  }
+
+  function handleCategory(value) {
+    const nextCategoria = value === categoria ? '' : value;
+    actualizarFiltros({ categoria: nextCategoria });
+  }
+
+  function handlePage(nextPage) {
+    actualizarParams(
+      { q: search, categoria, page: nextPage },
+      { replace: true },
+    );
+
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      resultsHeadingRef.current?.focus({ preventScroll: true });
+      const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      resultsHeadingRef.current?.scrollIntoView({
+        behavior: reducedMotion ? 'auto' : 'smooth',
+        block: 'start',
+      });
+    });
+  }
+
+  function limpiarFiltros() {
+    actualizarParams({});
+    searchRef.current?.focus();
+  }
+
+  function quitarBusqueda() {
+    actualizarFiltros({ q: '' });
+    searchRef.current?.focus();
+  }
+
+  function quitarCategoria() {
+    actualizarFiltros({ categoria: '' });
+  }
+
+  function limpiarCampoBusqueda() {
+    setSearchInput('');
+    if (search) {
+      actualizarFiltros({ q: '' });
+    }
+    searchRef.current?.focus();
+  }
+
+  function reintentar() {
+    setRetryKey((value) => value + 1);
+  }
+
+  const nivelesCatalogo = Object.entries(NIVELES);
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="mb-2 text-headline-lg-mobile text-secondary sm:text-headline-lg">
-          Catálogo de cursos
-        </h1>
-        <p className="max-w-2xl text-body-md text-on-surface-variant">
-          Explora cursos cortos diseñados por instructores expertos y potencia
-          tus habilidades.
-        </p>
+    <div className="space-y-6 sm:space-y-7">
+      <header className="relative isolate overflow-hidden rounded-panel border border-paper-line bg-surface shadow-card">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+          <span className="absolute -right-20 -top-24 h-60 w-60 rounded-full border border-primary/10" />
+          <span className="absolute -right-6 -top-12 h-44 w-44 rounded-full border border-primary/10" />
+          <span className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+        </div>
+
+        <div className="relative grid gap-6 p-5 sm:p-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-10 lg:p-8">
+          <div className="max-w-2xl">
+            <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">
+              <span className="h-1.5 w-1.5 rounded-full bg-success" />
+              Catálogo abierto
+            </span>
+            <h1 className="mt-3 text-headline-lg-mobile text-secondary sm:text-display-lg">
+              Catálogo de cursos
+            </h1>
+            <p className="mt-3 max-w-xl text-body-md leading-6 text-on-surface-variant text-pretty sm:text-body-lg sm:leading-7">
+              Cursos cortos creados por instructores. Filtra por categoría,
+              revisa el nivel y elige tu próxima ruta de aprendizaje.
+            </p>
+          </div>
+
+          <div className="rounded-card border border-outline-light bg-background/80 px-4 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">
+              Niveles del catálogo
+            </p>
+            <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
+              {nivelesCatalogo.map(([key, info]) => (
+                <li
+                  key={key}
+                  className="inline-flex items-center gap-1.5 text-body-sm text-on-surface-variant"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`h-1.5 w-1.5 rounded-full ${info.dot}`}
+                  />
+                  {info.label}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </header>
 
-      <section className="space-y-4 rounded-panel border border-outline bg-surface p-4 shadow-card sm:p-5">
-        <form className="flex flex-col gap-3 md:flex-row md:items-center" onSubmit={handleSearch}>
-          <label className="relative flex-1">
-            <span className="sr-only">Buscar cursos</span>
-            <Icon
-              name="search"
-              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[20px] text-on-surface-variant"
-            />
-            <input
-              type="search"
-              name="q"
-              id="catalog-search"
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Busca por título o tema"
-              className="w-full rounded-control border border-outline bg-background py-2.5 pl-11 pr-4 text-body-md text-secondary placeholder:text-on-surface-variant/70 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </label>
-          <button
-            type="submit"
-            className="inline-flex items-center justify-center gap-2 rounded-control bg-primary px-4 py-2.5 text-label-md font-semibold text-on-primary shadow-card transition-colors hover:bg-primary-dark"
-          >
-            <Icon name="search" className="text-[18px]" />
-            Buscar
-          </button>
+      <section
+        aria-labelledby="catalog-filters-heading"
+        className="rounded-panel border border-outline bg-surface p-4 shadow-card sm:p-5"
+      >
+        <h2 id="catalog-filters-heading" className="sr-only">
+          Buscar y filtrar cursos
+        </h2>
+
+        <form role="search" onSubmit={handleSearch} className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end">
+            <div className="min-w-0 flex-1">
+              <label
+                htmlFor="catalog-search"
+                className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-on-surface-variant"
+              >
+                Buscar por título
+              </label>
+              <div className="relative mt-2">
+                <Icon
+                  name="search"
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[20px] text-on-surface-variant"
+                />
+                <input
+                  ref={searchRef}
+                  type="search"
+                  name="q"
+                  id="catalog-search"
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  placeholder="Ej. React, PostgreSQL, inglés"
+                  autoComplete="off"
+                  className="h-11 w-full rounded-control border border-outline bg-background pl-11 pr-11 text-body-md text-secondary placeholder:text-on-surface-variant/70 transition-colors duration-200 [&::-ms-clear]:hidden [&::-webkit-search-cancel-button]:appearance-none focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                />
+                {searchInput && (
+                  <button
+                    type="button"
+                    onClick={limpiarCampoBusqueda}
+                    aria-label="Limpiar búsqueda"
+                    className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-on-surface-variant transition-colors duration-200 hover:bg-surface-variant hover:text-secondary"
+                  >
+                    <Icon name="close" className="text-[18px]" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-control bg-primary px-5 text-label-md font-semibold text-on-primary shadow-card transition-[background-color,transform] duration-200 ease-out-quint hover:bg-primary-dark active:scale-[0.98] motion-reduce:active:scale-100"
+            >
+              <Icon name="search" className="text-[18px]" />
+              Buscar
+            </button>
+          </div>
         </form>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          {CATEGORIAS.map((item) => {
-            const active =
-              (item === 'Todas' && categoria === '') || categoria === item;
-            return (
+        <div className="mt-4 border-t border-outline-light pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span
+              id="catalog-categories-label"
+              className="text-[10px] font-semibold uppercase tracking-[0.16em] text-on-surface-variant"
+            >
+              Categorías
+            </span>
+            {hayFiltros && (
               <button
-                key={item}
                 type="button"
-                onClick={() => handleCategory(item)}
-                className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-label-sm transition-colors ${
-                  active
-                    ? 'bg-primary font-semibold text-on-primary'
-                    : 'bg-surface-variant text-secondary hover:bg-outline-light'
-                }`}
+                onClick={limpiarFiltros}
+                className="inline-flex items-center gap-1 rounded-control px-1.5 py-1 text-label-sm font-semibold text-primary transition-colors duration-200 hover:bg-primary/[0.08]"
               >
-                {item}
+                <Icon name="filter_list_off" className="text-[16px]" />
+                Limpiar filtros
               </button>
-            );
-          })}
+            )}
+          </div>
+
+          <div
+            role="group"
+            aria-labelledby="catalog-categories-label"
+            className="mt-2 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap"
+          >
+            {CATEGORIAS.map((item) => {
+              const active = item.value === categoria;
+              return (
+                <button
+                  key={item.label}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => handleCategory(item.value)}
+                  className={`${active ? chipActive : chipIdle} justify-center whitespace-nowrap sm:justify-start`}
+                >
+                  {active && <Icon name="check" className="text-[14px]" />}
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </section>
 
+      <div className="flex flex-col gap-3 border-b border-paper-line pb-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2
+            ref={resultsHeadingRef}
+            tabIndex={-1}
+            className="scroll-mt-28 text-headline-sm text-secondary focus:outline-none"
+          >
+            {hayFiltros ? 'Resultados de tu búsqueda' : 'Cursos disponibles'}
+          </h2>
+          <p
+            role="status"
+            aria-live="polite"
+            className="mt-1 text-body-sm text-on-surface-variant tabular-nums"
+          >
+            {loading
+              ? 'Cargando cursos…'
+              : total === 0
+                ? 'Sin cursos para mostrar'
+                : `Mostrando ${desde}–${hasta} de ${total} ${total === 1 ? 'curso' : 'cursos'}`}
+          </p>
+        </div>
+
+        {!loading && hayFiltros && (
+          <div className="flex flex-wrap items-center gap-2">
+            {search && (
+              <button
+                type="button"
+                onClick={quitarBusqueda}
+                className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-primary/25 bg-primary/[0.06] px-3 py-1 text-label-sm text-primary transition-colors duration-200 hover:border-primary/50 hover:bg-primary/10"
+              >
+                <Icon name="search" className="text-[14px]" />
+                <span className="max-w-40 truncate">«{search}»</span>
+                <Icon name="close" className="text-[14px]" />
+                <span className="sr-only">Quitar filtro de búsqueda</span>
+              </button>
+            )}
+            {categoriaActiva && categoriaActiva.value && (
+              <button
+                type="button"
+                onClick={quitarCategoria}
+                className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-primary/25 bg-primary/[0.06] px-3 py-1 text-label-sm text-primary transition-colors duration-200 hover:border-primary/50 hover:bg-primary/10"
+              >
+                <Icon name="label" className="text-[14px]" />
+                {categoriaActiva.label}
+                <Icon name="close" className="text-[14px]" />
+                <span className="sr-only">Quitar filtro de categoría</span>
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
       {loading && (
-        <section className="rounded-panel border border-outline bg-surface p-8 text-center shadow-card">
-          <p className="text-body-md text-on-surface-variant">Cargando cursos…</p>
+        <section
+          aria-hidden="true"
+          className="grid gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3"
+        >
+          {Array.from({ length: 6 }, (_, index) => (
+            <div
+              key={index}
+              className="overflow-hidden rounded-panel border border-outline bg-surface shadow-card"
+            >
+              <div className="h-40 animate-pulse bg-surface-variant motion-reduce:animate-none sm:h-44" />
+              <div className="space-y-3 p-5">
+                <div className="h-2.5 w-16 animate-pulse rounded-full bg-surface-variant motion-reduce:animate-none" />
+                <div className="h-4 w-4/5 animate-pulse rounded bg-surface-variant motion-reduce:animate-none" />
+                <div className="h-3 w-full animate-pulse rounded bg-surface-variant motion-reduce:animate-none" />
+                <div className="h-3 w-2/3 animate-pulse rounded bg-surface-variant motion-reduce:animate-none" />
+                <div className="mt-6 h-11 animate-pulse rounded-control bg-surface-variant motion-reduce:animate-none" />
+              </div>
+            </div>
+          ))}
         </section>
       )}
 
       {!loading && error && (
-        <Alert variant="error" title="No pudimos cargar el catálogo">
-          {error.message}
-        </Alert>
+        <section className="space-y-3">
+          <Alert variant="error" title="No pudimos cargar el catálogo">
+            {error.message || 'Revisa tu conexión e inténtalo de nuevo.'}
+          </Alert>
+          <button
+            type="button"
+            onClick={reintentar}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-outline bg-surface px-4 py-2.5 text-label-md font-semibold text-secondary transition-colors duration-200 hover:border-primary/40 hover:bg-surface-variant"
+          >
+            <Icon name="refresh" className="text-[18px]" />
+            Reintentar
+          </button>
+        </section>
       )}
 
       {!loading && !error && cursos.length === 0 && (
-        <section className="rounded-panel border border-outline bg-surface p-8 text-center shadow-card">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Icon name="auto_stories" className="text-[28px]" />
+        <section className="relative overflow-hidden rounded-panel border border-outline bg-surface px-6 py-12 text-center shadow-card sm:py-16">
+          <span
+            aria-hidden="true"
+            className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/[0.08] text-primary"
+          >
+            <Icon name={hayFiltros ? 'search_off' : 'auto_stories'} className="text-[28px]" />
           </span>
-          <h2 className="mt-4 text-headline-sm text-secondary">
-            No encontramos cursos
+          <h2 className="mt-4 text-headline-md text-secondary text-balance">
+            {hayFiltros
+              ? 'No encontramos cursos con esos filtros'
+              : 'Todavía no hay cursos publicados'}
           </h2>
-          <p className="mx-auto mt-2 max-w-md text-body-md text-on-surface-variant">
-            Prueba con otra búsqueda o categoría, o vuelve más tarde.
+          <p className="mx-auto mt-2 max-w-md text-body-md leading-6 text-on-surface-variant text-pretty">
+            {hayFiltros
+              ? search
+                ? `No hay resultados para «${search}»${categoria ? ` en ${categoria}` : ''}. Prueba con otro título o cambia de categoría.`
+                : `Aún no hay cursos en ${categoria}. Prueba con otra categoría.`
+              : 'Los cursos aparecerán aquí en cuanto los instructores los publiquen.'}
           </p>
+          {hayFiltros && (
+            <button
+              type="button"
+              onClick={limpiarFiltros}
+              className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-primary px-5 py-2.5 text-label-md font-semibold text-on-primary shadow-card transition-[background-color,transform] duration-200 ease-out-quint hover:bg-primary-dark active:scale-[0.98] motion-reduce:active:scale-100"
+            >
+              Ver todos los cursos
+              <Icon name="arrow_forward" className="text-[18px]" />
+            </button>
+          )}
         </section>
       )}
 
       {!loading && !error && cursos.length > 0 && (
         <>
-          <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {cursos.map((curso) => (
-              <article
-                key={curso.id}
-                className="flex flex-col justify-between overflow-hidden rounded-panel border border-outline bg-surface shadow-card transition-all hover:border-primary/40 hover:shadow-hover"
-              >
-                <div>
+          <section
+            aria-label="Listado de cursos"
+            className="grid gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3"
+          >
+            {cursos.map((curso) => {
+              const nivel = nivelInfo(curso.nivel);
+              const instructor = curso.instructor?.nombre;
+
+              return (
+                <article
+                  key={curso.id}
+                  className="flex flex-col rounded-card border border-outline bg-surface p-3 shadow-card transition-[border-color,box-shadow] duration-300 ease-out-quint focus-within:border-primary/40 focus-within:shadow-hover"
+                >
                   <CourseCover
                     portada={curso.portada}
                     alt={`Portada de ${curso.titulo}`}
-                    className="h-36"
+                    icon={ICONO_CATEGORIA[curso.categoria] ?? 'auto_stories'}
+                    className="h-40 rounded-control sm:h-44"
+                    iconClassName="absolute bottom-3 right-4 text-[80px] text-white/20"
                   >
-                    <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-label-sm font-semibold text-primary shadow-sm">
-                      {curso.categoria ?? 'Sin categoría'}
-                    </span>
-                    <span className="absolute right-3 top-3 rounded-full bg-secondary px-2.5 py-1 text-label-sm text-white">
-                      {nivelLabel(curso.nivel)}
-                    </span>
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute -right-12 -top-20 h-48 w-48 rounded-full border border-white/10"
+                    />
                   </CourseCover>
 
-                  <div className="p-5">
-                    <h2 className="mb-2 text-balance text-headline-sm leading-snug text-secondary">
-                      {curso.titulo}
-                    </h2>
-                    {curso.descripcion && (
-                      <p className="mb-4 line-clamp-2 text-body-md text-on-surface-variant">
-                        {curso.descripcion}
-                      </p>
-                    )}
-
-                    <div className="flex items-center justify-between gap-2 border-t border-outline-light pt-2 text-label-sm text-on-surface-variant">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-label-sm font-bold text-primary">
-                          {getInitials(curso.instructor?.nombre)}
-                        </span>
-                        <span className="truncate font-medium text-secondary">
-                          {curso.instructor?.nombre ?? 'Sin instructor'}
-                        </span>
-                      </div>
-                      <span className="inline-flex shrink-0 items-center gap-1">
-                        <Icon name="play_lesson" className="text-[16px] text-primary" />
-                        Temario secuencial
+                  <div className="flex flex-1 flex-col pt-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="min-w-0 truncate text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
+                        {curso.categoria ?? 'Sin categoría'}
+                      </span>
+                      <span className="inline-flex shrink-0 items-center gap-1.5 text-label-sm text-on-surface-variant">
+                        <span
+                          aria-hidden="true"
+                          className={`h-1.5 w-1.5 rounded-full ${nivel.dot}`}
+                        />
+                        {nivel.label}
                       </span>
                     </div>
-                  </div>
-                </div>
 
-                <div className="p-5 pt-0">
-                  <Link
-                    to={`/catalog/${curso.id}`}
-                    className="flex w-full items-center justify-center gap-2 rounded-control bg-primary px-4 py-2.5 text-label-md text-on-primary transition-opacity hover:opacity-95"
-                  >
-                    Ver curso
-                    <Icon name="arrow_forward" className="text-[18px]" />
-                  </Link>
-                </div>
-              </article>
-            ))}
+                    <h3 className="mt-2 text-balance text-headline-sm leading-snug text-secondary">
+                      {curso.titulo}
+                    </h3>
+
+                    <p className="mt-2 line-clamp-2 text-body-md leading-5 text-on-surface-variant">
+                      {curso.descripcion || 'Sin descripción disponible.'}
+                    </p>
+
+                    <div className="mt-auto pt-5">
+                      <div className="flex items-center gap-2.5 border-t border-outline-light pt-3">
+                        <span
+                          aria-hidden="true"
+                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary"
+                        >
+                          {getInitials(instructor)}
+                        </span>
+                        <span className="min-w-0 truncate text-label-md font-semibold text-secondary">
+                          {instructor ?? 'Por confirmar'}
+                        </span>
+                        {instructor && (
+                          <span className="ml-auto shrink-0 text-[10px] font-medium uppercase tracking-[0.12em] text-ink-muted">
+                            Instructor
+                          </span>
+                        )}
+                      </div>
+
+                      <Link
+                        to={`/catalog/${curso.id}`}
+                        aria-label={`Ver curso: ${curso.titulo}`}
+                        className="group/cta mt-3 flex min-h-11 w-full overflow-hidden rounded-control border border-outline bg-surface transition-[background-color,border-color] duration-200 ease-out-quint hover:border-primary hover:bg-primary"
+                      >
+                        <span className="flex flex-1 items-center px-3.5 text-label-md font-semibold text-secondary transition-colors duration-200 group-hover/cta:text-on-primary">
+                          Ver curso
+                        </span>
+                        <span className="flex w-11 shrink-0 items-center justify-center border-l border-outline bg-surface-variant/60 text-primary transition-[background-color,border-color,color] duration-200 group-hover/cta:border-white/20 group-hover/cta:bg-white/10 group-hover/cta:text-on-primary">
+                          <Icon
+                            name="arrow_forward"
+                            className="text-[18px] transition-transform duration-200 ease-out-quint group-hover/cta:translate-x-0.5 motion-reduce:group-hover/cta:translate-x-0"
+                          />
+                        </span>
+                      </Link>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </section>
 
           {totalPages > 1 && (
             <nav
-              className="flex flex-col gap-3 border-t border-outline pt-5 sm:flex-row sm:items-center sm:justify-between"
-              aria-label="Paginación"
+              aria-label="Paginación de cursos"
+              className="flex flex-col gap-3 border-t border-paper-line pt-5 sm:flex-row sm:items-center sm:justify-between"
             >
-              <p className="text-body-sm text-on-surface-variant">
-                Mostrando{' '}
-                <span className="font-semibold text-secondary">
-                  {desde}-{hasta}
-                </span>{' '}
-                de <span className="font-semibold text-secondary">{total}</span>{' '}
-                cursos disponibles
+              <p className="text-body-sm text-on-surface-variant tabular-nums">
+                Página{' '}
+                <span className="font-semibold text-secondary">{page}</span> de{' '}
+                <span className="font-semibold text-secondary">{totalPages}</span>
               </p>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() => handlePage(Math.max(1, page - 1))}
                   disabled={page <= 1}
-                  className="inline-flex items-center gap-1 rounded-control border border-outline bg-surface px-3 py-1.5 text-label-sm text-secondary hover:bg-surface-variant disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex min-h-10 items-center gap-1 rounded-control border border-outline bg-surface px-3 py-1.5 text-label-sm text-secondary transition-colors duration-200 hover:bg-surface-variant disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface"
                 >
                   <Icon name="chevron_left" className="text-[16px]" />
                   Anterior
@@ -275,13 +583,19 @@ export default function CatalogPage() {
                   return (
                     <span key={number} className="flex items-center gap-2">
                       {previous && number - previous > 1 && (
-                        <span className="text-label-sm text-on-surface-variant">…</span>
+                        <span
+                          aria-hidden="true"
+                          className="text-label-sm text-on-surface-variant"
+                        >
+                          …
+                        </span>
                       )}
                       <button
                         type="button"
                         onClick={() => handlePage(number)}
                         aria-current={number === page ? 'page' : undefined}
-                        className={`flex h-8 w-8 items-center justify-center rounded-control text-label-sm ${
+                        aria-label={`Página ${number}`}
+                        className={`flex h-10 w-10 items-center justify-center rounded-control text-label-sm tabular-nums transition-colors duration-200 ${
                           number === page
                             ? 'bg-primary font-semibold text-on-primary'
                             : 'border border-outline bg-surface text-secondary hover:bg-surface-variant'
@@ -297,7 +611,7 @@ export default function CatalogPage() {
                   type="button"
                   onClick={() => handlePage(Math.min(totalPages, page + 1))}
                   disabled={page >= totalPages}
-                  className="inline-flex items-center gap-1 rounded-control border border-outline bg-surface px-3 py-1.5 text-label-sm text-secondary hover:bg-surface-variant disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex min-h-10 items-center gap-1 rounded-control border border-outline bg-surface px-3 py-1.5 text-label-sm text-secondary transition-colors duration-200 hover:bg-surface-variant disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface"
                 >
                   Siguiente
                   <Icon name="chevron_right" className="text-[16px]" />
