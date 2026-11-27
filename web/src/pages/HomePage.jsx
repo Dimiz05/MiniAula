@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import Icon from '../components/Icon.jsx';
 import { useAuth } from '../hooks/useAuth.jsx';
-import heroStudent from '../assets/hero-student.png';
+import heroBanner from '../assets/hero-banner.jpg';
 
 const primaryLink =
   'group inline-flex items-center justify-center gap-2 rounded-control bg-primary px-5 py-3 text-label-lg text-on-primary shadow-card transition-[background-color,box-shadow,transform] duration-200 ease-out-quint hover:bg-primary-dark hover:shadow-hover active:scale-[0.98] motion-reduce:active:scale-100';
@@ -293,22 +293,14 @@ export default function HomePage() {
             {isAuthenticated ? (
               <RoutePanel />
             ) : (
-              <div className="relative w-full max-w-[460px]">
-                <span
-                  aria-hidden="true"
-                  className="absolute bottom-6 left-1/2 h-[300px] w-[300px] -translate-x-1/2 rounded-full border border-primary/15 sm:h-[380px] sm:w-[380px] lg:left-auto lg:right-4 lg:h-[420px] lg:w-[420px] lg:translate-x-0"
-                />
-                <span
-                  aria-hidden="true"
-                  className="absolute bottom-2 left-1/2 h-[250px] w-[250px] -translate-x-1/2 rounded-full bg-gradient-to-br from-primary to-primary-dark sm:h-[320px] sm:w-[320px] lg:left-auto lg:right-0 lg:h-[360px] lg:w-[360px] lg:translate-x-0"
-                />
+              <div className="relative w-full max-w-[460px] overflow-hidden rounded-panel shadow-card">
                 <img
-                  src={heroStudent}
-                  alt="Estudiante trabajando en su laptop durante una lección en línea"
-                  width="760"
-                  height="710"
+                  src={heroBanner}
+                  alt="Mujer con lentes trabajando en su laptop durante una lección en línea"
+                  width="1416"
+                  height="1111"
                   fetchPriority="high"
-                  className="relative z-10 mx-auto h-[280px] w-auto max-w-full object-contain object-bottom drop-shadow-[0_28px_38px_rgba(3,32,23,0.35)] sm:h-[350px] lg:ml-auto lg:mr-0 lg:h-[430px]"
+                  className="block aspect-[14/11] w-full object-cover object-center"
                 />
               </div>
             )}

@@ -1,28 +1,28 @@
-import loginIllustration from '../assets/login-illustration.png';
+import loginIllustration from '../assets/login-illustration.jpg';
 import estudianteIllustration from '../assets/signup-estudiante.jpg';
 import instructorIllustration from '../assets/signup-instructor.jpg';
 
 const illustrations = {
   login: {
     src: loginIllustration,
-    alt: 'Ilustración de una estudiante celebrando con los brazos abiertos',
-    frame: 'aspect-[4/3] object-center',
-    width: 400,
-    height: 300,
+    alt: 'Ilustración de una persona subiendo escalones de cursos completados hacia una meta',
+    frame: 'aspect-square object-center',
+    width: 736,
+    height: 736,
   },
   estudiante: {
     src: estudianteIllustration,
-    alt: 'Ilustración de una estudiante con lentes y una libreta',
-    frame: 'aspect-[3/4] object-top',
-    width: 600,
-    height: 850,
+    alt: 'Ilustración de una silueta de graduado con una planta de estudiantes aprendiendo',
+    frame: 'aspect-[1/2] object-center',
+    width: 373,
+    height: 736,
   },
   instructor: {
     src: instructorIllustration,
-    alt: 'Ilustración de una instructora con un libro y una credencial',
-    frame: 'aspect-[3/4] object-top',
+    alt: 'Ilustración de un docente rodeado de escenas de enseñanza',
+    frame: 'aspect-[1/2] object-center',
     width: 600,
-    height: 1068,
+    height: 800,
   },
 };
 
