@@ -3,6 +3,7 @@ import { once } from 'node:events';
 import { test } from 'node:test';
 import { Op } from 'sequelize';
 import app from '../app.js';
+import { Curso } from '../models/index.js';
 import {
   catalogoQuerySchema,
   cursoIdParamsSchema,
@@ -12,6 +13,7 @@ import {
   construirFiltroCatalogo,
   construirPaginacion,
   escaparLike,
+  listarCursosPublicados,
   toPublicCurso,
   toTemarioItem,
 } from '../services/curso.service.js';
@@ -23,7 +25,7 @@ test('catalog query applies pagination defaults and trims empty filters', () => 
     q: 'react',
     categoria: undefined,
     page: 1,
-    limit: 12,
+    limit: 6,
   });
 });
 
@@ -80,12 +82,58 @@ test('pagination reports totals and pages', () => {
     total: 13,
     totalPaginas: 3,
   });
-  assert.deepEqual(construirPaginacion(0, 1, 12), {
+  assert.deepEqual(construirPaginacion(0, 1, 6), {
     pagina: 1,
-    limite: 12,
+    limite: 6,
     total: 0,
     totalPaginas: 0,
   });
+});
+
+function cursoPublicoFalso(id) {
+  return {
+    get: () => ({
+      id,
+      titulo: `Curso ${id}`,
+      descripcion: 'Descripción del curso',
+      portada: null,
+      categoria: 'Programación',
+      nivel: 'basico',
+      creadoEn: '2026-10-02T10:00:00.000Z',
+      instructor: { id: 1, nombre: 'Lucía Ferrer' },
+    }),
+  };
+}
+
+test('published catalog filters and paginates in the database query', async (t) => {
+  let opciones;
+  t.mock.method(Curso, 'findAndCountAll', async (options) => {
+    opciones = options;
+    return { rows: [cursoPublicoFalso(7), cursoPublicoFalso(8)], count: 13 };
+  });
+
+  const resultado = await listarCursosPublicados({
+    page: 2,
+    limit: 6,
+    q: 'react',
+    categoria: 'Programación',
+  });
+
+  assert.deepEqual(
+    opciones.where,
+    construirFiltroCatalogo({ q: 'react', categoria: 'Programación' }),
+  );
+  assert.deepEqual(opciones.order, [['creadoEn', 'DESC'], ['id', 'DESC']]);
+  assert.equal(opciones.limit, 6);
+  assert.equal(opciones.offset, 6);
+  assert.equal(opciones.distinct, true);
+  assert.deepEqual(resultado.paginacion, {
+    pagina: 2,
+    limite: 6,
+    total: 13,
+    totalPaginas: 3,
+  });
+  assert.deepEqual(resultado.cursos.map((curso) => curso.id), [7, 8]);
 });
 
 test('public course hides internal fields and flattens the instructor', () => {

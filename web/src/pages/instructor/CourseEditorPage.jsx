@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import Alert from '../../components/Alert.jsx';
 import Button from '../../components/Button.jsx';
-import CourseCover from '../../components/CourseCover.jsx';
 import FormField from '../../components/FormField.jsx';
 import Icon from '../../components/Icon.jsx';
 import { useFetch } from '../../hooks/useFetch.js';
@@ -15,12 +14,12 @@ import {
 } from '../../services/curso.service.js';
 import { toFieldErrors } from '../../utils/validation.js';
 import {
-  PORTADA_TIPOS,
   estados,
   niveles,
   validarArchivoPortada,
   validarCurso,
 } from './courseForm.js';
+import CoverField from './CoverField.jsx';
 import LessonEditor from './LessonEditor.jsx';
 
 const emptyCourse = { titulo: '', descripcion: '', portada: '', categoria: '', nivel: 'basico', estado: 'borrador' };
@@ -36,7 +35,6 @@ function CourseForm({ curso, editing, initialNotice = null }) {
   const [errors, setErrors] = useState({});
   const [notice, setNotice] = useState(initialNotice);
   const [saving, setSaving] = useState(false);
-  const inputPortada = useRef(null);
   const previewTemporal = useRef(null);
   const busy = saving || uploading;
 
@@ -67,10 +65,9 @@ function CourseForm({ curso, editing, initialNotice = null }) {
     };
   }
 
-  async function seleccionarPortada(event) {
-    const archivo = event.target.files?.[0];
-    event.target.value = '';
-
+  // Both the file picker and a drop go through this single path so format,
+  // size, preview and upload behave exactly the same.
+  async function procesarPortada(archivo) {
     if (!archivo || busy) return;
 
     const error = validarArchivoPortada(archivo);
@@ -110,6 +107,14 @@ function CourseForm({ curso, editing, initialNotice = null }) {
     } finally {
       setUploading(false);
     }
+  }
+
+  // A rejected drop keeps the current preview and only reports the problem.
+  function rechazarPortada(mensaje) {
+    if (busy) return;
+
+    setErrors((previous) => ({ ...previous, portada: mensaje }));
+    setNotice(null);
   }
 
   async function quitarPortada() {
@@ -274,53 +279,17 @@ function CourseForm({ curso, editing, initialNotice = null }) {
           </div>
         </div>
 
-        <div>
-          <p className="mb-1.5 text-label-md text-secondary">Imagen de portada</p>
-          <input
-            ref={inputPortada}
-            type="file"
-            accept={PORTADA_TIPOS.join(',')}
-            onChange={seleccionarPortada}
-            disabled={busy}
-            className="sr-only"
-            aria-label="Elegir imagen de portada"
-          />
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="secondary"
-              icon="upload"
-              iconPosition="start"
-              onClick={() => inputPortada.current?.click()}
-              disabled={busy}
-            >
-              {uploading ? 'Subiendo…' : previewPortada ? 'Cambiar imagen' : 'Elegir imagen'}
-            </Button>
-            {previewPortada && (
-              <Button
-                variant="danger"
-                icon="delete"
-                onClick={quitarPortada}
-                disabled={busy}
-              >
-                Quitar portada
-              </Button>
-            )}
-          </div>
-          <p className="mt-1.5 text-label-sm text-on-surface-variant">
-            PNG, JPG o WebP · máximo 5 MB.
-            {nombrePortada && ` Archivo: ${nombrePortada}.`}
-          </p>
-          {errors.portada && (
-            <p role="alert" className="mt-1.5 text-label-sm font-medium text-error">
-              {errors.portada}
-            </p>
-          )}
-          <CourseCover
-            portada={previewPortada}
-            alt={`Vista previa de la portada${values.titulo ? ` de ${values.titulo}` : ''}`}
-            className="mt-3 aspect-video w-full rounded-control border border-outline"
-          />
-        </div>
+        <CoverField
+          previewPortada={previewPortada}
+          alt={`Vista previa de la portada${values.titulo ? ` de ${values.titulo}` : ''}`}
+          nombrePortada={nombrePortada}
+          error={errors.portada}
+          busy={busy}
+          uploading={uploading}
+          onFile={procesarPortada}
+          onRemove={quitarPortada}
+          onError={rechazarPortada}
+        />
       </fieldset>
 
       <div className="border-t border-outline pt-5">

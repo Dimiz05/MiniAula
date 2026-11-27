@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router';
+import ScrollToTop from '../components/ScrollToTop.jsx';
 import SiteLayout from '../components/SiteLayout.jsx';
 import CatalogPage from '../pages/CatalogPage.jsx';
 import CourseDetailPage from '../pages/CourseDetailPage.jsx';
@@ -17,35 +18,38 @@ import { GuestOnly, RequireAuth, RequireInstructor, RequireStudent } from './gua
 
 export default function AppRoutes() {
   return (
-    <Routes>
-      <Route element={<SiteLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="catalog" element={<CatalogPage />} />
-        <Route path="catalog/:id" element={<CourseDetailPage />} />
-        <Route element={<RequireAuth />}>
-          <Route path="perfil" element={<ProfilePage />} />
-          <Route element={<RequireStudent />}>
-            <Route path="panel" element={<DashboardPage />} />
-            <Route path="mis-cursos" element={<StudentMyCoursesPage />} />
-            <Route
-              path="cursos/:cursoId/lecciones/:leccionId"
-              element={<LessonPage />}
-            />
+    <>
+      <ScrollToTop />
+      <Routes>
+        <Route element={<SiteLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="catalog" element={<CatalogPage />} />
+          <Route path="catalog/:id" element={<CourseDetailPage />} />
+          <Route element={<RequireAuth />}>
+            <Route path="perfil" element={<ProfilePage />} />
+            <Route element={<RequireStudent />}>
+              <Route path="panel" element={<DashboardPage />} />
+              <Route path="mis-cursos" element={<StudentMyCoursesPage />} />
+              <Route
+                path="cursos/:cursoId/lecciones/:leccionId"
+                element={<LessonPage />}
+              />
+            </Route>
+            <Route element={<RequireInstructor />}>
+              <Route path="instructor/cursos" element={<MyCoursesPage />} />
+              <Route path="instructor/cursos/nuevo" element={<CourseEditorPage />} />
+              <Route path="instructor/cursos/:id/editar" element={<CourseEditorPage />} />
+              <Route path="instructor/analiticas" element={<AnalyticsPage />} />
+            </Route>
           </Route>
-          <Route element={<RequireInstructor />}>
-            <Route path="instructor/cursos" element={<MyCoursesPage />} />
-            <Route path="instructor/cursos/nuevo" element={<CourseEditorPage />} />
-            <Route path="instructor/cursos/:id/editar" element={<CourseEditorPage />} />
-            <Route path="instructor/analiticas" element={<AnalyticsPage />} />
-          </Route>
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
-        <Route path="*" element={<NotFoundPage />} />
-      </Route>
 
-      <Route element={<GuestOnly />}>
-        <Route path="login" element={<LoginPage />} />
-        <Route path="registro" element={<RegisterPage />} />
-      </Route>
-    </Routes>
+        <Route element={<GuestOnly />}>
+          <Route path="login" element={<LoginPage />} />
+          <Route path="registro" element={<RegisterPage />} />
+        </Route>
+      </Routes>
+    </>
   );
 }

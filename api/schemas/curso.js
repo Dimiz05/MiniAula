@@ -84,6 +84,6 @@ export const catalogoQuerySchema = z
       .int('El límite debe ser un número entero.')
       .min(1, 'El límite debe ser mayor o igual a 1.')
       .max(50, 'El límite no puede superar 50.')
-      .default(12),
+      .default(6),
   })
   .strict();

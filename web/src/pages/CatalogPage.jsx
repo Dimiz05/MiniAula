@@ -4,9 +4,13 @@ import Alert from '../components/Alert.jsx';
 import CourseCover from '../components/CourseCover.jsx';
 import Icon from '../components/Icon.jsx';
 import { listarCursos } from '../services/curso.service.js';
+import {
+  construirParamsCatalogo,
+  paginaDentroDeRango,
+} from '../utils/catalogParams.js';
 import { getInitials } from '../utils/initials.js';
 
-const LIMITE = 12;
+const LIMITE = 6;
 
 const CATEGORIAS = [
   { value: '', label: 'Todas' },
@@ -114,9 +118,11 @@ export default function CatalogPage() {
   // A shared URL can point past the last page once the results are known.
   useEffect(() => {
     if (!loading && !error && totalPages > 0 && page > totalPages) {
-      const params = new URLSearchParams();
-      if (search) params.set('q', search);
-      if (categoria) params.set('categoria', categoria);
+      const params = construirParamsCatalogo({
+        q: search,
+        categoria,
+        page: paginaDentroDeRango(page, totalPages),
+      });
       setSearchParams(params, { replace: true });
     }
   }, [loading, error, totalPages, page, search, categoria, setSearchParams]);
@@ -127,11 +133,7 @@ export default function CatalogPage() {
   const categoriaActiva = CATEGORIAS.find((item) => item.value === categoria);
 
   function actualizarParams(next, { replace = false } = {}) {
-    const params = new URLSearchParams();
-    if (next.q) params.set('q', next.q);
-    if (next.categoria) params.set('categoria', next.categoria);
-    if (next.page && next.page > 1) params.set('page', String(next.page));
-    setSearchParams(params, { replace });
+    setSearchParams(construirParamsCatalogo(next), { replace });
   }
 
   function actualizarFiltros({ q = search, categoria: nextCategoria = categoria, page: nextPage = 1 }) {
@@ -149,10 +151,13 @@ export default function CatalogPage() {
   }
 
   function handlePage(nextPage) {
-    actualizarParams(
-      { q: search, categoria, page: nextPage },
-      { replace: true },
-    );
+    if (nextPage === page) {
+      return;
+    }
+
+    // Push a history entry so Back/Forward restore the previous page along
+    // with the active search and category filters.
+    actualizarParams({ q: search, categoria, page: nextPage });
 
     if (typeof window === 'undefined') {
       return;

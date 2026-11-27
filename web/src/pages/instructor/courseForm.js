@@ -12,6 +12,32 @@ export function accionesCurso({ estado, totalLecciones, totalInscritos }) {
 export const PORTADA_TIPOS = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
 export const PORTADA_MAX_BYTES = 5 * 1024 * 1024;
 
+// A drag can carry text, links or files; only a file drag opens the drop area.
+export function esArrastreDeArchivos(dataTransfer) {
+  return Array.from(dataTransfer?.types ?? []).includes('Files');
+}
+
+// Drop events can carry zero or several files; the cover accepts exactly one.
+export function analizarArchivosSoltados(files) {
+  const lista = Array.from(files ?? []);
+
+  if (lista.length === 0) {
+    return {
+      archivo: null,
+      error: 'No se detectó ninguna imagen. Arrastra un archivo PNG, JPG o WebP.',
+    };
+  }
+
+  if (lista.length > 1) {
+    return {
+      archivo: null,
+      error: 'Suelta una sola imagen a la vez para cambiar la portada.',
+    };
+  }
+
+  return { archivo: lista[0], error: null };
+}
+
 export function validarArchivoPortada(archivo) {
   if (!archivo) {
     return 'Selecciona una imagen para la portada.';
