@@ -5,6 +5,8 @@ const variants = {
     'bg-primary text-on-primary shadow-card hover:bg-primary-dark disabled:hover:bg-primary',
   secondary:
     'border border-outline bg-surface text-secondary hover:bg-surface-variant disabled:hover:bg-surface',
+  soft:
+    'border border-outline bg-surface text-secondary hover:border-primary/30 hover:bg-primary/10 hover:text-primary disabled:hover:border-outline disabled:hover:bg-surface disabled:hover:text-secondary',
   ghost:
     'text-on-surface-variant hover:bg-surface-variant hover:text-secondary disabled:hover:bg-transparent',
   danger:

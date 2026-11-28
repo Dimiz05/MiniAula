@@ -299,7 +299,7 @@ export default function DashboardPage() {
                   <Button
                     as={Link}
                     to={`/catalog/${curso.id}`}
-                    variant="secondary"
+                    variant="soft"
                     icon="arrow_forward"
                     className="w-full"
                   >

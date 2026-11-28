@@ -206,7 +206,7 @@ export default function MyCoursesPage() {
                           <Button
                             as={Link}
                             to={`/catalog/${cursoId}`}
-                            variant="secondary"
+                            variant="soft"
                             icon="arrow_forward"
                             className="w-full"
                           >

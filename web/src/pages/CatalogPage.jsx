@@ -539,7 +539,7 @@ export default function CatalogPage() {
                         as={Link}
                         to={`/catalog/${curso.id}`}
                         aria-label={`Ver curso: ${curso.titulo}`}
-                        variant="secondary"
+                        variant="soft"
                         icon="arrow_forward"
                         className="mt-3 w-full"
                       >
