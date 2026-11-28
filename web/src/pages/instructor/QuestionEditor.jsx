@@ -23,24 +23,16 @@ import {
 
 const emptyPregunta = { enunciado: '', opciones: ['', ''], indiceCorrecto: -1 };
 
-function QuestionForm({
+export function QuestionFields({
   values,
   errors,
-  editing,
-  saving,
   onChange,
   onChangeOpcion,
   onAddOpcion,
   onRemoveOpcion,
-  onSubmit,
-  onCancel,
 }) {
   return (
-    <form
-      noValidate
-      onSubmit={onSubmit}
-      className="space-y-4 rounded-control border border-outline bg-surface-variant/30 p-4"
-    >
+    <>
       <FormField
         label="Enunciado de la pregunta"
         maxLength={500}
@@ -115,6 +107,36 @@ function QuestionForm({
           Añadir otra opción
         </button>
       </fieldset>
+    </>
+  );
+}
+
+function QuestionForm({
+  values,
+  errors,
+  editing,
+  saving,
+  onChange,
+  onChangeOpcion,
+  onAddOpcion,
+  onRemoveOpcion,
+  onSubmit,
+  onCancel,
+}) {
+  return (
+    <form
+      noValidate
+      onSubmit={onSubmit}
+      className="space-y-4 rounded-control border border-outline bg-surface-variant/30 p-4"
+    >
+      <QuestionFields
+        values={values}
+        errors={errors}
+        onChange={onChange}
+        onChangeOpcion={onChangeOpcion}
+        onAddOpcion={onAddOpcion}
+        onRemoveOpcion={onRemoveOpcion}
+      />
 
       <FormActions flush>
         <Button type="submit" icon="save" iconPosition="start" loading={saving}>

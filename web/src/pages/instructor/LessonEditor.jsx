@@ -15,9 +15,23 @@ import {
 } from '../../services/leccion.service.js';
 import { toFieldErrors } from '../../utils/validation.js';
 import { moverLeccion, reordenarLista, validarLeccion } from './lessonForm.js';
-import QuestionEditor from './QuestionEditor.jsx';
+import {
+  NOTA_MINIMA_POR_DEFECTO,
+  quitarOpcion,
+  toQuizErrors,
+  validarPregunta,
+  validarQuiz,
+} from './quizForm.js';
+import QuestionEditor, { QuestionFields } from './QuestionEditor.jsx';
 
 const emptyForm = { titulo: '', contenido: '', videoUrl: '' };
+const emptyQuizForm = {
+  titulo: '',
+  notaMinima: String(NOTA_MINIMA_POR_DEFECTO),
+  enunciado: '',
+  opciones: ['', ''],
+  indiceCorrecto: -1,
+};
 
 function LessonForm({ values, errors, editing, saving, onChange, onSubmit, onCancel }) {
   function field(name) {
@@ -73,6 +87,85 @@ function LessonForm({ values, errors, editing, saving, onChange, onSubmit, onCan
       <FormActions flush status={saving ? 'Guardando…' : null}>
         <Button type="submit" icon="save" iconPosition="start" loading={saving}>
           {saving ? 'Guardando…' : editing ? 'Guardar lección' : 'Crear lección'}
+        </Button>
+        <Button variant="secondary" onClick={onCancel} disabled={saving}>
+          Cancelar
+        </Button>
+      </FormActions>
+    </form>
+  );
+}
+
+function QuizForm({
+  values,
+  errors,
+  saving,
+  onChange,
+  onChangeOpcion,
+  onAddOpcion,
+  onRemoveOpcion,
+  onSubmit,
+  onCancel,
+}) {
+  return (
+    <form
+      noValidate
+      onSubmit={onSubmit}
+      className="space-y-4 rounded-control border border-outline bg-surface-variant/30 p-4"
+    >
+      <div>
+        <p className="text-label-md font-semibold text-secondary">Nuevo cuestionario</p>
+        <p className="mt-1 text-label-sm text-on-surface-variant">
+          Un cuestionario se crea con al menos una pregunta. Podrás agregar más después con
+          «Editar preguntas».
+        </p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField
+          label="Título del cuestionario"
+          maxLength={150}
+          required
+          error={errors.titulo}
+          value={values.titulo}
+          onChange={(event) => onChange('titulo', event.target.value)}
+        />
+
+        <FormField
+          label="Nota mínima de aprobación"
+          type="number"
+          min={1}
+          max={100}
+          step={1}
+          required
+          hint="Valor entero entre 1 y 100."
+          error={errors.notaMinima}
+          value={values.notaMinima}
+          onChange={(event) => onChange('notaMinima', event.target.value)}
+        />
+      </div>
+
+      <div className="space-y-4 rounded-control border border-outline bg-surface p-4">
+        <div>
+          <p className="text-label-md font-semibold text-secondary">Primera pregunta</p>
+          <p className="mt-1 text-label-sm text-on-surface-variant">
+            Marca la opción correcta. La calificación se resuelve en el servidor.
+          </p>
+        </div>
+
+        <QuestionFields
+          values={values}
+          errors={errors}
+          onChange={onChange}
+          onChangeOpcion={onChangeOpcion}
+          onAddOpcion={onAddOpcion}
+          onRemoveOpcion={onRemoveOpcion}
+        />
+      </div>
+
+      <FormActions flush status={saving ? 'Guardando…' : null}>
+        <Button type="submit" icon="save" iconPosition="start" loading={saving}>
+          {saving ? 'Guardando…' : 'Crear cuestionario'}
         </Button>
         <Button variant="secondary" onClick={onCancel} disabled={saving}>
           Cancelar
@@ -219,6 +312,10 @@ export default function LessonEditor({ cursoId, lecciones = [], onCountChange })
   const [errors, setErrors] = useState({});
   const [notice, setNotice] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [quizFormOpen, setQuizFormOpen] = useState(false);
+  const [quizValues, setQuizValues] = useState(emptyQuizForm);
+  const [quizErrors, setQuizErrors] = useState({});
+  const [savingQuiz, setSavingQuiz] = useState(false);
   const [pending, setPending] = useState(null);
   const [quizId, setQuizId] = useState(null);
   const [leccionAEliminar, setLeccionAEliminar] = useState(null);
@@ -246,12 +343,111 @@ export default function LessonEditor({ cursoId, lecciones = [], onCountChange })
     setEditingId(null);
     setValues(emptyForm);
     setErrors({});
+    setQuizFormOpen(false);
     setNotice(null);
     setFormOpen(true);
   }
 
+  function abrirNuevoCuestionario() {
+    setEditingId(null);
+    setFormOpen(false);
+    setQuizId(null);
+    setQuizValues(emptyQuizForm);
+    setQuizErrors({});
+    setNotice(null);
+    setQuizFormOpen(true);
+  }
+
+  function cerrarFormularioCuestionario() {
+    if (savingQuiz) return;
+    setQuizFormOpen(false);
+    setQuizValues(emptyQuizForm);
+    setQuizErrors({});
+  }
+
+  function cambiarCampoCuestionario(name, value) {
+    setQuizValues((previous) => ({ ...previous, [name]: value }));
+    setQuizErrors((previous) => ({ ...previous, [name]: undefined }));
+    setNotice(null);
+  }
+
+  function cambiarOpcionCuestionario(index, value) {
+    setQuizValues((previous) => ({
+      ...previous,
+      opciones: previous.opciones.map((opcion, posicion) => (
+        posicion === index ? value : opcion
+      )),
+    }));
+    setQuizErrors((previous) => ({ ...previous, opciones: undefined }));
+    setNotice(null);
+  }
+
+  function agregarOpcionCuestionario() {
+    setQuizValues((previous) => ({
+      ...previous,
+      opciones: [...previous.opciones, ''],
+    }));
+    setNotice(null);
+  }
+
+  function eliminarOpcionCuestionario(index) {
+    setQuizValues((previous) => ({
+      ...previous,
+      ...quitarOpcion(previous.opciones, previous.indiceCorrecto, index),
+    }));
+    setQuizErrors((previous) => ({
+      ...previous,
+      opciones: undefined,
+      indiceCorrecto: undefined,
+    }));
+    setNotice(null);
+  }
+
+  async function guardarCuestionario(event) {
+    event.preventDefault();
+    if (savingQuiz) return;
+
+    const meta = validarQuiz({
+      titulo: quizValues.titulo,
+      notaMinima: quizValues.notaMinima,
+    });
+    const pregunta = validarPregunta(quizValues);
+    const errores = { ...meta.errores, ...pregunta.errores };
+    setQuizErrors(errores);
+    setNotice(null);
+
+    if (Object.keys(errores).length) return;
+
+    setSavingQuiz(true);
+    try {
+      const result = await crearLeccion(cursoId, {
+        titulo: meta.datos.titulo,
+        tipo: 'cuestionario',
+        notaMinima: meta.datos.notaMinima,
+        preguntas: [pregunta.datos],
+      });
+      setItems((previous) => [...previous, result.leccion].sort(
+        (a, b) => a.orden - b.orden || a.id - b.id,
+      ));
+      setQuizFormOpen(false);
+      setQuizValues(emptyQuizForm);
+      setQuizErrors({});
+      setQuizId(result.leccion.id);
+      setNotice({
+        variant: 'success',
+        message: 'Cuestionario creado con su primera pregunta.',
+      });
+    } catch (err) {
+      setQuizErrors(toQuizErrors(err.details));
+      setNotice({ variant: 'error', message: err.message });
+    } finally {
+      setSavingQuiz(false);
+    }
+  }
+
   function abrirEdicion(leccion) {
     setEditingId(leccion.id);
+    setQuizFormOpen(false);
     setValues({
       titulo: leccion.titulo,
       contenido: leccion.contenido ?? '',
@@ -390,16 +586,46 @@ export default function LessonEditor({ cursoId, lecciones = [], onCountChange })
           </h2>
           <p className="text-body-sm text-on-surface-variant">
             {items.length} {items.length === 1 ? 'lección' : 'lecciones'}. Reordena con las
-            flechas o arrastrando. Los cuestionarios también forman parte de la secuencia y
-            pueden reordenarse.
+            flechas o arrastrando. Agrega contenido o un cuestionario; ambos forman parte de
+            la secuencia y pueden reordenarse.
           </p>
         </div>
-        <Button icon="post_add" iconPosition="start" onClick={abrirNueva} disabled={saving || pending !== null}>
-          Agregar lección de contenido
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button
+            variant="secondary"
+            icon="quiz"
+            iconPosition="start"
+            onClick={abrirNuevoCuestionario}
+            disabled={saving || savingQuiz || pending !== null}
+          >
+            Agregar cuestionario
+          </Button>
+          <Button
+            icon="post_add"
+            iconPosition="start"
+            onClick={abrirNueva}
+            disabled={saving || savingQuiz || pending !== null}
+          >
+            Agregar lección de contenido
+          </Button>
+        </div>
       </header>
 
       {notice && <Alert variant={notice.variant}>{notice.message}</Alert>}
+
+      {quizFormOpen && (
+        <QuizForm
+          values={quizValues}
+          errors={quizErrors}
+          saving={savingQuiz}
+          onChange={cambiarCampoCuestionario}
+          onChangeOpcion={cambiarOpcionCuestionario}
+          onAddOpcion={agregarOpcionCuestionario}
+          onRemoveOpcion={eliminarOpcionCuestionario}
+          onSubmit={guardarCuestionario}
+          onCancel={cerrarFormularioCuestionario}
+        />
+      )}
 
       {formOpen && (
         <LessonForm
@@ -432,6 +658,7 @@ export default function LessonEditor({ cursoId, lecciones = [], onCountChange })
               onEdit={abrirEdicion}
               onEditQuestions={(leccion) => {
                 setNotice(null);
+                setQuizFormOpen(false);
                 setQuizId(leccion.id);
               }}
               onDelete={pedirBorrado}

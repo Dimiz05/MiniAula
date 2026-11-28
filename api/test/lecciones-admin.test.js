@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import { test } from 'node:test';
 import app from '../app.js';
-import { Curso, Leccion, Usuario, sequelize } from '../models/index.js';
+import { Curso, Leccion, Pregunta, Usuario, sequelize } from '../models/index.js';
 import {
   actualizarLeccionSchema,
   crearLeccionSchema,
@@ -74,7 +74,7 @@ function tokenDe(id, rol) {
   return `Bearer ${signAccessToken({ id, rol })}`;
 }
 
-test('creating a content lesson trims input and rejects quiz or server fields', () => {
+test('creating a lesson trims input and validates content or quiz fields', () => {
   const datos = crearLeccionSchema.parse({
     titulo: '  Introducción  ',
     contenido: '  Texto  ',
@@ -109,12 +109,68 @@ test('creating a content lesson trims input and rejects quiz or server fields', 
     'contenido',
   );
 
+  assert.deepEqual(
+    crearLeccionSchema.parse({
+      titulo: '  Cuestionario final  ',
+      tipo: 'cuestionario',
+      notaMinima: 70,
+      preguntas: [
+        {
+          enunciado: '  ¿Cuál es la capital?  ',
+          opciones: ['  Lima  ', 'Bogotá'],
+          indiceCorrecto: 1,
+        },
+      ],
+    }),
+    {
+      titulo: 'Cuestionario final',
+      tipo: 'cuestionario',
+      notaMinima: 70,
+      preguntas: [
+        {
+          enunciado: '¿Cuál es la capital?',
+          opciones: ['Lima', 'Bogotá'],
+          indiceCorrecto: 1,
+        },
+      ],
+    },
+  );
+
   for (const invalido of [
     { titulo: 'ab', contenido: 'Texto' },
     { titulo: 'Introducción', contenido: '   ' },
     { titulo: 'Introducción', contenido: 'Texto', videoUrl: 'no-es-url' },
     { titulo: 'Introducción', contenido: 'Texto', videoUrl: 'ftp://videos.example.com/intro.mp4' },
     { titulo: 'Introducción', contenido: 'Texto', tipo: 'cuestionario' },
+    { titulo: 'Cuestionario', tipo: 'cuestionario' },
+    { titulo: 'Cuestionario', tipo: 'cuestionario', notaMinima: 70 },
+    { titulo: 'Cuestionario', tipo: 'cuestionario', notaMinima: 70, preguntas: [] },
+    {
+      titulo: 'Cuestionario',
+      tipo: 'cuestionario',
+      notaMinima: 70,
+      contenido: 'Texto',
+      preguntas: [{ enunciado: '¿Pregunta?', opciones: ['A', 'B'], indiceCorrecto: 0 }],
+    },
+    {
+      titulo: 'Cuestionario',
+      tipo: 'cuestionario',
+      notaMinima: 70,
+      videoUrl: 'https://videos.example.com/intro.mp4',
+      preguntas: [{ enunciado: '¿Pregunta?', opciones: ['A', 'B'], indiceCorrecto: 0 }],
+    },
+    {
+      titulo: 'Cuestionario',
+      tipo: 'cuestionario',
+      notaMinima: 101,
+      preguntas: [{ enunciado: '¿Pregunta?', opciones: ['A', 'B'], indiceCorrecto: 0 }],
+    },
+    { titulo: 'Introducción', contenido: 'Texto', notaMinima: 70 },
+    {
+      titulo: 'Introducción',
+      contenido: 'Texto',
+      preguntas: [{ enunciado: '¿Pregunta?', opciones: ['A', 'B'], indiceCorrecto: 0 }],
+    },
     { titulo: 'Introducción', contenido: 'Texto', orden: 1 },
     { titulo: 'Introducción', contenido: 'Texto', cursoId: 5 },
   ]) {
@@ -237,6 +293,51 @@ test('creating a lesson appends it to the course order', async (t) => {
   assert.equal(creada.datos.videoUrl, null);
   assert.equal(creada.opciones.transaction, TRANSACCION);
   assert.equal(resultado.orden, 4);
+});
+
+test('creating a quiz stores its passing grade and first question', async (t) => {
+  simularTransaccion(t);
+  t.mock.method(Curso, 'findByPk', async () => cursoFalso());
+  t.mock.method(Leccion, 'max', async () => 2);
+
+  let creada;
+  t.mock.method(Leccion, 'create', async (datos, opciones) => {
+    creada = { datos, opciones };
+    return leccionFalsa({ ...datos, id: 16, orden: datos.orden });
+  });
+
+  let preguntasCreadas;
+  t.mock.method(Pregunta, 'bulkCreate', async (filas, opciones) => {
+    preguntasCreadas = { filas, opciones };
+    return filas.map((fila, indice) => ({
+      ...fila,
+      id: 30 + indice,
+      get: () => ({ ...fila, id: 30 + indice }),
+    }));
+  });
+
+  const resultado = await crearLeccionPropia(9, 5, {
+    titulo: 'Cuestionario final',
+    tipo: 'cuestionario',
+    notaMinima: 80,
+    preguntas: [
+      { enunciado: '¿Cuál es la capital?', opciones: ['Lima', 'Bogotá'], indiceCorrecto: 1 },
+    ],
+  });
+
+  assert.equal(creada.datos.tipo, 'cuestionario');
+  assert.equal(creada.datos.contenido, null);
+  assert.equal(creada.datos.videoUrl, null);
+  assert.equal(creada.datos.notaMinima, 80);
+  assert.equal(creada.datos.orden, 3);
+  assert.equal(creada.datos.cursoId, 5);
+  assert.equal(preguntasCreadas.filas.length, 1);
+  assert.equal(preguntasCreadas.filas[0].leccionId, 16);
+  assert.equal(preguntasCreadas.filas[0].enunciado, '¿Cuál es la capital?');
+  assert.equal(preguntasCreadas.opciones.transaction, TRANSACCION);
+  assert.equal(resultado.notaMinima, 80);
+  assert.equal(resultado.preguntas.length, 1);
+  assert.equal(resultado.preguntas[0].indiceCorrecto, 1);
 });
 
 test('creating a lesson on a foreign or missing course fails before creating', async (t) => {
@@ -381,6 +482,7 @@ test('reordering rewrites the full sequence from the received ids', async (t) =>
       opciones.where.id,
       opciones.where.cursoId,
       opciones.transaction,
+      opciones.validate,
     ]);
     filas.find((fila) => fila.id === opciones.where.id).orden = cambios.orden;
     return [1];
@@ -389,9 +491,9 @@ test('reordering rewrites the full sequence from the received ids', async (t) =>
   const lecciones = await reordenarLeccionesPropias(9, 5, [12, 10, 11]);
 
   assert.deepEqual(updates, [
-    [1, 12, 5, TRANSACCION],
-    [2, 10, 5, TRANSACCION],
-    [3, 11, 5, TRANSACCION],
+    [1, 12, 5, TRANSACCION, false],
+    [2, 10, 5, TRANSACCION, false],
+    [3, 11, 5, TRANSACCION, false],
   ]);
   assert.deepEqual(lecciones.map((leccion) => leccion.id), [12, 10, 11]);
 });

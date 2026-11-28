@@ -76,6 +76,7 @@ export default function ProfilePage() {
 
   const roleLabel = usuario.rol === 'instructor' ? 'Instructor' : 'Estudiante';
   const roleIcon = usuario.rol === 'instructor' ? 'co_present' : 'school';
+  const panelPrincipal = usuario.rol === 'instructor' ? '/instructor/cursos' : '/panel';
   const roleClasses = usuario.rol === 'instructor'
     ? 'bg-warning-light text-warning'
     : 'bg-success-light text-success';
@@ -241,11 +242,11 @@ export default function ProfilePage() {
           </p>
         </div>
         <Link
-          to="/"
+          to={panelPrincipal}
           className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
         >
           <Icon name="arrow_back" className="text-[18px]" />
-          Volver al inicio
+          Ir al panel principal
         </Link>
       </header>
 

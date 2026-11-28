@@ -128,6 +128,8 @@ test('keeps a stored session across a reload and shows the profile', () => {
   assert.match(html, /Miembro desde/);
   assert.match(html, /Cerrar sesión/);
   assert.match(html, /name="nombre"/);
+  assert.match(html, /Ir al panel principal/);
+  assert.match(html, /<a[^>]*href="\/panel"[^>]*>(?:(?!<\/a>)[\s\S])*Ir al panel principal/);
 });
 
 test('does not render the profile without a session', () => {
@@ -165,6 +167,9 @@ test('only instructors see course management routes and navigation', () => {
 
   session.writeSession({ token: 'stored-token', usuario: { ...demoUsuario, rol: 'instructor' } });
   assert.match(render(paths[0]), /Cargando tus cursos/);
+  const perfil = render('/perfil');
+  assert.match(perfil, /Ir al panel principal/);
+  assert.match(perfil, /<a[^>]*href="\/instructor\/cursos"[^>]*>(?:(?!<\/a>)[\s\S])*Ir al panel principal/);
   const nuevo = render(paths[1]);
   assert.match(nuevo, /Nuevo curso/);
   assert.match(nuevo, /Borrador/);

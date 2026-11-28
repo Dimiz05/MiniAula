@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { crearPreguntaSchema } from './pregunta.js';
 
 export const leccionIdParamsSchema = z
   .object({
@@ -43,20 +44,89 @@ const videoUrlSchema = z.preprocess(
     .optional(),
 );
 
-// Esta fase solo crea lecciones de contenido. La Tarea 6 extiende el contrato
-// para los cuestionarios y su nota mínima.
+const notaMinimaSchema = z
+  .number({ message: 'La nota mínima debe ser un número.' })
+  .int('La nota mínima debe ser un número entero.')
+  .min(1, 'La nota mínima debe ser al menos 1.')
+  .max(100, 'La nota mínima no puede superar 100.');
+
+// Crea una lección de contenido o un cuestionario. Cuando `tipo` se omite se
+// asume "contenido" para conservar el contrato anterior.
 export const crearLeccionSchema = z
   .object({
     titulo: tituloLeccionSchema,
     tipo: z
-      .enum(['contenido'], {
-        message: 'Solo se pueden crear lecciones de contenido en esta versión.',
+      .enum(['contenido', 'cuestionario'], {
+        message: 'El tipo de lección debe ser contenido o cuestionario.',
       })
       .optional(),
-    contenido: contenidoLeccionSchema,
+    contenido: contenidoLeccionSchema.optional(),
     videoUrl: videoUrlSchema,
+    notaMinima: notaMinimaSchema.optional(),
+    preguntas: z.array(crearPreguntaSchema).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((datos, contexto) => {
+    if (datos.tipo === 'cuestionario') {
+      if (datos.notaMinima === undefined) {
+        contexto.addIssue({
+          code: 'custom',
+          path: ['notaMinima'],
+          message: 'La nota mínima es obligatoria para un cuestionario.',
+        });
+      }
+
+      if (!Array.isArray(datos.preguntas) || datos.preguntas.length === 0) {
+        contexto.addIssue({
+          code: 'custom',
+          path: ['preguntas'],
+          message: 'El cuestionario debe tener al menos una pregunta.',
+        });
+      }
+
+      if (datos.contenido !== undefined) {
+        contexto.addIssue({
+          code: 'custom',
+          path: ['contenido'],
+          message: 'Un cuestionario no lleva contenido de lección.',
+        });
+      }
+
+      if (datos.videoUrl !== undefined) {
+        contexto.addIssue({
+          code: 'custom',
+          path: ['videoUrl'],
+          message: 'Un cuestionario no lleva enlace de video.',
+        });
+      }
+
+      return;
+    }
+
+    if (!datos.contenido) {
+      contexto.addIssue({
+        code: 'custom',
+        path: ['contenido'],
+        message: 'El contenido es obligatorio.',
+      });
+    }
+
+    if (datos.notaMinima !== undefined) {
+      contexto.addIssue({
+        code: 'custom',
+        path: ['notaMinima'],
+        message: 'La nota mínima solo aplica a un cuestionario.',
+      });
+    }
+
+    if (datos.preguntas !== undefined) {
+      contexto.addIssue({
+        code: 'custom',
+        path: ['preguntas'],
+        message: 'Las preguntas solo aplican a un cuestionario.',
+      });
+    }
+  });
 
 export const actualizarLeccionSchema = z
   .object({

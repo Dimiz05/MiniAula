@@ -190,19 +190,41 @@ export async function crearLeccionPropia(instructorId, cursoId, datos) {
       transaction,
     });
 
+    const esCuestionario = datos.tipo === 'cuestionario';
+
     const leccion = await Leccion.create(
       {
         titulo: datos.titulo,
-        tipo: 'contenido',
-        contenido: datos.contenido,
-        videoUrl: datos.videoUrl || null,
+        tipo: esCuestionario ? 'cuestionario' : 'contenido',
+        contenido: esCuestionario ? null : datos.contenido,
+        videoUrl: esCuestionario ? null : (datos.videoUrl || null),
+        notaMinima: esCuestionario ? datos.notaMinima : null,
         orden: Number(maximo ?? 0) + 1,
         cursoId,
       },
       { transaction },
     );
 
-    return toLeccionDetalle(leccion);
+    if (!esCuestionario) {
+      return toLeccionDetalle(leccion);
+    }
+
+    // Un cuestionario se crea junto con su primera pregunta para que nunca
+    // quede guardado sin preguntas.
+    const preguntas = await Pregunta.bulkCreate(
+      datos.preguntas.map((pregunta) => ({
+        enunciado: pregunta.enunciado,
+        opciones: pregunta.opciones,
+        indiceCorrecto: pregunta.indiceCorrecto,
+        leccionId: leccion.id,
+      })),
+      { transaction },
+    );
+
+    return {
+      ...toLeccionDetalle(leccion),
+      preguntas: preguntas.map(toPreguntaDetalle),
+    };
   });
 }
 
@@ -323,9 +345,13 @@ export async function reordenarLeccionesPropias(instructorId, cursoId, ordenIds)
     }
 
     for (const [indice, id] of idsRecibidos.entries()) {
+      // The row model validates that content lessons carry `contenido` and
+      // quizzes carry `notaMinima`. A partial update only contains `orden`,
+      // so instance validation would reject every row. The order value is
+      // trusted here and does not need field validation.
       await Leccion.update(
         { orden: indice + 1 },
-        { where: { id, cursoId }, transaction },
+        { where: { id, cursoId }, transaction, validate: false },
       );
     }
 
