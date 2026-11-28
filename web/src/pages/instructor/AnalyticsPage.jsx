@@ -163,7 +163,7 @@ export default function AnalyticsPage() {
           </p>
           <Link
             to="/instructor/cursos/nuevo"
-            className="mt-3 inline-flex items-center gap-2 rounded-control bg-primary px-4 py-2 text-label-md font-semibold text-on-primary"
+            className="mt-3 inline-flex items-center gap-2 rounded-control bg-primary px-4 py-2 text-label-md font-semibold text-on-primary shadow-control transition-[background-color,box-shadow] hover:bg-primary-dark hover:shadow-card"
           >
             <Icon name="add_box" className="text-[18px]" />
             Crear curso

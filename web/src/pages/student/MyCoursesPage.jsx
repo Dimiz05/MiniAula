@@ -2,7 +2,7 @@ import { Link } from 'react-router';
 import Alert from '../../components/Alert.jsx';
 import Button from '../../components/Button.jsx';
 import CourseCard from '../../components/CourseCard.jsx';
-import CourseProgress from '../../components/CourseProgress.jsx';
+import CourseProgressRing from '../../components/CourseProgressRing.jsx';
 import Icon from '../../components/Icon.jsx';
 import StatCard from '../../components/StatCard.jsx';
 import { useFetch } from '../../hooks/useFetch.js';
@@ -109,7 +109,7 @@ export default function MyCoursesPage() {
       )}
 
       {!loading && !error && inscripciones.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-panel border border-dashed border-outline bg-surface-variant/40 p-8 text-center">
+        <div className="flex flex-col items-center justify-center rounded-panel border border-dashed border-outline bg-surface p-8 text-center shadow-card">
           <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-surface text-primary">
             <Icon name="auto_stories" className="text-[24px]" />
           </span>
@@ -171,9 +171,6 @@ export default function MyCoursesPage() {
                 const titulo = curso?.titulo ?? `Curso #${cursoId}`;
                 const avance = porcentajeAvanceInscripcion(inscripcion);
                 const completadoCurso = avance >= 100;
-                const totalLecciones = Number(inscripcion.totalLecciones) || 0;
-                const leccionesCompletadas =
-                  Number(inscripcion.leccionesCompletadas) || 0;
 
                 return (
                   <li key={inscripcion.id ?? cursoId} className="h-full">
@@ -207,10 +204,10 @@ export default function MyCoursesPage() {
                             as={Link}
                             to={`/catalog/${cursoId}`}
                             variant="soft"
-                            icon="arrow_forward"
+                            icon={completadoCurso ? 'replay' : 'arrow_forward'}
                             className="w-full"
                           >
-                            Ver curso
+                            {completadoCurso ? 'Repasar' : 'Ver curso'}
                           </Button>
                         ) : (
                           <span className="block text-center text-label-sm text-on-surface-variant">
@@ -219,10 +216,12 @@ export default function MyCoursesPage() {
                         )
                       }
                     >
-                      <CourseProgress
-                        porcentaje={avance}
-                        leccionesCompletadas={leccionesCompletadas}
-                        totalLecciones={totalLecciones}
+                      {/* The ring presents the lesson progress summary already
+                          returned by the API; quiz grades are not involved. */}
+                      <CourseProgressRing
+                        porcentaje={inscripcion.porcentajeAvance}
+                        leccionesCompletadas={inscripcion.leccionesCompletadas}
+                        totalLecciones={inscripcion.totalLecciones}
                         titulo={titulo}
                       />
 

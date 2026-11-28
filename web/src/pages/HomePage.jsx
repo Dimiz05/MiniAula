@@ -272,7 +272,7 @@ export default function HomePage() {
             ? 'Tu espacio de aprendizaje'
             : 'Presentación de MiniAula'
         }
-        className="hero-rise relative isolate -mt-2 overflow-hidden rounded-panel border border-paper-line bg-paper text-on-surface shadow-card"
+        className="hero-rise relative isolate -mt-2 overflow-hidden rounded-panel border border-outline bg-surface text-on-surface shadow-hover"
       >
         <div
           aria-hidden="true"
@@ -312,7 +312,7 @@ export default function HomePage() {
         aria-label="Ventajas de MiniAula"
         className="border-t border-paper-line pt-10 sm:pt-12"
       >
-        <div className="grid gap-px overflow-hidden rounded-panel border border-outline bg-outline sm:grid-cols-3">
+        <div className="grid gap-px overflow-hidden rounded-panel border border-outline bg-outline shadow-card sm:grid-cols-3">
           {values.map((value) => (
             <div
               key={value.title}
@@ -343,15 +343,15 @@ export default function HomePage() {
           description="Elige un curso, inscríbete y avanza lección por lección. Sin configuraciones ni pasos extra."
         />
 
-        <ol className="mt-8 grid gap-6 sm:grid-cols-3 sm:gap-8">
+        <ol className="mt-8 grid gap-5 sm:grid-cols-3">
           {steps.map((step, index) => (
             <li
               key={step.title}
-              className="group relative border-t border-outline pt-6"
+              className="group relative overflow-hidden rounded-card border border-outline bg-surface p-5 shadow-card transition-[border-color,box-shadow] duration-300 ease-out-quint hover:border-primary/30 hover:shadow-hover"
             >
               <span
                 aria-hidden="true"
-                className="absolute -top-px left-0 h-px w-10 origin-left bg-primary transition-transform duration-300 ease-out-quint group-hover:scale-x-150 motion-reduce:group-hover:scale-x-100"
+                className="absolute inset-x-0 top-0 h-1 origin-left bg-gradient-to-r from-primary to-primary/20 transition-transform duration-300 ease-out-quint group-hover:scale-x-105 motion-reduce:group-hover:scale-x-100"
               />
               <span className="text-label-sm font-semibold tabular-nums text-primary">
                 Paso {String(index + 1).padStart(2, '0')}
@@ -513,7 +513,7 @@ export default function HomePage() {
       <div className="border-t border-paper-line pt-10 sm:pt-12">
         <section
           aria-labelledby="instructors-heading"
-          className="relative overflow-hidden rounded-panel bg-secondary p-7 text-on-secondary shadow-card sm:p-10"
+          className="relative overflow-hidden rounded-panel bg-secondary p-7 text-on-secondary shadow-modal sm:p-10"
         >
           <Icon
             name="co_present"

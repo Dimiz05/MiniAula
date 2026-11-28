@@ -48,7 +48,7 @@ export default function FormField({
           required={required}
           aria-invalid={error ? 'true' : undefined}
           aria-describedby={describedBy || undefined}
-          className={`w-full rounded-control border bg-surface py-2.5 text-body-md text-secondary placeholder:text-on-surface-variant/70 transition-colors focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:bg-surface-variant ${
+          className={`w-full rounded-control border bg-surface py-2.5 text-body-md text-secondary shadow-control placeholder:text-on-surface-variant/70 transition-colors focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:bg-surface-variant disabled:shadow-none ${
             icon ? 'pl-10' : 'pl-3.5'
           } ${revealable ? 'pr-11' : 'pr-3.5'} ${
             error

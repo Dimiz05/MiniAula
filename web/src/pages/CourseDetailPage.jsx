@@ -14,6 +14,10 @@ import {
   listarMisInscripciones,
 } from '../services/inscripcion.service.js';
 import { obtenerTemarioEstudiante } from '../services/leccion.service.js';
+import {
+  MENSAJE_CURSO_NO_DISPONIBLE,
+  mensajeErrorCurso,
+} from '../utils/courseError.js';
 import { getInitials } from '../utils/initials.js';
 import { rutaLeccion, siguienteLeccion } from '../utils/lessonState.js';
 
@@ -190,6 +194,7 @@ export default function CourseDetailPage() {
 
   const puedeInscribirse = isAuthenticated && usuario?.rol === 'estudiante';
   const siguiente = conEstados ? siguienteLeccion(temario) : null;
+  const cursoCompletado = conEstados && Number(avance?.porcentajeAvance) >= 100;
 
   function renderInscripcionCta() {
     if (inscrito) {
@@ -201,7 +206,9 @@ export default function CourseDetailPage() {
           </span>
           {siguiente && (
             <Link to={rutaLeccion(id, siguiente.id)} className="inline-flex">
-              <Button icon="play_arrow">Continuar curso</Button>
+              <Button icon={cursoCompletado ? 'replay' : 'play_arrow'}>
+                {cursoCompletado ? 'Repasar' : 'Continuar curso'}
+              </Button>
             </Link>
           )}
           <Link to="/mis-cursos" className="inline-flex">
@@ -278,7 +285,7 @@ export default function CourseDetailPage() {
 
       {!loading && error && (
         <Alert variant="error" title="No pudimos cargar el curso">
-          {error.message}
+          {mensajeErrorCurso(error)}
         </Alert>
       )}
 
@@ -360,21 +367,7 @@ export default function CourseDetailPage() {
             </CourseCover>
           </section>
 
-          {inscrito ? (
-            <section className="flex items-start gap-3 rounded-panel border border-primary/20 bg-primary/5 p-4">
-              <Icon name="verified_user" className="mt-0.5 text-[24px] text-primary" />
-              <div>
-                <h2 className="text-label-md font-bold text-secondary">
-                  Tu avance lo valida el servidor
-                </h2>
-                <p className="text-body-sm text-on-surface-variant">
-                  Los estados completada, disponible y bloqueada provienen de la
-                  API. Las lecciones bloqueadas no permiten abrir su contenido,
-                  incluso si escribes la dirección directamente.
-                </p>
-              </div>
-            </section>
-          ) : (
+          {!inscrito && (
             <section className="flex items-start gap-3 rounded-panel border border-warning/40 bg-warning-light p-4">
               <Icon name="info" className="mt-0.5 text-[24px] text-secondary" />
               <div>
@@ -435,7 +428,7 @@ export default function CourseDetailPage() {
       {!loading && !error && !curso && (
         <section className="rounded-panel border border-outline bg-surface p-8 text-center shadow-card">
           <p className="text-body-md text-on-surface-variant">
-            El curso no existe o no está publicado.
+            {MENSAJE_CURSO_NO_DISPONIBLE}
           </p>
         </section>
       )}
