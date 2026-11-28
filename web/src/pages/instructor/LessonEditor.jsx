@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Alert from '../../components/Alert.jsx';
 import Button from '../../components/Button.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
@@ -180,6 +180,8 @@ function LessonRow({
   index,
   total,
   pending,
+  dragging = false,
+  dragOver = false,
   onEdit,
   onEditQuestions,
   onDelete,
@@ -203,20 +205,23 @@ function LessonRow({
 
   return (
     <li
+      data-lesson-id={leccion.id}
+      draggable={!ocupada}
+      title={ocupada ? undefined : 'Arrastra el bloque para reordenarlo'}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      className={`flex flex-col gap-3 rounded-control border border-outline bg-surface p-4 transition-colors sm:flex-row sm:items-center sm:justify-between ${
+      className={`flex flex-col gap-3 rounded-control border border-outline bg-surface p-4 transition-[border-color,box-shadow,opacity] duration-200 sm:flex-row sm:items-center sm:justify-between ${
         esCuestionario ? 'bg-surface-variant/40' : ''
+      } ${dragging ? 'cursor-grabbing opacity-60 shadow-hover' : 'cursor-grab'} ${
+        dragOver && !dragging ? 'border-primary ring-2 ring-primary/25' : ''
       }`}
     >
       <div className="flex min-w-0 items-start gap-3">
         <span
-          draggable={!ocupada}
-          onDragStart={onDragStart}
-          onDragEnd={onDragEnd}
           aria-hidden="true"
-          title="Arrastrar para ordenar"
-          className="mt-0.5 hidden h-11 w-8 shrink-0 cursor-grab items-center justify-center text-on-surface-variant sm:flex [@media(pointer:coarse)]:hidden"
+          className="mt-0.5 hidden h-11 w-8 shrink-0 items-center justify-center text-on-surface-variant sm:flex [@media(pointer:coarse)]:hidden"
         >
           <Icon name="drag_indicator" className="text-[22px]" />
         </span>
@@ -319,11 +324,62 @@ export default function LessonEditor({ cursoId, lecciones = [], onCountChange })
   const [pending, setPending] = useState(null);
   const [quizId, setQuizId] = useState(null);
   const [leccionAEliminar, setLeccionAEliminar] = useState(null);
+  const [draggingIndex, setDraggingIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
   const dragIndex = useRef(null);
+  const listRef = useRef(null);
+  const posicionesAnteriores = useRef(new Map());
 
   useEffect(() => {
     setItems(lecciones);
   }, [lecciones]);
+
+  function capturarPosiciones() {
+    const lista = listRef.current;
+    if (!lista) return new Map();
+
+    return new Map(
+      [...lista.querySelectorAll('[data-lesson-id]')].map((nodo) => [
+        nodo.dataset.lessonId,
+        nodo.offsetTop,
+      ]),
+    );
+  }
+
+  // FLIP animation: when the order changes, each row starts at its old
+  // position and slides to the new one. Both drag-and-drop and the
+  // "Subir/Bajar" actions share this path.
+  useLayoutEffect(() => {
+    const anteriores = posicionesAnteriores.current;
+    posicionesAnteriores.current = new Map();
+
+    if (anteriores.size === 0) return;
+    if (
+      typeof window !== 'undefined'
+      && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    ) {
+      return;
+    }
+
+    const lista = listRef.current;
+    if (!lista) return;
+
+    lista.querySelectorAll('[data-lesson-id]').forEach((nodo) => {
+      const antes = anteriores.get(nodo.dataset.lessonId);
+      if (antes === undefined || typeof nodo.animate !== 'function') return;
+
+      const desplazamiento = antes - nodo.offsetTop;
+      if (Math.abs(desplazamiento) < 1) return;
+
+      nodo.animate(
+        [
+          { transform: `translateY(${desplazamiento}px)` },
+          { transform: 'translateY(0)' },
+        ],
+        { duration: 280, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+      );
+    });
+  }, [items]);
 
   useEffect(() => {
     onCountChange?.(items.length);
@@ -522,6 +578,7 @@ export default function LessonEditor({ cursoId, lecciones = [], onCountChange })
     setNotice(null);
     try {
       await eliminarLeccion(leccion.id);
+      posicionesAnteriores.current = capturarPosiciones();
       setItems((previous) => previous.filter((item) => item.id !== leccion.id));
       if (quizId === leccion.id) {
         setQuizId(null);
@@ -536,6 +593,7 @@ export default function LessonEditor({ cursoId, lecciones = [], onCountChange })
 
   async function guardarOrden(next) {
     const anterior = items;
+    posicionesAnteriores.current = capturarPosiciones();
     setPending('orden');
     setNotice(null);
     setItems(next);
@@ -548,6 +606,7 @@ export default function LessonEditor({ cursoId, lecciones = [], onCountChange })
       setItems(result.lecciones);
       setNotice({ variant: 'success', message: 'Orden de lecciones actualizado.' });
     } catch (err) {
+      posicionesAnteriores.current = capturarPosiciones();
       setItems(anterior);
       setNotice({ variant: 'error', message: err.message });
     } finally {
@@ -567,6 +626,8 @@ export default function LessonEditor({ cursoId, lecciones = [], onCountChange })
   function soltar(index) {
     const desde = dragIndex.current;
     dragIndex.current = null;
+    setDraggingIndex(null);
+    setDragOverIndex(null);
 
     if (desde === null || desde === index || pending) return;
 
@@ -647,7 +708,7 @@ export default function LessonEditor({ cursoId, lecciones = [], onCountChange })
           </p>
         </div>
       ) : (
-        <ul className="space-y-3">
+        <ul ref={listRef} className="space-y-3">
           {items.map((leccion, index) => (
             <LessonRow
               key={leccion.id}
@@ -655,6 +716,8 @@ export default function LessonEditor({ cursoId, lecciones = [], onCountChange })
               index={index}
               total={items.length}
               pending={pending}
+              dragging={draggingIndex === index}
+              dragOver={dragOverIndex === index}
               onEdit={abrirEdicion}
               onEditQuestions={(leccion) => {
                 setNotice(null);
@@ -665,11 +728,15 @@ export default function LessonEditor({ cursoId, lecciones = [], onCountChange })
               onMove={mover}
               onDragStart={(event) => {
                 dragIndex.current = index;
+                setDraggingIndex(index);
                 event.dataTransfer.effectAllowed = 'move';
               }}
               onDragOver={(event) => {
                 event.preventDefault();
                 event.dataTransfer.dropEffect = 'move';
+                if (dragOverIndex !== index) {
+                  setDragOverIndex(index);
+                }
               }}
               onDrop={(event) => {
                 event.preventDefault();
@@ -677,6 +744,8 @@ export default function LessonEditor({ cursoId, lecciones = [], onCountChange })
               }}
               onDragEnd={() => {
                 dragIndex.current = null;
+                setDraggingIndex(null);
+                setDragOverIndex(null);
               }}
             />
           ))}

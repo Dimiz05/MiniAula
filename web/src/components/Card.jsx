@@ -19,7 +19,11 @@ export default function Card({
       className={`border border-outline bg-surface ${
         radii[radius] ?? radii.card
       } ${padded ? 'p-4' : ''} ${
-        flat ? '' : interactive ? 'shadow-card transition-shadow hover:shadow-hover' : 'shadow-card'
+        flat
+          ? ''
+          : interactive
+            ? 'shadow-card transition-[border-color,box-shadow] duration-200 hover:border-primary/30 hover:shadow-hover'
+            : 'shadow-card'
       } ${className}`}
     >
       {children}

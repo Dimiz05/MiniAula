@@ -94,7 +94,7 @@ export default function DashboardPage() {
         </Alert>
       )}
 
-      <section className="flex flex-col items-start justify-between gap-6 rounded-panel border border-primary/20 bg-primary/[0.05] p-6 md:flex-row md:items-center md:p-8">
+      <section className="flex flex-col items-start justify-between gap-6 rounded-panel border border-primary/20 bg-primary/[0.05] p-6 shadow-card md:flex-row md:items-center md:p-8">
         <div>
           <span className="mb-3 inline-block rounded-full border border-primary/20 bg-surface px-3 py-1 text-label-sm font-semibold text-primary">
             Tu espacio de aprendizaje
@@ -179,7 +179,7 @@ export default function DashboardPage() {
             Cargando tus cursos…
           </p>
         ) : errorResumen ? (
-          <div className="rounded-panel border border-dashed border-outline bg-surface p-6 text-center">
+          <div className="rounded-panel border border-dashed border-outline bg-surface p-6 text-center shadow-card">
             <p className="text-body-md text-on-surface-variant">
               No pudimos cargar tus cursos en progreso.
             </p>
@@ -193,7 +193,7 @@ export default function DashboardPage() {
             </Button>
           </div>
         ) : resumen.inscritos > 0 ? (
-          <div className="flex flex-col items-start justify-between gap-4 rounded-panel border border-primary/20 bg-primary/[0.04] p-6 sm:flex-row sm:items-center">
+          <div className="flex flex-col items-start justify-between gap-4 rounded-panel border border-primary/20 bg-primary/[0.04] p-6 shadow-card sm:flex-row sm:items-center">
             <div className="flex items-start gap-3">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface text-primary">
                 <Icon name="play_lesson" className="text-[24px]" />
@@ -224,7 +224,7 @@ export default function DashboardPage() {
             </Button>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center rounded-panel border border-dashed border-outline bg-surface-variant/40 p-8 text-center">
+          <div className="flex flex-col items-center justify-center rounded-panel border border-dashed border-outline bg-surface p-8 text-center shadow-card">
             <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-surface text-primary">
               <Icon name="play_lesson" className="text-[24px]" />
             </span>
@@ -266,7 +266,7 @@ export default function DashboardPage() {
         )}
 
         {!loading && !error && recomendados.length === 0 && (
-          <p className="rounded-panel border border-dashed border-outline bg-surface p-6 text-center text-body-md text-on-surface-variant">
+          <p className="rounded-panel border border-dashed border-outline bg-surface p-6 text-center text-body-md text-on-surface-variant shadow-card">
             Todavía no hay cursos publicados. Vuelve pronto.
           </p>
         )}

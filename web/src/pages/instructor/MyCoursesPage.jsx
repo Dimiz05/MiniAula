@@ -205,7 +205,7 @@ export default function MyCoursesPage() {
           </div>
 
           {visibles.length === 0 ? (
-            <p className="rounded-panel border border-dashed border-outline bg-surface p-6 text-center text-body-md text-on-surface-variant">
+            <p className="rounded-panel border border-dashed border-outline bg-surface p-6 text-center text-body-md text-on-surface-variant shadow-card">
               No tienes cursos en este estado.
             </p>
           ) : (

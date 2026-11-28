@@ -279,7 +279,7 @@ export default function CatalogPage() {
                   onChange={(event) => setSearchInput(event.target.value)}
                   placeholder="Ej. React, PostgreSQL, inglés"
                   autoComplete="off"
-                  className="h-11 w-full rounded-control border border-outline bg-background pl-11 pr-11 text-body-md text-secondary placeholder:text-on-surface-variant/70 transition-colors duration-200 [&::-ms-clear]:hidden [&::-webkit-search-cancel-button]:appearance-none focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  className="h-11 w-full rounded-control border border-outline bg-surface pl-11 pr-11 text-body-md text-secondary shadow-control placeholder:text-on-surface-variant/70 transition-colors duration-200 [&::-ms-clear]:hidden [&::-webkit-search-cancel-button]:appearance-none focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 />
                 {searchInput && (
                   <button

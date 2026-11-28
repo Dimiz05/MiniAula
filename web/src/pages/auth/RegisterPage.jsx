@@ -182,8 +182,8 @@ export default function RegisterPage() {
                     key={role.value}
                     className={`relative flex cursor-pointer flex-col items-center justify-center rounded-control border p-2 text-center transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary sm:p-3 ${
                       selected
-                        ? 'border-primary bg-success-light ring-1 ring-inset ring-primary'
-                        : 'border-outline bg-surface hover:border-primary/60'
+                        ? 'border-primary bg-success-light shadow-control ring-1 ring-inset ring-primary'
+                        : 'border-outline bg-surface shadow-control hover:border-primary/60'
                     }`}
                   >
                     <input

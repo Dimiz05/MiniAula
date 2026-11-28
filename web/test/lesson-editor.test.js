@@ -56,6 +56,9 @@ test('renders content and quiz lessons with their available actions', () => {
   assert.match(html, /acciones de/);
   assert.match(html, /Editar preguntas de Cuestionario final/);
   assert.doesNotMatch(html, /Editar Cuestionario final/);
+  // The whole row is the drag source so the block can be reordered visually.
+  assert.match(html, /data-lesson-id="1"/);
+  assert.match(html, /draggable="true"/);
 });
 
 test('renders an empty state when the course has no lessons', () => {

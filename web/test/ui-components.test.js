@@ -71,6 +71,8 @@ test('el diálogo de confirmación no ocupa DOM cerrado y expone título y accio
     }),
   );
   assert.match(open, /<dialog/);
+  // m-auto restores native dialog centering after Tailwind's margin reset.
+  assert.match(open, /m-auto/);
   assert.match(open, /¿Eliminar la lección\?/);
   assert.match(open, /También se eliminarán sus preguntas\./);
   assert.match(open, /Eliminar lección/);

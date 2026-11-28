@@ -56,18 +56,18 @@ export default function ConfirmDialog({
       onClick={(event) => {
         if (event.target === event.currentTarget && !busy) onCancel();
       }}
-      className="w-[min(28rem,calc(100vw-2rem))] rounded-panel border border-outline bg-surface p-0 text-on-surface shadow-modal backdrop:bg-secondary/50"
+      className="m-auto max-h-[calc(100dvh-2rem)] w-[min(23rem,calc(100vw-2rem))] overflow-y-auto rounded-panel border border-outline bg-surface p-0 text-on-surface shadow-modal backdrop:bg-secondary/50"
     >
-      <div className="p-6">
+      <div className="p-5">
         <h2 id={titleId} className="text-headline-sm text-secondary">
           {title}
         </h2>
         {description && (
-          <p id={descriptionId} className="mt-2 text-body-md text-on-surface-variant">
+          <p id={descriptionId} className="mt-1.5 text-body-md leading-5 text-on-surface-variant">
             {description}
           </p>
         )}
-        <div className="mt-5 flex flex-wrap justify-end gap-2">
+        <div className="mt-4 flex flex-wrap justify-end gap-2">
           <Button variant="secondary" onClick={onCancel} disabled={busy}>
             {cancelLabel}
           </Button>
