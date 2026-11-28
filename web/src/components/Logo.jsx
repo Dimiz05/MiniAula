@@ -30,7 +30,7 @@ export default function Logo({ to = '/', tone = 'dark', showName = true, size = 
       </span>
       {showName && (
         <span
-          className={`tracking-tight ${style.name} ${
+          className={`font-mono tracking-tight ${style.name} ${
             tone === 'light' ? 'text-white' : 'text-secondary'
           }`}
         >
