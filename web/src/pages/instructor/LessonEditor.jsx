@@ -211,7 +211,7 @@ function LessonRow({
   );
 }
 
-export default function LessonEditor({ cursoId, lecciones = [] }) {
+export default function LessonEditor({ cursoId, lecciones = [], onCountChange }) {
   const [items, setItems] = useState(lecciones);
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -227,6 +227,10 @@ export default function LessonEditor({ cursoId, lecciones = [] }) {
   useEffect(() => {
     setItems(lecciones);
   }, [lecciones]);
+
+  useEffect(() => {
+    onCountChange?.(items.length);
+  }, [items.length, onCountChange]);
 
   const leccionCuestionario = items.find(
     (item) => item.id === quizId && item.tipo === 'cuestionario',

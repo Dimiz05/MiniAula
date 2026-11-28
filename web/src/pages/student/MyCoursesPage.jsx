@@ -4,6 +4,7 @@ import Button from '../../components/Button.jsx';
 import CourseCard from '../../components/CourseCard.jsx';
 import CourseProgress from '../../components/CourseProgress.jsx';
 import Icon from '../../components/Icon.jsx';
+import StatCard from '../../components/StatCard.jsx';
 import { useFetch } from '../../hooks/useFetch.js';
 import { obtenerCurso } from '../../services/curso.service.js';
 import {
@@ -119,57 +120,39 @@ export default function MyCoursesPage() {
             Explora el catálogo y elige un curso publicado para comenzar tu ruta
             de aprendizaje.
           </p>
-          <Link
-            to="/catalog"
-            className="inline-flex items-center gap-2 rounded-control bg-primary px-4 py-2 text-label-md font-semibold text-on-primary shadow-card transition-opacity hover:opacity-95"
-          >
-            <Icon name="explore" className="text-[18px]" />
+          <Button as={Link} to="/catalog" icon="explore" iconPosition="start">
             Explorar cursos
-          </Link>
+          </Button>
         </div>
       )}
 
       {!loading && !error && inscripciones.length > 0 && (
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-            <article className="rounded-card border border-outline bg-surface p-5 shadow-card">
-              <div className="mb-2 flex items-center justify-between text-on-surface-variant">
-                <span className="text-label-sm">Cursos inscritos</span>
-                <Icon name="auto_stories" className="text-[22px] text-primary" />
-              </div>
-              <p className="text-headline-md tabular-nums text-secondary">
-                {inscripciones.length}
-              </p>
-              <span className="text-label-sm text-on-surface-variant">
-                En tu ruta de aprendizaje
-              </span>
-            </article>
+            <StatCard
+              label="Cursos inscritos"
+              icon="auto_stories"
+              tone="primary"
+              value={inscripciones.length}
+              detail="En tu ruta de aprendizaje"
+            />
 
-            <article className="rounded-card border border-outline bg-surface p-5 shadow-card">
-              <div className="mb-2 flex items-center justify-between text-on-surface-variant">
-                <span className="text-label-sm">En progreso</span>
-                <Icon name="play_lesson" className="text-[22px] text-warning" />
-              </div>
-              <p className="text-headline-md tabular-nums text-secondary">
-                {enProgreso}
-              </p>
-              <span className="text-label-sm text-on-surface-variant">
-                Pendientes de completar
-              </span>
-            </article>
+            <StatCard
+              label="En progreso"
+              icon="play_lesson"
+              tone="neutral"
+              value={enProgreso}
+              detail="Pendientes de completar"
+            />
 
-            <article className="col-span-2 rounded-card border border-outline bg-surface p-5 shadow-card lg:col-span-1">
-              <div className="mb-2 flex items-center justify-between text-on-surface-variant">
-                <span className="text-label-sm">Completados</span>
-                <Icon name="verified" className="text-[22px] text-success" />
-              </div>
-              <p className="text-headline-md tabular-nums text-secondary">
-                {completados}
-              </p>
-              <span className="text-label-sm text-on-surface-variant">
-                Cursos finalizados
-              </span>
-            </article>
+            <StatCard
+              className="col-span-2 lg:col-span-1"
+              label="Completados"
+              icon="verified"
+              tone="success"
+              value={completados}
+              detail="Cursos finalizados"
+            />
           </div>
 
           <div>

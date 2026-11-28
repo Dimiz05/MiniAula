@@ -15,7 +15,7 @@ const variants = {
 
 const sizes = {
   md: 'min-h-11 px-4 py-2.5',
-  sm: 'min-h-9 px-3 py-1.5',
+  sm: 'min-h-11 px-3 py-2',
 };
 
 const shapes = {

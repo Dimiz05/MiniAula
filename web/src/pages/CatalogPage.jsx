@@ -294,13 +294,9 @@ export default function CatalogPage() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-control bg-primary px-5 text-label-md font-semibold text-on-primary shadow-card transition-[background-color,transform] duration-200 ease-out-quint hover:bg-primary-dark active:scale-[0.98] motion-reduce:active:scale-100"
-            >
-              <Icon name="search" className="text-[18px]" />
+            <Button type="submit" icon="search" iconPosition="start" className="shrink-0">
               Buscar
-            </button>
+            </Button>
           </div>
         </form>
 
@@ -428,14 +424,14 @@ export default function CatalogPage() {
           <Alert variant="error" title="No pudimos cargar el catálogo">
             {error.message || 'Revisa tu conexión e inténtalo de nuevo.'}
           </Alert>
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            icon="refresh"
+            iconPosition="start"
             onClick={reintentar}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-outline bg-surface px-4 py-2.5 text-label-md font-semibold text-secondary transition-colors duration-200 hover:border-primary/40 hover:bg-surface-variant"
           >
-            <Icon name="refresh" className="text-[18px]" />
             Reintentar
-          </button>
+          </Button>
         </section>
       )}
 
@@ -460,14 +456,13 @@ export default function CatalogPage() {
               : 'Los cursos aparecerán aquí en cuanto los instructores los publiquen.'}
           </p>
           {hayFiltros && (
-            <button
-              type="button"
+            <Button
+              icon="arrow_forward"
               onClick={limpiarFiltros}
-              className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-primary px-5 py-2.5 text-label-md font-semibold text-on-primary shadow-card transition-[background-color,transform] duration-200 ease-out-quint hover:bg-primary-dark active:scale-[0.98] motion-reduce:active:scale-100"
+              className="mt-6"
             >
               Ver todos los cursos
-              <Icon name="arrow_forward" className="text-[18px]" />
-            </button>
+            </Button>
           )}
         </section>
       )}
@@ -569,15 +564,16 @@ export default function CatalogPage() {
               </p>
 
               <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon="chevron_left"
+                  iconPosition="start"
                   onClick={() => handlePage(Math.max(1, page - 1))}
                   disabled={page <= 1}
-                  className="inline-flex min-h-10 items-center gap-1 rounded-control border border-outline bg-surface px-3 py-1.5 text-label-sm text-secondary transition-colors duration-200 hover:bg-surface-variant disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface"
                 >
-                  <Icon name="chevron_left" className="text-[16px]" />
                   Anterior
-                </button>
+                </Button>
 
                 {pageNumbers(page, totalPages).map((number, index, list) => {
                   const previous = list[index - 1];
@@ -608,15 +604,15 @@ export default function CatalogPage() {
                   );
                 })}
 
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon="chevron_right"
                   onClick={() => handlePage(Math.min(totalPages, page + 1))}
                   disabled={page >= totalPages}
-                  className="inline-flex min-h-10 items-center gap-1 rounded-control border border-outline bg-surface px-3 py-1.5 text-label-sm text-secondary transition-colors duration-200 hover:bg-surface-variant disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface"
                 >
                   Siguiente
-                  <Icon name="chevron_right" className="text-[16px]" />
-                </button>
+                </Button>
               </div>
             </nav>
           )}

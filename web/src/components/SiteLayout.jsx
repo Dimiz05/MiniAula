@@ -70,7 +70,7 @@ export default function SiteLayout() {
                     <Icon name="co_present" className="text-[22px]" />
                   </span>
                   <span className="leading-tight">
-                    <span className="block text-headline-sm font-mono tracking-tight text-secondary">
+                    <span className="block text-[18px] leading-6 font-mono tracking-tight text-secondary">
                       MiniAula
                     </span>
                     <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">

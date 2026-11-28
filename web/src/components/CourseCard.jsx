@@ -1,3 +1,4 @@
+import Card from './Card.jsx';
 import CourseCover from './CourseCover.jsx';
 
 export default function CourseCard({
@@ -12,8 +13,11 @@ export default function CourseCard({
   className = '',
 }) {
   return (
-    <article
-      className={`flex flex-col justify-between overflow-hidden rounded-card border border-outline bg-surface shadow-card transition-shadow hover:shadow-hover ${className}`}
+    <Card
+      as="article"
+      padded={false}
+      interactive
+      className={`flex flex-col justify-between overflow-hidden ${className}`}
     >
       <div>
         <CourseCover
@@ -44,6 +48,6 @@ export default function CourseCard({
       </div>
 
       {action && <div className="p-4 pt-0">{action}</div>}
-    </article>
+    </Card>
   );
 }

@@ -5,12 +5,12 @@ const sizes = {
   sm: {
     mark: 'h-9 w-9 rounded-lg',
     icon: 'text-[22px]',
-    name: 'text-headline-sm font-bold',
+    name: 'text-[18px] leading-6',
   },
   md: {
     mark: 'h-10 w-10 rounded-control',
     icon: 'text-[24px]',
-    name: 'text-lg font-bold',
+    name: 'text-[20px] leading-7',
   },
 };
 

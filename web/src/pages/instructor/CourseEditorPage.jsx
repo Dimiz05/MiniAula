@@ -44,11 +44,13 @@ function CourseForm({ curso, editing, totalLecciones = 0, initialNotice = null }
   const statusMessage =
     saving || uploading
       ? 'Guardando…'
-      : notice?.variant === 'success'
-        ? notice.message
-        : dirty
-          ? 'Cambios sin guardar'
-          : 'Todo guardado';
+      : notice?.variant === 'error'
+        ? 'No se pudo guardar'
+        : notice?.variant === 'success'
+          ? notice.message
+          : dirty
+            ? 'Cambios sin guardar'
+            : 'Todo guardado';
   const statusTone = notice?.variant === 'error' ? 'error' : 'muted';
 
   useEffect(() => {
@@ -111,7 +113,7 @@ function CourseForm({ curso, editing, totalLecciones = 0, initialNotice = null }
     setNombrePortada(archivo.name);
     setErrors((previous) => ({ ...previous, portada: undefined }));
     setNotice(null);
-    setDirty(true);
+    if (!editing) setDirty(true);
 
     if (!editing) return;
 
@@ -365,6 +367,7 @@ function ExistingCourse({ id }) {
   const location = useLocation();
   const { data, loading, error, refetch } = useFetch(() => obtenerCursoPropio(id), [id]);
   const initialNotice = location.state?.notice ?? null;
+  const [lessonCount, setLessonCount] = useState(null);
 
   if (loading) return <p role="status" className="text-body-md text-on-surface-variant">Cargando curso…</p>;
   if (error) {
@@ -383,10 +386,14 @@ function ExistingCourse({ id }) {
       <CourseForm
         curso={data.curso}
         editing
-        totalLecciones={data.lecciones?.length ?? 0}
+        totalLecciones={lessonCount ?? data.lecciones?.length ?? 0}
         initialNotice={initialNotice}
       />
-      <LessonEditor cursoId={id} lecciones={data.lecciones ?? []} />
+      <LessonEditor
+        cursoId={id}
+        lecciones={data.lecciones ?? []}
+        onCountChange={setLessonCount}
+      />
     </div>
   );
 }

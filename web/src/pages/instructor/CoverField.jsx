@@ -97,7 +97,11 @@ export default function CoverField({
         disabled={busy}
         className="peer sr-only"
         aria-label="Elegir imagen de portada"
-        aria-describedby={error ? `${hintId} ${errorId}` : hintId}
+        aria-describedby={
+          [tienePreview ? null : hintId, error ? errorId : null]
+            .filter(Boolean)
+            .join(' ') || undefined
+        }
       />
 
       <label
@@ -147,9 +151,8 @@ export default function CoverField({
       <div className={`mt-2 flex flex-wrap items-center gap-2 ${tienePreview ? 'min-h-9' : ''}`}>
         {tienePreview && (
           <Button
-            variant="ghost"
+            variant="danger"
             icon="delete"
-            className="text-error hover:bg-error-light"
             onClick={() => setConfirmandoBorrado(true)}
             disabled={busy}
           >
