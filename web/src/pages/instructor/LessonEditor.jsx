@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import Alert from '../../components/Alert.jsx';
 import Button from '../../components/Button.jsx';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import FormActions from '../../components/FormActions.jsx';
 import FormField from '../../components/FormField.jsx';
 import Icon from '../../components/Icon.jsx';
+import RowActions from '../../components/RowActions.jsx';
+import { controlClass } from '../../components/formControl.js';
 import {
   actualizarLeccion,
   crearLeccion,
@@ -11,10 +15,23 @@ import {
 } from '../../services/leccion.service.js';
 import { toFieldErrors } from '../../utils/validation.js';
 import { moverLeccion, reordenarLista, validarLeccion } from './lessonForm.js';
-import QuestionEditor from './QuestionEditor.jsx';
+import {
+  NOTA_MINIMA_POR_DEFECTO,
+  quitarOpcion,
+  toQuizErrors,
+  validarPregunta,
+  validarQuiz,
+} from './quizForm.js';
+import QuestionEditor, { QuestionFields } from './QuestionEditor.jsx';
 
 const emptyForm = { titulo: '', contenido: '', videoUrl: '' };
-const controlClass = 'w-full rounded-control border border-outline bg-surface px-3.5 py-2.5 text-body-md text-secondary placeholder:text-on-surface-variant/70 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary aria-invalid:border-error';
+const emptyQuizForm = {
+  titulo: '',
+  notaMinima: String(NOTA_MINIMA_POR_DEFECTO),
+  enunciado: '',
+  opciones: ['', ''],
+  indiceCorrecto: -1,
+};
 
 function LessonForm({ values, errors, editing, saving, onChange, onSubmit, onCancel }) {
   function field(name) {
@@ -67,14 +84,93 @@ function LessonForm({ values, errors, editing, saving, onChange, onSubmit, onCan
         {...field('videoUrl')}
       />
 
-      <div className="flex flex-wrap items-center gap-2">
+      <FormActions flush status={saving ? 'Guardando…' : null}>
         <Button type="submit" icon="save" iconPosition="start" loading={saving}>
-          {saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Crear lección'}
+          {saving ? 'Guardando…' : editing ? 'Guardar lección' : 'Crear lección'}
         </Button>
         <Button variant="secondary" onClick={onCancel} disabled={saving}>
           Cancelar
         </Button>
+      </FormActions>
+    </form>
+  );
+}
+
+function QuizForm({
+  values,
+  errors,
+  saving,
+  onChange,
+  onChangeOpcion,
+  onAddOpcion,
+  onRemoveOpcion,
+  onSubmit,
+  onCancel,
+}) {
+  return (
+    <form
+      noValidate
+      onSubmit={onSubmit}
+      className="space-y-4 rounded-control border border-outline bg-surface-variant/30 p-4"
+    >
+      <div>
+        <p className="text-label-md font-semibold text-secondary">Nuevo cuestionario</p>
+        <p className="mt-1 text-label-sm text-on-surface-variant">
+          Un cuestionario se crea con al menos una pregunta. Podrás agregar más después con
+          «Editar preguntas».
+        </p>
       </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField
+          label="Título del cuestionario"
+          maxLength={150}
+          required
+          error={errors.titulo}
+          value={values.titulo}
+          onChange={(event) => onChange('titulo', event.target.value)}
+        />
+
+        <FormField
+          label="Nota mínima de aprobación"
+          type="number"
+          min={1}
+          max={100}
+          step={1}
+          required
+          hint="Valor entero entre 1 y 100."
+          error={errors.notaMinima}
+          value={values.notaMinima}
+          onChange={(event) => onChange('notaMinima', event.target.value)}
+        />
+      </div>
+
+      <div className="space-y-4 rounded-control border border-outline bg-surface p-4">
+        <div>
+          <p className="text-label-md font-semibold text-secondary">Primera pregunta</p>
+          <p className="mt-1 text-label-sm text-on-surface-variant">
+            Marca la opción correcta. La calificación se resuelve en el servidor.
+          </p>
+        </div>
+
+        <QuestionFields
+          values={values}
+          errors={errors}
+          onChange={onChange}
+          onChangeOpcion={onChangeOpcion}
+          onAddOpcion={onAddOpcion}
+          onRemoveOpcion={onRemoveOpcion}
+        />
+      </div>
+
+      <FormActions flush status={saving ? 'Guardando…' : null}>
+        <Button type="submit" icon="save" iconPosition="start" loading={saving}>
+          {saving ? 'Guardando…' : 'Crear cuestionario'}
+        </Button>
+        <Button variant="secondary" onClick={onCancel} disabled={saving}>
+          Cancelar
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -107,19 +203,20 @@ function LessonRow({
 
   return (
     <li
-      draggable={!ocupada}
-      onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      onDragEnd={onDragEnd}
       className={`flex flex-col gap-3 rounded-control border border-outline bg-surface p-4 transition-colors sm:flex-row sm:items-center sm:justify-between ${
-        esCuestionario ? 'border-warning/40 bg-warning-light/20' : ''
+        esCuestionario ? 'bg-surface-variant/40' : ''
       }`}
     >
       <div className="flex min-w-0 items-start gap-3">
         <span
-          className="mt-0.5 shrink-0 cursor-grab text-on-surface-variant"
+          draggable={!ocupada}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          aria-hidden="true"
           title="Arrastrar para ordenar"
+          className="mt-0.5 hidden h-11 w-8 shrink-0 cursor-grab items-center justify-center text-on-surface-variant sm:flex [@media(pointer:coarse)]:hidden"
         >
           <Icon name="drag_indicator" className="text-[22px]" />
         </span>
@@ -151,68 +248,63 @@ function LessonRow({
         </div>
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center gap-1">
-        <button
-          type="button"
-          onClick={() => onMove(index, -1)}
-          disabled={ocupada || index === 0}
-          aria-label={`Subir ${leccion.titulo}`}
-          title="Subir"
-          className="rounded p-1.5 text-on-surface-variant transition-colors hover:bg-surface-variant hover:text-secondary disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <Icon name="arrow_upward" className="text-[18px]" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onMove(index, 1)}
-          disabled={ocupada || index === total - 1}
-          aria-label={`Bajar ${leccion.titulo}`}
-          title="Bajar"
-          className="rounded p-1.5 text-on-surface-variant transition-colors hover:bg-surface-variant hover:text-secondary disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <Icon name="arrow_downward" className="text-[18px]" />
-        </button>
-        {esCuestionario ? (
-          <button
-            type="button"
-            onClick={() => onEditQuestions(leccion)}
-            disabled={ocupada}
-            aria-label={`Editar preguntas de ${leccion.titulo}`}
-            className="flex items-center gap-1 rounded border border-outline bg-surface px-3 py-1.5 text-label-sm font-semibold text-secondary transition-colors hover:bg-surface-variant disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <Icon name="tune" className="text-[16px]" />
-            Editar preguntas
-          </button>
-        ) : (
-          <>
-            <button
-              type="button"
+      <RowActions
+        label={`Más acciones de ${leccion.titulo}`}
+        disabled={ocupada}
+        primary={
+          esCuestionario ? (
+            <Button
+              variant="secondary"
+              icon="tune"
+              onClick={() => onEditQuestions(leccion)}
+              disabled={ocupada}
+              aria-label={`Editar preguntas de ${leccion.titulo}`}
+            >
+              Editar preguntas
+            </Button>
+          ) : (
+            <Button
+              variant="secondary"
+              icon="edit"
               onClick={() => onEdit(leccion)}
               disabled={ocupada}
               aria-label={`Editar ${leccion.titulo}`}
-              title="Editar"
-              className="rounded p-1.5 text-on-surface-variant transition-colors hover:bg-surface-variant hover:text-secondary disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <Icon name="edit" className="text-[18px]" />
-            </button>
-            <button
-              type="button"
-              onClick={() => onDelete(leccion)}
-              disabled={ocupada}
-              aria-label={`Eliminar ${leccion.titulo}`}
-              title="Eliminar"
-              className="rounded p-1.5 text-error transition-colors hover:bg-error-light disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <Icon name="delete" className="text-[18px]" />
-            </button>
-          </>
-        )}
-      </div>
+              Editar
+            </Button>
+          )
+        }
+        items={[
+          {
+            label: 'Subir',
+            icon: 'arrow_upward',
+            disabled: ocupada || index === 0,
+            onClick: () => onMove(index, -1),
+          },
+          {
+            label: 'Bajar',
+            icon: 'arrow_downward',
+            disabled: ocupada || index === total - 1,
+            onClick: () => onMove(index, 1),
+          },
+          ...(!esCuestionario
+            ? [
+                {
+                  label: 'Eliminar',
+                  icon: 'delete',
+                  danger: true,
+                  disabled: ocupada,
+                  onClick: () => onDelete(leccion),
+                },
+              ]
+            : []),
+        ]}
+      />
     </li>
   );
 }
 
-export default function LessonEditor({ cursoId, lecciones = [] }) {
+export default function LessonEditor({ cursoId, lecciones = [], onCountChange }) {
   const [items, setItems] = useState(lecciones);
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -220,13 +312,22 @@ export default function LessonEditor({ cursoId, lecciones = [] }) {
   const [errors, setErrors] = useState({});
   const [notice, setNotice] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [quizFormOpen, setQuizFormOpen] = useState(false);
+  const [quizValues, setQuizValues] = useState(emptyQuizForm);
+  const [quizErrors, setQuizErrors] = useState({});
+  const [savingQuiz, setSavingQuiz] = useState(false);
   const [pending, setPending] = useState(null);
   const [quizId, setQuizId] = useState(null);
+  const [leccionAEliminar, setLeccionAEliminar] = useState(null);
   const dragIndex = useRef(null);
 
   useEffect(() => {
     setItems(lecciones);
   }, [lecciones]);
+
+  useEffect(() => {
+    onCountChange?.(items.length);
+  }, [items.length, onCountChange]);
 
   const leccionCuestionario = items.find(
     (item) => item.id === quizId && item.tipo === 'cuestionario',
@@ -242,12 +343,111 @@ export default function LessonEditor({ cursoId, lecciones = [] }) {
     setEditingId(null);
     setValues(emptyForm);
     setErrors({});
+    setQuizFormOpen(false);
     setNotice(null);
     setFormOpen(true);
   }
 
+  function abrirNuevoCuestionario() {
+    setEditingId(null);
+    setFormOpen(false);
+    setQuizId(null);
+    setQuizValues(emptyQuizForm);
+    setQuizErrors({});
+    setNotice(null);
+    setQuizFormOpen(true);
+  }
+
+  function cerrarFormularioCuestionario() {
+    if (savingQuiz) return;
+    setQuizFormOpen(false);
+    setQuizValues(emptyQuizForm);
+    setQuizErrors({});
+  }
+
+  function cambiarCampoCuestionario(name, value) {
+    setQuizValues((previous) => ({ ...previous, [name]: value }));
+    setQuizErrors((previous) => ({ ...previous, [name]: undefined }));
+    setNotice(null);
+  }
+
+  function cambiarOpcionCuestionario(index, value) {
+    setQuizValues((previous) => ({
+      ...previous,
+      opciones: previous.opciones.map((opcion, posicion) => (
+        posicion === index ? value : opcion
+      )),
+    }));
+    setQuizErrors((previous) => ({ ...previous, opciones: undefined }));
+    setNotice(null);
+  }
+
+  function agregarOpcionCuestionario() {
+    setQuizValues((previous) => ({
+      ...previous,
+      opciones: [...previous.opciones, ''],
+    }));
+    setNotice(null);
+  }
+
+  function eliminarOpcionCuestionario(index) {
+    setQuizValues((previous) => ({
+      ...previous,
+      ...quitarOpcion(previous.opciones, previous.indiceCorrecto, index),
+    }));
+    setQuizErrors((previous) => ({
+      ...previous,
+      opciones: undefined,
+      indiceCorrecto: undefined,
+    }));
+    setNotice(null);
+  }
+
+  async function guardarCuestionario(event) {
+    event.preventDefault();
+    if (savingQuiz) return;
+
+    const meta = validarQuiz({
+      titulo: quizValues.titulo,
+      notaMinima: quizValues.notaMinima,
+    });
+    const pregunta = validarPregunta(quizValues);
+    const errores = { ...meta.errores, ...pregunta.errores };
+    setQuizErrors(errores);
+    setNotice(null);
+
+    if (Object.keys(errores).length) return;
+
+    setSavingQuiz(true);
+    try {
+      const result = await crearLeccion(cursoId, {
+        titulo: meta.datos.titulo,
+        tipo: 'cuestionario',
+        notaMinima: meta.datos.notaMinima,
+        preguntas: [pregunta.datos],
+      });
+      setItems((previous) => [...previous, result.leccion].sort(
+        (a, b) => a.orden - b.orden || a.id - b.id,
+      ));
+      setQuizFormOpen(false);
+      setQuizValues(emptyQuizForm);
+      setQuizErrors({});
+      setQuizId(result.leccion.id);
+      setNotice({
+        variant: 'success',
+        message: 'Cuestionario creado con su primera pregunta.',
+      });
+    } catch (err) {
+      setQuizErrors(toQuizErrors(err.details));
+      setNotice({ variant: 'error', message: err.message });
+    } finally {
+      setSavingQuiz(false);
+    }
+  }
+
   function abrirEdicion(leccion) {
     setEditingId(leccion.id);
+    setQuizFormOpen(false);
     setValues({
       titulo: leccion.titulo,
       contenido: leccion.contenido ?? '',
@@ -310,13 +510,13 @@ export default function LessonEditor({ cursoId, lecciones = [] }) {
     }
   }
 
+  function pedirBorrado(leccion) {
+    if (pending) return;
+    setLeccionAEliminar(leccion);
+  }
+
   async function borrar(leccion) {
     if (pending) return;
-    if (!window.confirm(
-      `¿Eliminar «${leccion.titulo}»? También se eliminarán sus preguntas y el progreso asociado. Esta acción no se puede deshacer.`,
-    )) {
-      return;
-    }
 
     setPending(`eliminar-${leccion.id}`);
     setNotice(null);
@@ -386,16 +586,46 @@ export default function LessonEditor({ cursoId, lecciones = [] }) {
           </h2>
           <p className="text-body-sm text-on-surface-variant">
             {items.length} {items.length === 1 ? 'lección' : 'lecciones'}. Reordena con las
-            flechas o arrastrando. Los cuestionarios también forman parte de la secuencia y
-            pueden reordenarse.
+            flechas o arrastrando. Agrega contenido o un cuestionario; ambos forman parte de
+            la secuencia y pueden reordenarse.
           </p>
         </div>
-        <Button icon="post_add" iconPosition="start" onClick={abrirNueva} disabled={saving || pending !== null}>
-          Agregar lección de contenido
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button
+            variant="secondary"
+            icon="quiz"
+            iconPosition="start"
+            onClick={abrirNuevoCuestionario}
+            disabled={saving || savingQuiz || pending !== null}
+          >
+            Agregar cuestionario
+          </Button>
+          <Button
+            icon="post_add"
+            iconPosition="start"
+            onClick={abrirNueva}
+            disabled={saving || savingQuiz || pending !== null}
+          >
+            Agregar lección de contenido
+          </Button>
+        </div>
       </header>
 
       {notice && <Alert variant={notice.variant}>{notice.message}</Alert>}
+
+      {quizFormOpen && (
+        <QuizForm
+          values={quizValues}
+          errors={quizErrors}
+          saving={savingQuiz}
+          onChange={cambiarCampoCuestionario}
+          onChangeOpcion={cambiarOpcionCuestionario}
+          onAddOpcion={agregarOpcionCuestionario}
+          onRemoveOpcion={eliminarOpcionCuestionario}
+          onSubmit={guardarCuestionario}
+          onCancel={cerrarFormularioCuestionario}
+        />
+      )}
 
       {formOpen && (
         <LessonForm
@@ -428,9 +658,10 @@ export default function LessonEditor({ cursoId, lecciones = [] }) {
               onEdit={abrirEdicion}
               onEditQuestions={(leccion) => {
                 setNotice(null);
+                setQuizFormOpen(false);
                 setQuizId(leccion.id);
               }}
-              onDelete={borrar}
+              onDelete={pedirBorrado}
               onMove={mover}
               onDragStart={(event) => {
                 dragIndex.current = index;
@@ -460,6 +691,19 @@ export default function LessonEditor({ cursoId, lecciones = [] }) {
           onClose={() => setQuizId(null)}
         />
       )}
+
+      <ConfirmDialog
+        open={Boolean(leccionAEliminar)}
+        title="¿Eliminar esta lección?"
+        description={`«${leccionAEliminar?.titulo ?? ''}» y sus preguntas dejarán de estar disponibles. El progreso asociado también se elimina y no se puede deshacer.`}
+        confirmLabel="Eliminar lección"
+        onCancel={() => setLeccionAEliminar(null)}
+        onConfirm={() => {
+          const leccion = leccionAEliminar;
+          setLeccionAEliminar(null);
+          if (leccion) borrar(leccion);
+        }}
+      />
     </section>
   );
 }

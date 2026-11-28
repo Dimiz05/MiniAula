@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import Alert from '../../components/Alert.jsx';
 import Button from '../../components/Button.jsx';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import CourseCover from '../../components/CourseCover.jsx';
-import Icon from '../../components/Icon.jsx';
 import { useFetch } from '../../hooks/useFetch.js';
 import {
   archivarCurso,
@@ -60,6 +60,8 @@ export default function MyCoursesPage() {
   const [pending, setPending] = useState(null);
   const [notice, setNotice] = useState(null);
   const [filtro, setFiltro] = useState('todos');
+  const [confirmacion, setConfirmacion] = useState(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
 
   const cursos = data?.cursos ?? [];
   const publicados = cursos.filter((curso) => curso.estado === 'publicado').length;
@@ -71,9 +73,18 @@ export default function MyCoursesPage() {
     return cursos.filter((curso) => curso.estado === valor).length;
   }
 
-  async function run(action, curso) {
+  function run(action, curso) {
     const operation = operations[action];
-    if (pending || (operation.confirm && !window.confirm(operation.confirm(curso.titulo)))) return;
+    if (pending) return;
+    if (operation.confirm) {
+      setConfirmacion({ action, curso });
+      return;
+    }
+    ejecutar(action, curso);
+  }
+
+  async function ejecutar(action, curso) {
+    const operation = operations[action];
 
     setPending({ action, id: curso.id });
     setNotice(null);
@@ -88,6 +99,16 @@ export default function MyCoursesPage() {
     }
   }
 
+  async function confirmar() {
+    if (!confirmacion || confirmBusy) return;
+
+    const { action, curso } = confirmacion;
+    setConfirmBusy(true);
+    await ejecutar(action, curso);
+    setConfirmBusy(false);
+    setConfirmacion(null);
+  }
+
   return (
     <section className="space-y-8">
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -100,13 +121,15 @@ export default function MyCoursesPage() {
             publica nuevos contenidos.
           </p>
         </div>
-        <Link
+        <Button
+          as={Link}
           to="nuevo"
-          className="inline-flex shrink-0 items-center gap-2 rounded-control bg-primary px-5 py-2.5 text-label-md font-semibold text-on-primary shadow-card transition-opacity hover:opacity-95"
+          icon="add_box"
+          iconPosition="start"
+          className="shrink-0"
         >
-          <Icon name="add_box" className="text-[20px]" />
           Crear curso
-        </Link>
+        </Button>
       </header>
 
       {notice && <Alert variant={notice.variant}>{notice.message}</Alert>}
@@ -196,7 +219,7 @@ export default function MyCoursesPage() {
                 return (
                   <li
                     key={curso.id}
-                    className={`flex flex-col justify-between overflow-hidden rounded-panel border border-outline bg-surface shadow-card transition-shadow hover:shadow-hover ${
+                    className={`flex flex-col justify-between overflow-hidden rounded-card border border-outline bg-surface shadow-card transition-shadow hover:shadow-hover ${
                       curso.estado === 'archivado' ? 'opacity-85' : ''
                     }`}
                   >
@@ -215,7 +238,7 @@ export default function MyCoursesPage() {
                         </span>
                       </CourseCover>
 
-                      <div className="p-5">
+                      <div className="p-4">
                         <h3 className="mb-2 break-words text-balance text-headline-sm leading-snug text-secondary">
                           {curso.titulo}
                         </h3>
@@ -238,29 +261,33 @@ export default function MyCoursesPage() {
                           </div>
                         </dl>
 
-                        <Link
+                        <Button
+                          as={Link}
                           to={`/instructor/analiticas?curso=${curso.id}`}
-                          className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-control bg-primary px-3 py-2 text-label-md font-semibold text-on-primary transition-opacity hover:opacity-95"
+                          icon="insights"
+                          iconPosition="start"
+                          className="mt-4 w-full"
                         >
-                          <Icon name="insights" className="text-[18px]" />
                           Ver métricas del curso
-                        </Link>
+                        </Button>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 p-5 pt-0">
-                      <Link
+                    <div className="flex flex-wrap items-center gap-2 p-4 pt-0">
+                      <Button
+                        as={Link}
                         to={`${curso.id}/editar`}
-                        className="inline-flex flex-1 items-center justify-center gap-1 rounded-control border border-outline bg-surface px-3 py-2 text-label-md text-secondary hover:bg-surface-variant"
+                        variant="secondary"
+                        icon="edit"
+                        className="flex-1"
                       >
-                        <Icon name="edit" className="text-[18px]" />
                         Editar
-                      </Link>
+                      </Button>
                       {curso.estado === 'borrador' && (
                         <Button
                           disabled={disabled || !actions.publicar}
                           loading={busy('publicar')}
-                          className="flex-1 px-3 py-2 text-label-md"
+                          className="flex-1"
                           onClick={() => run('publicar', curso)}
                         >
                           Publicar
@@ -271,7 +298,7 @@ export default function MyCoursesPage() {
                           variant="secondary"
                           disabled={disabled}
                           loading={busy('archivar')}
-                          className="px-3 py-2 text-label-md"
+                          className="flex-1"
                           onClick={() => run('archivar', curso)}
                         >
                           Archivar
@@ -282,7 +309,7 @@ export default function MyCoursesPage() {
                           variant="danger"
                           disabled={disabled}
                           loading={busy('eliminar')}
-                          className="px-3 py-2 text-label-md"
+                          className="flex-1"
                           onClick={() => run('eliminar', curso)}
                         >
                           Eliminar
@@ -291,7 +318,7 @@ export default function MyCoursesPage() {
                     </div>
 
                     {curso.estado === 'borrador' && !actions.publicar && (
-                      <p className="px-5 pb-5 text-label-sm text-on-surface-variant">
+                      <p className="px-4 pb-4 text-label-sm text-on-surface-variant">
                         El curso necesita al menos una lección para publicarse.
                       </p>
                     )}
@@ -302,6 +329,22 @@ export default function MyCoursesPage() {
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={Boolean(confirmacion)}
+        title={confirmacion ? operations[confirmacion.action].confirm(confirmacion.curso.titulo) : ''}
+        description={
+          confirmacion?.action === 'eliminar'
+            ? 'También se eliminarán sus lecciones, preguntas y el progreso asociado.'
+            : undefined
+        }
+        confirmLabel={confirmacion?.action === 'archivar' ? 'Archivar curso' : 'Eliminar curso'}
+        busy={confirmBusy}
+        onCancel={() => {
+          if (!confirmBusy) setConfirmacion(null);
+        }}
+        onConfirm={confirmar}
+      />
     </section>
   );
 }

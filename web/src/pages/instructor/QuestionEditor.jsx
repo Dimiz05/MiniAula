@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import Alert from '../../components/Alert.jsx';
 import Button from '../../components/Button.jsx';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import FormActions from '../../components/FormActions.jsx';
 import FormField from '../../components/FormField.jsx';
 import Icon from '../../components/Icon.jsx';
+import { controlClass } from '../../components/formControl.js';
 import {
   actualizarCuestionario,
   actualizarPregunta,
@@ -18,28 +21,18 @@ import {
   validarPregunta,
 } from './quizForm.js';
 
-const controlClass = 'w-full rounded-control border border-outline bg-surface px-3.5 py-2.5 text-body-md text-secondary placeholder:text-on-surface-variant/70 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary aria-invalid:border-error';
-
 const emptyPregunta = { enunciado: '', opciones: ['', ''], indiceCorrecto: -1 };
 
-function QuestionForm({
+export function QuestionFields({
   values,
   errors,
-  editing,
-  saving,
   onChange,
   onChangeOpcion,
   onAddOpcion,
   onRemoveOpcion,
-  onSubmit,
-  onCancel,
 }) {
   return (
-    <form
-      noValidate
-      onSubmit={onSubmit}
-      className="space-y-4 rounded-control border border-outline bg-surface-variant/30 p-4"
-    >
+    <>
       <FormField
         label="Enunciado de la pregunta"
         maxLength={500}
@@ -114,15 +107,45 @@ function QuestionForm({
           Añadir otra opción
         </button>
       </fieldset>
+    </>
+  );
+}
 
-      <div className="flex flex-wrap items-center gap-2">
+function QuestionForm({
+  values,
+  errors,
+  editing,
+  saving,
+  onChange,
+  onChangeOpcion,
+  onAddOpcion,
+  onRemoveOpcion,
+  onSubmit,
+  onCancel,
+}) {
+  return (
+    <form
+      noValidate
+      onSubmit={onSubmit}
+      className="space-y-4 rounded-control border border-outline bg-surface-variant/30 p-4"
+    >
+      <QuestionFields
+        values={values}
+        errors={errors}
+        onChange={onChange}
+        onChangeOpcion={onChangeOpcion}
+        onAddOpcion={onAddOpcion}
+        onRemoveOpcion={onRemoveOpcion}
+      />
+
+      <FormActions flush>
         <Button type="submit" icon="save" iconPosition="start" loading={saving}>
           {saving ? 'Guardando…' : editing ? 'Guardar pregunta' : 'Crear pregunta'}
         </Button>
         <Button variant="secondary" onClick={onCancel} disabled={saving}>
           Cancelar
         </Button>
-      </div>
+      </FormActions>
     </form>
   );
 }
@@ -140,6 +163,7 @@ export default function QuestionEditor({ leccion, onUpdate, onClose }) {
   const [saving, setSaving] = useState(false);
   const [savingNota, setSavingNota] = useState(false);
   const [pending, setPending] = useState(null);
+  const [preguntaAEliminar, setPreguntaAEliminar] = useState(null);
 
   function notificar(nextPreguntas, nextNota = nota) {
     onUpdate({ ...leccion, notaMinima: nextNota, preguntas: nextPreguntas });
@@ -245,11 +269,13 @@ export default function QuestionEditor({ leccion, onUpdate, onClose }) {
     }
   }
 
+  function pedirBorradoPregunta(pregunta) {
+    if (pending) return;
+    setPreguntaAEliminar(pregunta);
+  }
+
   async function borrarPregunta(pregunta) {
     if (pending) return;
-    if (!window.confirm(`¿Eliminar la pregunta «${pregunta.enunciado}»? Esta acción no se puede deshacer.`)) {
-      return;
-    }
 
     setPending(`eliminar-${pregunta.id}`);
     setNotice(null);
@@ -423,17 +449,17 @@ export default function QuestionEditor({ leccion, onUpdate, onClose }) {
                   disabled={pending !== null || saving}
                   aria-label={`Editar pregunta ${index + 1}`}
                   title="Editar pregunta"
-                  className="rounded p-1.5 text-on-surface-variant transition-colors hover:bg-surface-variant hover:text-secondary disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex h-11 w-11 items-center justify-center rounded-control text-on-surface-variant transition-colors hover:bg-surface-variant hover:text-secondary disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <Icon name="edit" className="text-[18px]" />
                 </button>
                 <button
                   type="button"
-                  onClick={() => borrarPregunta(pregunta)}
+                  onClick={() => pedirBorradoPregunta(pregunta)}
                   disabled={pending !== null || saving}
                   aria-label={`Eliminar pregunta ${index + 1}`}
                   title="Eliminar pregunta"
-                  className="rounded p-1.5 text-error transition-colors hover:bg-error-light disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex h-11 w-11 items-center justify-center rounded-control text-error transition-colors hover:bg-error-light disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <Icon name="delete" className="text-[18px]" />
                 </button>
@@ -442,6 +468,19 @@ export default function QuestionEditor({ leccion, onUpdate, onClose }) {
           ))}
         </ol>
       )}
+
+      <ConfirmDialog
+        open={Boolean(preguntaAEliminar)}
+        title="¿Eliminar esta pregunta?"
+        description={`«${preguntaAEliminar?.enunciado ?? ''}» dejará de formar parte del cuestionario. Esta acción no se puede deshacer.`}
+        confirmLabel="Eliminar pregunta"
+        onCancel={() => setPreguntaAEliminar(null)}
+        onConfirm={() => {
+          const pregunta = preguntaAEliminar;
+          setPreguntaAEliminar(null);
+          if (pregunta) borrarPregunta(pregunta);
+        }}
+      />
     </section>
   );
 }

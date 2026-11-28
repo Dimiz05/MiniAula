@@ -1,5 +1,6 @@
-import { useId, useRef, useState } from 'react';
+import { useId, useState } from 'react';
 import Button from '../../components/Button.jsx';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import CourseCover from '../../components/CourseCover.jsx';
 import Icon from '../../components/Icon.jsx';
 import {
@@ -28,8 +29,9 @@ export default function CoverField({
   const inputId = useId();
   const hintId = `${inputId}-hint`;
   const errorId = `${inputId}-error`;
-  const inputRef = useRef(null);
   const [arrastrando, setArrastrando] = useState(false);
+  const [confirmandoBorrado, setConfirmandoBorrado] = useState(false);
+  const tienePreview = Boolean(previewPortada);
 
   function resaltar(event) {
     if (busy || !esArrastreDeArchivos(event.dataTransfer)) {
@@ -88,7 +90,6 @@ export default function CoverField({
       <p className="mb-1.5 text-label-md text-secondary">Imagen de portada</p>
 
       <input
-        ref={inputRef}
         id={inputId}
         type="file"
         accept={PORTADA_TIPOS.join(',')}
@@ -96,7 +97,11 @@ export default function CoverField({
         disabled={busy}
         className="peer sr-only"
         aria-label="Elegir imagen de portada"
-        aria-describedby={error ? `${hintId} ${errorId}` : hintId}
+        aria-describedby={
+          [tienePreview ? null : hintId, error ? errorId : null]
+            .filter(Boolean)
+            .join(' ') || undefined
+        }
       />
 
       <label
@@ -105,33 +110,59 @@ export default function CoverField({
         onDragOver={resaltar}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`${zonaBase} ${arrastrando ? zonaActiva : zonaInactiva} ${
+        className={`${
+          tienePreview
+            ? 'group relative block overflow-hidden rounded-control border border-outline'
+            : `${zonaBase} ${arrastrando ? zonaActiva : zonaInactiva}`
+        } ${
           busy ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
         }`}
       >
-        <Icon name="upload" className="text-[26px] text-primary" />
-        <span className="text-label-md font-semibold text-secondary">
-          Arrastra una imagen aquí o haz clic para seleccionarla
-        </span>
-        <span id={hintId} className="text-label-sm text-on-surface-variant">
-          PNG, JPG o WebP · máximo 5 MB.
-        </span>
+        {tienePreview ? (
+          <>
+            <CourseCover
+              portada={previewPortada}
+              alt={alt}
+              className="aspect-[16/9] max-h-64 w-full"
+            />
+            <span className="pointer-events-none absolute inset-0 flex items-end justify-end bg-gradient-to-t from-secondary/60 via-transparent to-transparent p-3 opacity-100 transition-opacity duration-200">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface/95 px-3 py-1.5 text-label-sm font-semibold text-secondary shadow-sm">
+                <Icon name="upload" className="text-[16px]" />
+                Cambiar imagen
+              </span>
+            </span>
+            {arrastrando && (
+              <span className="absolute inset-0 rounded-control border-2 border-primary bg-primary/10" />
+            )}
+          </>
+        ) : (
+          <>
+            <Icon name="upload" className="text-[26px] text-primary" />
+            <span className="text-label-md font-semibold text-secondary">
+              Arrastra una imagen aquí o haz clic para seleccionarla
+            </span>
+            <span id={hintId} className="text-label-sm text-on-surface-variant">
+              PNG, JPG o WebP · máximo 5 MB.
+            </span>
+          </>
+        )}
       </label>
 
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <Button
-          variant="secondary"
-          icon="upload"
-          iconPosition="start"
-          onClick={() => inputRef.current?.click()}
-          disabled={busy}
-        >
-          {uploading ? 'Subiendo…' : previewPortada ? 'Cambiar imagen' : 'Elegir imagen'}
-        </Button>
-        {previewPortada && (
-          <Button variant="danger" icon="delete" onClick={onRemove} disabled={busy}>
+      <div className={`mt-2 flex flex-wrap items-center gap-2 ${tienePreview ? 'min-h-9' : ''}`}>
+        {tienePreview && (
+          <Button
+            variant="danger"
+            icon="delete"
+            onClick={() => setConfirmandoBorrado(true)}
+            disabled={busy}
+          >
             Quitar portada
           </Button>
+        )}
+        {uploading && (
+          <span role="status" className="text-label-sm text-on-surface-variant">
+            Subiendo…
+          </span>
         )}
       </div>
 
@@ -147,10 +178,17 @@ export default function CoverField({
         </p>
       )}
 
-      <CourseCover
-        portada={previewPortada}
-        alt={alt}
-        className="mt-3 aspect-video w-full rounded-control border border-outline"
+      <ConfirmDialog
+        open={confirmandoBorrado}
+        title="¿Quitar la portada?"
+        description="La imagen se eliminará de este curso y no se puede recuperar desde aquí."
+        confirmLabel="Quitar portada"
+        busy={uploading}
+        onCancel={() => setConfirmandoBorrado(false)}
+        onConfirm={() => {
+          setConfirmandoBorrado(false);
+          onRemove();
+        }}
       />
     </div>
   );

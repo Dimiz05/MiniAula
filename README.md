@@ -410,7 +410,7 @@ curso lo sigue ocultando.
 | Método y ruta | Descripción |
 | --- | --- |
 | `GET /api/cursos/mios/:id` | Devolver un curso propio para editarlo con `{ curso, lecciones }`. Cada lección incluye `id`, `titulo`, `tipo`, `contenido`, `videoUrl`, `orden`, `notaMinima` y `cursoId`. Un cuestionario también incluye `preguntas` ordenadas por `id`, cada una con `id`, `enunciado`, `opciones`, `indiceCorrecto` y `leccionId`; el editor del instructor necesita el índice correcto. |
-| `POST /api/cursos/:id/lecciones` | Crear una lección de contenido con `titulo`, `contenido` y `videoUrl` opcional. El servidor guarda `tipo: "contenido"`, asigna el siguiente `orden` y devuelve `201 { leccion }`. |
+| `POST /api/cursos/:id/lecciones` | Crear una lección con `titulo` y `tipo`. Con `tipo: "contenido"` (o sin `tipo`) acepta `contenido` y `videoUrl` opcional. Con `tipo: "cuestionario"` exige `notaMinima` (entero de 1 a 100) y `preguntas` con al menos una pregunta (`enunciado`, `opciones` e `indiceCorrecto`), y no acepta `contenido` ni `videoUrl`. El servidor asigna el siguiente `orden`, guarda el cuestionario con sus preguntas y devuelve `201 { leccion }` con `preguntas`. |
 | `PUT /api/lecciones/:id` | Actualizar `titulo`, `contenido` y/o `videoUrl` de una lección de contenido propia. Se requiere al menos un campo. Devuelve `{ leccion }`; un cuestionario devuelve `409 LECCION_NO_ES_CONTENIDO`. |
 | `DELETE /api/lecciones/:id` | Eliminar una lección propia. Devuelve `204`. Eliminar una lección también borra sus preguntas y el progreso del estudiante mediante la cascada de claves foráneas existente. |
 | `PATCH /api/cursos/:id/lecciones/orden` | Reordenar un curso propio con `{ "orden": [lessonId, ...] }`. La lista debe contener todas las lecciones del curso exactamente una vez; una lista vacía es válida solo cuando el curso no tiene lecciones. El servidor reescribe `orden` como `1..N` y devuelve `{ lecciones }`. |
@@ -443,8 +443,10 @@ devuelve `404 PREGUNTA_NO_ENCONTRADA` o `404 LECCION_NO_ENCONTRADA`, y un cuerpo
 inválido devuelve `422 VALIDACION` con el sobre de error estándar. Las pantallas
 del instructor usan estas rutas mediante la acción «Editar preguntas» de una
 fila de cuestionario: el editor de preguntas lista las preguntas, marca la opción
-correcta y guarda la nota mínima. La calificación del estudiante se documenta en
-la sección de progreso.
+correcta y guarda la nota mínima. Un cuestionario nuevo se crea desde el editor
+del curso con «Agregar cuestionario» junto con su primera pregunta, y después se
+le añaden más preguntas. La calificación del estudiante se documenta en la
+sección de progreso.
 
 ## API de inscripción, acceso a lecciones y progreso del estudiante
 

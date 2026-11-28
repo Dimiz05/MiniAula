@@ -42,6 +42,25 @@ export function validarNotaMinima(valor) {
   return { valor: numero, error: null };
 }
 
+export function validarQuiz({ titulo = '', notaMinima = NOTA_MINIMA_POR_DEFECTO } = {}) {
+  const nota = validarNotaMinima(notaMinima);
+  const datos = {
+    titulo: titulo.trim(),
+    notaMinima: nota.valor,
+  };
+  const errores = {};
+
+  if (datos.titulo.length < 3 || datos.titulo.length > 150) {
+    errores.titulo = 'El título debe tener entre 3 y 150 caracteres.';
+  }
+
+  if (nota.error) {
+    errores.notaMinima = nota.error;
+  }
+
+  return { datos, errores };
+}
+
 export function toPreguntaErrors(details) {
   const errores = toFieldErrors(details, ['enunciado', 'opciones', 'indiceCorrecto']);
 
@@ -54,6 +73,38 @@ export function toPreguntaErrors(details) {
 
     if (detalleOpcion) {
       errores.opciones = detalleOpcion.mensaje;
+    }
+  }
+
+  return errores;
+}
+
+// La API anida los errores de la primera pregunta como `preguntas.0.campo`.
+export function toQuizErrors(details) {
+  const errores = toFieldErrors(details, ['titulo', 'notaMinima']);
+
+  if (!Array.isArray(details)) {
+    return errores;
+  }
+
+  const prefijo = 'preguntas.0.';
+
+  for (const detalle of details) {
+    if (
+      typeof detalle?.campo !== 'string'
+      || !detalle.campo.startsWith(prefijo)
+      || typeof detalle?.mensaje !== 'string'
+    ) {
+      continue;
+    }
+
+    const campo = detalle.campo.slice(prefijo.length);
+
+    if (
+      ['enunciado', 'opciones', 'indiceCorrecto'].includes(campo)
+      && !errores[campo]
+    ) {
+      errores[campo] = detalle.mensaje;
     }
   }
 

@@ -6,7 +6,7 @@ import { useAuth } from '../hooks/useAuth.jsx';
 import { getInitials } from '../utils/initials.js';
 
 function navClass({ isActive }) {
-  return `shrink-0 whitespace-nowrap border-b pb-1 text-[10px] font-normal uppercase tracking-[0.2em] transition-colors duration-200 lg:text-[11px] ${
+  return `shrink-0 whitespace-nowrap border-b pb-1 text-[11px] font-normal uppercase tracking-[0.12em] transition-colors duration-200 lg:text-[12px] ${
     isActive
       ? 'border-primary text-primary'
       : 'border-transparent text-ink-muted hover:border-primary/40 hover:text-primary'
@@ -70,10 +70,10 @@ export default function SiteLayout() {
                     <Icon name="co_present" className="text-[22px]" />
                   </span>
                   <span className="leading-tight">
-                    <span className="block text-headline-sm tracking-tight text-secondary">
+                    <span className="block text-[18px] leading-6 font-mono tracking-tight text-secondary">
                       MiniAula
                     </span>
-                    <span className="block text-[9px] font-semibold uppercase tracking-[0.22em] text-primary">
+                    <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
                       Instructor
                     </span>
                   </span>
@@ -137,7 +137,7 @@ export default function SiteLayout() {
                       <span className="block max-w-40 truncate text-[11px] font-semibold text-secondary">
                         {usuario.nombre}
                       </span>
-                      <span className="block text-[10px] uppercase tracking-[0.14em] text-ink-muted">
+                      <span className="block text-[11px] uppercase tracking-[0.14em] text-ink-muted">
                         {usuario.rol === 'instructor' ? 'Instructor' : 'Estudiante'}
                       </span>
                     </span>
@@ -159,21 +159,19 @@ export default function SiteLayout() {
                 <>
                   <Link
                     to="/login"
-                    className="inline-flex items-center py-2 text-[10px] font-normal uppercase tracking-[0.16em] text-ink-muted transition-colors duration-200 hover:text-primary sm:text-[11px]"
+                    className="inline-flex items-center py-2 text-[11px] font-normal uppercase tracking-[0.16em] text-ink-muted transition-colors duration-200 hover:text-primary sm:text-[12px]"
                   >
                     <span className="hidden sm:inline">Iniciar sesión</span>
                     <span className="sm:hidden">Entrar</span>
                   </Link>
-                  <Link
+                  <Button
+                    as={Link}
                     to="/registro"
-                    className="group inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-label-md font-semibold text-on-primary transition-[background-color,transform] duration-200 ease-out-quint hover:bg-primary-dark active:scale-[0.98] motion-reduce:active:scale-100"
+                    shape="pill"
+                    icon="arrow_outward"
                   >
-                    <span>Crear cuenta</span>
-                    <Icon
-                      name="arrow_outward"
-                      className="text-[16px] transition-transform duration-200 ease-out-quint group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:-translate-y-0"
-                    />
-                  </Link>
+                    Crear cuenta
+                  </Button>
                 </>
               )}
             </div>
@@ -181,7 +179,7 @@ export default function SiteLayout() {
 
           <nav
             aria-label="Navegación principal móvil"
-            className="flex items-center gap-6 overflow-x-auto pb-3 lg:hidden"
+            className="flex items-center gap-4 overflow-x-auto pb-3 sm:gap-6 lg:hidden"
           >
             {links.map((link) => (
               <NavLink

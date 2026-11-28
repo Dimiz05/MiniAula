@@ -1,7 +1,9 @@
 import { Link, useLocation } from 'react-router';
 import Alert from '../../components/Alert.jsx';
-import CourseCover from '../../components/CourseCover.jsx';
+import Button from '../../components/Button.jsx';
+import CourseCard from '../../components/CourseCard.jsx';
 import Icon from '../../components/Icon.jsx';
+import StatCard from '../../components/StatCard.jsx';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useFetch } from '../../hooks/useFetch.js';
 import { listarCursos } from '../../services/curso.service.js';
@@ -42,7 +44,7 @@ export default function DashboardPage() {
     {
       label: 'Cursos inscritos',
       icon: 'auto_stories',
-      iconClass: 'text-primary',
+      tone: 'primary',
       value: resumenDisponible ? resumen.inscritos : '—',
       detail: loadingResumen
         ? 'Cargando tu ruta…'
@@ -50,12 +52,14 @@ export default function DashboardPage() {
           ? 'No disponible'
           : resumen.inscritos === 0
             ? 'Explora el catálogo para inscribirte'
-            : `${resumen.activos} ${resumen.activos === 1 ? 'activo' : 'activos'} actualmente`,
+            : resumen.activos === 0
+              ? 'Todos tus cursos completados'
+              : `${resumen.activos} ${resumen.activos === 1 ? 'activo' : 'activos'} actualmente`,
     },
     {
       label: 'Cursos completados',
       icon: 'verified',
-      iconClass: 'text-success',
+      tone: 'success',
       value: resumenDisponible ? resumen.completados : '—',
       detail: loadingResumen
         ? 'Cargando tu ruta…'
@@ -70,7 +74,7 @@ export default function DashboardPage() {
     {
       label: 'Lecciones completadas',
       icon: 'task_alt',
-      iconClass: 'text-warning',
+      tone: 'neutral',
       value: resumenDisponible ? resumen.leccionesCompletadas : '—',
       detail: loadingResumen
         ? 'Cargando tu ruta…'
@@ -90,9 +94,9 @@ export default function DashboardPage() {
         </Alert>
       )}
 
-      <section className="flex flex-col items-start justify-between gap-6 rounded-panel border border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-surface p-6 md:flex-row md:items-center md:p-8">
+      <section className="flex flex-col items-start justify-between gap-6 rounded-panel border border-primary/20 bg-primary/[0.05] p-6 md:flex-row md:items-center md:p-8">
         <div>
-          <span className="mb-3 inline-block rounded-full border border-primary/20 bg-white px-3 py-1 text-label-sm font-semibold text-primary">
+          <span className="mb-3 inline-block rounded-full border border-primary/20 bg-surface px-3 py-1 text-label-sm font-semibold text-primary">
             Tu espacio de aprendizaje
           </span>
           <h1 className="mb-1 text-headline-lg-mobile text-secondary sm:text-headline-lg">
@@ -102,13 +106,16 @@ export default function DashboardPage() {
             Continúa aprendiendo y alcanza tus objetivos de certificación académica.
           </p>
         </div>
-        <Link
+        <Button
+          as={Link}
           to="/catalog"
-          className="inline-flex shrink-0 items-center gap-2 rounded-control bg-primary px-5 py-2.5 text-label-md font-semibold text-on-primary shadow-card transition-opacity hover:opacity-95"
+          variant="secondary"
+          icon="explore"
+          iconPosition="start"
+          className="shrink-0"
         >
-          <Icon name="explore" className="text-[20px]" />
           Explorar nuevos cursos
-        </Link>
+        </Button>
       </section>
 
       <section>
@@ -121,13 +128,14 @@ export default function DashboardPage() {
             className="mb-4"
           >
             <p>{errorResumen.message}</p>
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
+              className="mt-2"
               onClick={refetchResumen}
-              className="mt-2 rounded-control border border-outline bg-surface px-3 py-1.5 text-label-md text-secondary transition-colors hover:bg-surface-variant"
             >
               Reintentar
-            </button>
+            </Button>
           </Alert>
         )}
 
@@ -136,33 +144,16 @@ export default function DashboardPage() {
           aria-busy={loadingResumen}
         >
           {stats.map((stat) => (
-            <article
-              key={stat.label}
-              className="rounded-card border border-outline bg-surface p-5 shadow-card"
-            >
-              <div className="mb-2 flex items-center justify-between text-on-surface-variant">
-                <span className="text-label-sm">{stat.label}</span>
-                <Icon name={stat.icon} className={`text-[22px] ${stat.iconClass}`} />
-              </div>
-              <p className="text-headline-md tabular-nums text-secondary">
-                {stat.value}
-              </p>
-              <span className="text-label-sm text-on-surface-variant">{stat.detail}</span>
-            </article>
+            <StatCard key={stat.label} {...stat} />
           ))}
 
-          <article className="rounded-card border border-outline bg-surface p-5 shadow-card">
-            <div className="mb-2 flex items-center justify-between text-on-surface-variant">
-              <span className="text-label-sm">Cursos disponibles</span>
-              <Icon name="school" className="text-[22px] text-secondary" />
-            </div>
-            <p className="text-headline-md tabular-nums text-secondary">
-              {loading || error ? '—' : totalCursos}
-            </p>
-            <span className="text-label-sm text-on-surface-variant">
-              {error ? 'No disponible' : 'En el catálogo ahora'}
-            </span>
-          </article>
+          <StatCard
+            label="Cursos disponibles"
+            icon="school"
+            tone="neutral"
+            value={loading || error ? '—' : totalCursos}
+            detail={error ? 'No disponible' : 'En el catálogo ahora'}
+          />
         </div>
       </section>
 
@@ -192,18 +183,19 @@ export default function DashboardPage() {
             <p className="text-body-md text-on-surface-variant">
               No pudimos cargar tus cursos en progreso.
             </p>
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
+              className="mt-3"
               onClick={refetchResumen}
-              className="mt-3 rounded-control border border-outline bg-surface px-3 py-1.5 text-label-md text-secondary transition-colors hover:bg-surface-variant"
             >
               Reintentar
-            </button>
+            </Button>
           </div>
         ) : resumen.inscritos > 0 ? (
           <div className="flex flex-col items-start justify-between gap-4 rounded-panel border border-primary/20 bg-primary/[0.04] p-6 sm:flex-row sm:items-center">
             <div className="flex items-start gap-3">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface text-primary shadow-card">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface text-primary">
                 <Icon name="play_lesson" className="text-[24px]" />
               </span>
               <div>
@@ -221,20 +213,19 @@ export default function DashboardPage() {
                 </p>
               </div>
             </div>
-            <Link
+            <Button
+              as={Link}
               to={resumen.activos > 0 ? '/mis-cursos' : '/catalog'}
-              className="inline-flex shrink-0 items-center gap-2 rounded-control bg-primary px-4 py-2 text-label-md font-semibold text-on-primary shadow-card transition-opacity hover:opacity-95"
+              icon={resumen.activos > 0 ? 'play_arrow' : 'explore'}
+              iconPosition="start"
+              className="shrink-0"
             >
-              <Icon
-                name={resumen.activos > 0 ? 'play_arrow' : 'explore'}
-                className="text-[18px]"
-              />
               {resumen.activos > 0 ? 'Continuar aprendiendo' : 'Explorar cursos'}
-            </Link>
+            </Button>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center rounded-panel border border-dashed border-outline bg-surface-variant/40 p-8 text-center">
-            <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-surface text-primary shadow-card">
+            <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-surface text-primary">
               <Icon name="play_lesson" className="text-[24px]" />
             </span>
             <h3 className="mb-1 text-headline-sm text-secondary">
@@ -244,13 +235,9 @@ export default function DashboardPage() {
               Explora el catálogo y elige tu primer curso para comenzar tu ruta de
               aprendizaje.
             </p>
-            <Link
-              to="/catalog"
-              className="inline-flex items-center gap-2 rounded-control bg-primary px-4 py-2 text-label-md font-semibold text-on-primary shadow-card transition-opacity hover:opacity-95"
-            >
-              <Icon name="explore" className="text-[18px]" />
+            <Button as={Link} to="/catalog" icon="explore" iconPosition="start">
               Explorar cursos
-            </Link>
+            </Button>
           </div>
         )}
       </section>
@@ -272,13 +259,9 @@ export default function DashboardPage() {
         {!loading && error && (
           <Alert variant="error" title="No pudimos cargar las recomendaciones">
             <p>{error.message}</p>
-            <button
-              type="button"
-              onClick={refetch}
-              className="mt-2 rounded-control border border-outline bg-surface px-3 py-1.5 text-label-md text-secondary hover:bg-surface-variant"
-            >
+            <Button variant="secondary" size="sm" className="mt-2" onClick={refetch}>
               Reintentar
-            </button>
+            </Button>
           </Alert>
         )}
 
@@ -289,51 +272,41 @@ export default function DashboardPage() {
         )}
 
         {!loading && !error && recomendados.length > 0 && (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
             {recomendados.map((curso) => (
-              <article
+              <CourseCard
                 key={curso.id}
-                className="flex flex-col justify-between overflow-hidden rounded-card border border-outline bg-surface shadow-card transition-shadow hover:shadow-hover"
-              >
-                <div>
-                  <CourseCover
-                    portada={curso.portada}
-                    alt={`Portada de ${curso.titulo}`}
-                    className="h-28"
-                    iconClassName="absolute right-3 top-3 text-[48px] text-white/15"
-                  >
-                    <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2 py-0.5 text-label-sm font-semibold text-primary shadow-sm">
-                      {curso.categoria ?? 'Sin categoría'}
+                portada={curso.portada}
+                alt={`Portada de ${curso.titulo}`}
+                cover={
+                  <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2 py-0.5 text-label-sm font-semibold text-primary shadow-sm">
+                    {curso.categoria ?? 'Sin categoría'}
+                  </span>
+                }
+                title={curso.titulo}
+                description={curso.descripcion}
+                meta={
+                  <>
+                    <span className="truncate">
+                      {curso.instructor?.nombre ?? 'Sin instructor'}
                     </span>
-                  </CourseCover>
-                  <div className="p-4">
-                    <h3 className="mb-1 text-headline-sm leading-snug text-secondary">
-                      {curso.titulo}
-                    </h3>
-                    {curso.descripcion && (
-                      <p className="mb-3 line-clamp-2 text-body-md text-on-surface-variant">
-                        {curso.descripcion}
-                      </p>
-                    )}
-                    <div className="flex items-center justify-between text-label-sm text-on-surface-variant">
-                      <span className="truncate">
-                        {curso.instructor?.nombre ?? 'Sin instructor'}
-                      </span>
-                      <span className="shrink-0 rounded bg-surface-variant px-2 py-0.5 text-secondary">
-                        {niveles[curso.nivel] ?? curso.nivel ?? 'Sin nivel'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4 pt-0">
-                  <Link
+                    <span className="shrink-0 rounded bg-surface-variant px-2 py-0.5 text-secondary">
+                      {niveles[curso.nivel] ?? curso.nivel ?? 'Sin nivel'}
+                    </span>
+                  </>
+                }
+                action={
+                  <Button
+                    as={Link}
                     to={`/catalog/${curso.id}`}
-                    className="flex w-full items-center justify-center rounded-control border border-outline bg-surface px-3 py-2 text-label-md text-secondary transition-colors hover:bg-surface-variant"
+                    variant="soft"
+                    icon="arrow_forward"
+                    className="w-full"
                   >
                     Ver detalle
-                  </Link>
-                </div>
-              </article>
+                  </Button>
+                }
+              />
             ))}
           </div>
         )}

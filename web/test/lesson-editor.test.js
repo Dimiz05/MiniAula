@@ -51,7 +51,9 @@ test('renders content and quiz lessons with their available actions', () => {
   assert.match(html, /2 preguntas configuradas · Nota mínima: 70/);
   assert.match(html, /https:\/\/videos\.example\.com\/intro\.mp4/);
   assert.match(html, /Agregar lección de contenido/);
+  assert.match(html, /Agregar cuestionario/);
   assert.match(html, /Editar Introducción/);
+  assert.match(html, /acciones de/);
   assert.match(html, /Editar preguntas de Cuestionario final/);
   assert.doesNotMatch(html, /Editar Cuestionario final/);
 });

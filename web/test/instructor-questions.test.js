@@ -11,10 +11,13 @@ import {
   eliminarPregunta,
 } from '../src/services/pregunta.service.js';
 import {
+  NOTA_MINIMA_POR_DEFECTO,
   quitarOpcion,
   toPreguntaErrors,
+  toQuizErrors,
   validarNotaMinima,
   validarPregunta,
+  validarQuiz,
 } from '../src/pages/instructor/quizForm.js';
 
 const vite = await createServer({
@@ -116,6 +119,42 @@ test('passing grade validation accepts integers from 1 to 100', () => {
       error: 'La nota mínima debe ser un número entero entre 1 y 100.',
     });
   }
+});
+
+test('quiz creation validation trims the title and validates the passing grade', () => {
+  const valido = validarQuiz({ titulo: '  Cuestionario final  ', notaMinima: '75' });
+
+  assert.deepEqual(valido.datos, { titulo: 'Cuestionario final', notaMinima: 75 });
+  assert.deepEqual(valido.errores, {});
+  assert.deepEqual(
+    validarQuiz({ titulo: '', notaMinima: '' }).errores,
+    {
+      titulo: 'El título debe tener entre 3 y 150 caracteres.',
+      notaMinima: 'La nota mínima debe ser un número entero entre 1 y 100.',
+    },
+  );
+  assert.equal(
+    validarQuiz({ titulo: 'Cuestionario' }).datos.notaMinima,
+    NOTA_MINIMA_POR_DEFECTO,
+  );
+});
+
+test('quiz creation maps the first question errors returned by the API', () => {
+  assert.deepEqual(
+    toQuizErrors([
+      { campo: 'titulo', mensaje: 'El título es obligatorio.' },
+      { campo: 'preguntas.0.enunciado', mensaje: 'El enunciado es obligatorio.' },
+      { campo: 'preguntas.0.opciones', mensaje: 'La pregunta requiere al menos dos opciones.' },
+      { campo: 'preguntas.0.indiceCorrecto', mensaje: 'Marca la opción correcta.' },
+    ]),
+    {
+      titulo: 'El título es obligatorio.',
+      enunciado: 'El enunciado es obligatorio.',
+      opciones: 'La pregunta requiere al menos dos opciones.',
+      indiceCorrecto: 'Marca la opción correcta.',
+    },
+  );
+  assert.deepEqual(toQuizErrors(null), {});
 });
 
 test('removing an option keeps at least two and fixes the correct index', () => {

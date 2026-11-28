@@ -3,13 +3,16 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import Alert from '../../components/Alert.jsx';
 import Button from '../../components/Button.jsx';
 import FormField from '../../components/FormField.jsx';
+import FormActions from '../../components/FormActions.jsx';
 import Icon from '../../components/Icon.jsx';
+import { controlClass } from '../../components/formControl.js';
 import { useFetch } from '../../hooks/useFetch.js';
 import {
   actualizarCurso,
   crearCurso,
   eliminarPortada,
   obtenerCursoPropio,
+  publicarCurso,
   subirPortada,
 } from '../../services/curso.service.js';
 import { toFieldErrors } from '../../utils/validation.js';
@@ -23,9 +26,8 @@ import CoverField from './CoverField.jsx';
 import LessonEditor from './LessonEditor.jsx';
 
 const emptyCourse = { titulo: '', descripcion: '', portada: '', categoria: '', nivel: 'basico', estado: 'borrador' };
-const controlClass = 'w-full rounded-control border border-outline bg-surface px-3.5 py-2.5 text-body-md text-secondary placeholder:text-on-surface-variant/70 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary aria-invalid:border-error';
 
-function CourseForm({ curso, editing, initialNotice = null }) {
+function CourseForm({ curso, editing, totalLecciones = 0, initialNotice = null }) {
   const navigate = useNavigate();
   const [values, setValues] = useState(curso);
   const [previewPortada, setPreviewPortada] = useState(curso.portada ?? '');
@@ -35,8 +37,33 @@ function CourseForm({ curso, editing, initialNotice = null }) {
   const [errors, setErrors] = useState({});
   const [notice, setNotice] = useState(initialNotice);
   const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const previewTemporal = useRef(null);
   const busy = saving || uploading;
+  const puedePublicar = editing && values.estado === 'borrador' && totalLecciones > 0;
+  const statusMessage =
+    saving || uploading
+      ? 'Guardando…'
+      : notice?.variant === 'error'
+        ? 'No se pudo guardar'
+        : notice?.variant === 'success'
+          ? notice.message
+          : dirty
+            ? 'Cambios sin guardar'
+            : 'Todo guardado';
+  const statusTone = notice?.variant === 'error' ? 'error' : 'muted';
+
+  useEffect(() => {
+    if (!dirty) return undefined;
+
+    function warnUnsaved(event) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+
+    window.addEventListener('beforeunload', warnUnsaved);
+    return () => window.removeEventListener('beforeunload', warnUnsaved);
+  }, [dirty]);
 
   useEffect(() => () => {
     if (previewTemporal.current) {
@@ -61,6 +88,7 @@ function CourseForm({ curso, editing, initialNotice = null }) {
         setValues((previous) => ({ ...previous, [name]: value }));
         setErrors((previous) => ({ ...previous, [name]: undefined }));
         setNotice(null);
+        setDirty(true);
       },
     };
   }
@@ -85,6 +113,7 @@ function CourseForm({ curso, editing, initialNotice = null }) {
     setNombrePortada(archivo.name);
     setErrors((previous) => ({ ...previous, portada: undefined }));
     setNotice(null);
+    if (!editing) setDirty(true);
 
     if (!editing) return;
 
@@ -164,6 +193,7 @@ function CourseForm({ curso, editing, initialNotice = null }) {
         setValues(result.curso);
         setPreviewPortada(result.curso.portada ?? '');
         setNotice({ variant: 'success', message: 'Cambios guardados.' });
+        setDirty(false);
         return;
       }
 
@@ -189,6 +219,23 @@ function CourseForm({ curso, editing, initialNotice = null }) {
       navigate(`/instructor/cursos/${creado.id}/editar`, { replace: true });
     } catch (err) {
       setErrors(toFieldErrors(err.details, ['titulo', 'descripcion', 'categoria', 'nivel']));
+      setNotice({ variant: 'error', message: err.message });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function publicar() {
+    if (busy || !values.id) return;
+
+    setSaving(true);
+    setNotice(null);
+    try {
+      const result = await publicarCurso(values.id);
+      setValues((previous) => ({ ...previous, estado: result.curso.estado }));
+      setNotice({ variant: 'success', message: 'Curso publicado.' });
+      setDirty(false);
+    } catch (err) {
       setNotice({ variant: 'error', message: err.message });
     } finally {
       setSaving(false);
@@ -229,8 +276,6 @@ function CourseForm({ curso, editing, initialNotice = null }) {
           {estados[values.estado] ?? values.estado}
         </span>
       </div>
-
-      {notice && <Alert variant={notice.variant}>{notice.message}</Alert>}
 
       <fieldset disabled={busy} className="min-w-0 space-y-4">
         <FormField label="Título del curso" maxLength={150} error={errors.titulo} {...field('titulo')} />
@@ -292,7 +337,20 @@ function CourseForm({ curso, editing, initialNotice = null }) {
         />
       </fieldset>
 
-      <div className="border-t border-outline pt-5">
+      {notice?.variant === 'error' && <Alert variant="error">{notice.message}</Alert>}
+
+      <FormActions sticky={dirty} status={statusMessage} tone={statusTone}>
+        {puedePublicar && (
+          <Button
+            variant="secondary"
+            icon="publish"
+            iconPosition="start"
+            onClick={publicar}
+            disabled={busy}
+          >
+            Publicar curso
+          </Button>
+        )}
         <Button type="submit" icon="save" iconPosition="start" loading={saving || uploading}>
           {saving || uploading
             ? 'Guardando…'
@@ -300,7 +358,7 @@ function CourseForm({ curso, editing, initialNotice = null }) {
               ? 'Guardar cambios'
               : 'Crear borrador'}
         </Button>
-      </div>
+      </FormActions>
     </form>
   );
 }
@@ -309,6 +367,7 @@ function ExistingCourse({ id }) {
   const location = useLocation();
   const { data, loading, error, refetch } = useFetch(() => obtenerCursoPropio(id), [id]);
   const initialNotice = location.state?.notice ?? null;
+  const [lessonCount, setLessonCount] = useState(null);
 
   if (loading) return <p role="status" className="text-body-md text-on-surface-variant">Cargando curso…</p>;
   if (error) {
@@ -324,8 +383,17 @@ function ExistingCourse({ id }) {
 
   return (
     <div className="space-y-8">
-      <CourseForm curso={data.curso} editing initialNotice={initialNotice} />
-      <LessonEditor cursoId={id} lecciones={data.lecciones ?? []} />
+      <CourseForm
+        curso={data.curso}
+        editing
+        totalLecciones={lessonCount ?? data.lecciones?.length ?? 0}
+        initialNotice={initialNotice}
+      />
+      <LessonEditor
+        cursoId={id}
+        lecciones={data.lecciones ?? []}
+        onCountChange={setLessonCount}
+      />
     </div>
   );
 }
@@ -343,7 +411,7 @@ export default function CourseEditorPage() {
         >
           <Icon name="arrow_back" className="text-[20px]" />
         </Link>
-        <h1 className="text-headline-sm text-secondary">
+        <h1 className="text-headline-lg-mobile text-secondary sm:text-headline-lg">
           {id ? 'Editar curso' : 'Nuevo curso'}
         </h1>
       </div>
