@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import Alert from '../components/Alert.jsx';
+import Button from '../components/Button.jsx';
 import CourseCover from '../components/CourseCover.jsx';
 import Icon from '../components/Icon.jsx';
 import { listarCursos } from '../services/curso.service.js';
@@ -539,21 +540,16 @@ export default function CatalogPage() {
                         )}
                       </div>
 
-                      <Link
+                      <Button
+                        as={Link}
                         to={`/catalog/${curso.id}`}
                         aria-label={`Ver curso: ${curso.titulo}`}
-                        className="group/cta mt-3 flex min-h-11 w-full overflow-hidden rounded-control border border-outline bg-surface transition-[background-color,border-color] duration-200 ease-out-quint hover:border-primary hover:bg-primary"
+                        variant="secondary"
+                        icon="arrow_forward"
+                        className="mt-3 w-full"
                       >
-                        <span className="flex flex-1 items-center px-3.5 text-label-md font-semibold text-secondary transition-colors duration-200 group-hover/cta:text-on-primary">
-                          Ver curso
-                        </span>
-                        <span className="flex w-11 shrink-0 items-center justify-center border-l border-outline bg-surface-variant/60 text-primary transition-[background-color,border-color,color] duration-200 group-hover/cta:border-white/20 group-hover/cta:bg-white/10 group-hover/cta:text-on-primary">
-                          <Icon
-                            name="arrow_forward"
-                            className="text-[18px] transition-transform duration-200 ease-out-quint group-hover/cta:translate-x-0.5 motion-reduce:group-hover/cta:translate-x-0"
-                          />
-                        </span>
-                      </Link>
+                        Ver curso
+                      </Button>
                     </div>
                   </div>
                 </article>

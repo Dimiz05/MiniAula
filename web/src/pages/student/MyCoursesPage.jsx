@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import Alert from '../../components/Alert.jsx';
 import Button from '../../components/Button.jsx';
-import CourseCover from '../../components/CourseCover.jsx';
+import CourseCard from '../../components/CourseCard.jsx';
 import CourseProgress from '../../components/CourseProgress.jsx';
 import Icon from '../../components/Icon.jsx';
 import { useFetch } from '../../hooks/useFetch.js';
@@ -80,13 +80,16 @@ export default function MyCoursesPage() {
             Revisa tus cursos inscritos, su estado y retoma tu aprendizaje.
           </p>
         </div>
-        <Link
+        <Button
+          as={Link}
           to="/catalog"
-          className="inline-flex shrink-0 items-center gap-2 rounded-control border border-outline bg-surface px-4 py-2 text-label-md text-secondary transition-colors hover:bg-surface-variant"
+          variant="secondary"
+          icon="explore"
+          iconPosition="start"
+          className="shrink-0"
         >
-          <Icon name="explore" className="text-[20px]" />
           Explorar catálogo
-        </Link>
+        </Button>
       </header>
 
       {loading && (
@@ -106,7 +109,7 @@ export default function MyCoursesPage() {
 
       {!loading && !error && inscripciones.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-panel border border-dashed border-outline bg-surface-variant/40 p-8 text-center">
-          <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-surface text-primary shadow-card">
+          <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-surface text-primary">
             <Icon name="auto_stories" className="text-[24px]" />
           </span>
           <h2 className="mb-1 text-headline-sm text-secondary">
@@ -190,95 +193,81 @@ export default function MyCoursesPage() {
                   Number(inscripcion.leccionesCompletadas) || 0;
 
                 return (
-                  <li
-                    key={inscripcion.id ?? cursoId}
-                    className="flex flex-col justify-between overflow-hidden rounded-panel border border-outline bg-surface shadow-card transition-shadow hover:shadow-hover"
-                  >
-                    <div>
-                      <CourseCover
-                        portada={curso?.portada}
-                        alt={curso ? `Portada de ${titulo}` : ''}
-                        className="h-28"
-                        iconClassName="absolute right-4 top-4 text-[52px] text-white/15"
-                      >
-                        <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-label-sm font-semibold text-primary shadow-sm">
-                          {curso?.categoria ?? 'Curso'}
-                        </span>
-                        {completadoCurso && (
-                          <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-success-light px-2.5 py-1 text-label-sm font-semibold text-success shadow-sm">
-                            <Icon name="verified" filled className="text-[16px]" />
-                            Completado
+                  <li key={inscripcion.id ?? cursoId} className="h-full">
+                    <CourseCard
+                      className="h-full"
+                      portada={curso?.portada}
+                      alt={curso ? `Portada de ${titulo}` : ''}
+                      cover={
+                        <>
+                          <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-label-sm font-semibold text-primary shadow-sm">
+                            {curso?.categoria ?? 'Curso'}
                           </span>
-                        )}
-                      </CourseCover>
-
-                      <div className="p-5">
-                        <h3 className="mb-2 break-words text-balance text-headline-sm leading-snug text-secondary">
-                          {titulo}
-                        </h3>
-
-                        {curso?.descripcion && (
-                          <p className="mb-3 line-clamp-2 break-words text-body-sm text-on-surface-variant">
-                            {curso.descripcion}
-                          </p>
-                        )}
-
-                        {!curso && (
-                          <p className="mb-3 text-body-sm text-on-surface-variant">
-                            La información pública de este curso ya no está
-                            disponible.
-                          </p>
-                        )}
-
-                        <CourseProgress
-                          porcentaje={avance}
-                          leccionesCompletadas={leccionesCompletadas}
-                          totalLecciones={totalLecciones}
-                          titulo={titulo}
-                        />
-
-                        <dl className="my-3 grid grid-cols-2 gap-2 border-y border-outline-light py-2 text-label-sm">
-                          <div>
-                            <dt className="text-on-surface-variant">Nivel:</dt>
-                            <dd className="font-semibold text-secondary">
-                              {niveles[curso?.nivel] ?? curso?.nivel ?? 'Sin nivel'}
-                            </dd>
-                          </div>
-                          <div>
-                            <dt className="text-on-surface-variant">Estado:</dt>
-                            <dd
-                              className={`font-semibold ${
-                                completadoCurso ? 'text-success' : 'text-primary'
-                              }`}
-                            >
-                              {completadoCurso ? 'Completado' : 'En progreso'}
-                            </dd>
-                          </div>
-                          {fecha && (
-                            <div className="col-span-2">
-                              <dt className="text-on-surface-variant">Inscrito el:</dt>
-                              <dd className="font-semibold text-secondary">{fecha}</dd>
-                            </div>
+                          {completadoCurso && (
+                            <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-success-light px-2.5 py-1 text-label-sm font-semibold text-success shadow-sm">
+                              <Icon name="verified" filled className="text-[16px]" />
+                              Completado
+                            </span>
                           )}
-                        </dl>
-                      </div>
-                    </div>
+                        </>
+                      }
+                      title={titulo}
+                      description={
+                        curso?.descripcion ??
+                        (!curso
+                          ? 'La información pública de este curso ya no está disponible.'
+                          : null)
+                      }
+                      action={
+                        cursoId ? (
+                          <Button
+                            as={Link}
+                            to={`/catalog/${cursoId}`}
+                            variant="secondary"
+                            icon="arrow_forward"
+                            className="w-full"
+                          >
+                            Ver curso
+                          </Button>
+                        ) : (
+                          <span className="block text-center text-label-sm text-on-surface-variant">
+                            Curso no disponible
+                          </span>
+                        )
+                      }
+                    >
+                      <CourseProgress
+                        porcentaje={avance}
+                        leccionesCompletadas={leccionesCompletadas}
+                        totalLecciones={totalLecciones}
+                        titulo={titulo}
+                      />
 
-                    <div className="p-5 pt-0">
-                      {cursoId ? (
-                        <Link
-                          to={`/catalog/${cursoId}`}
-                          className="flex w-full items-center justify-center gap-1.5 rounded-control border border-outline bg-surface px-3 py-2 text-label-md text-secondary transition-colors hover:bg-surface-variant"
-                        >
-                          <Icon name="arrow_forward" className="text-[18px]" />
-                          Ver curso
-                        </Link>
-                      ) : (
-                        <span className="block text-center text-label-sm text-on-surface-variant">
-                          Curso no disponible
-                        </span>
-                      )}
-                    </div>
+                      <dl className="my-3 grid grid-cols-2 gap-2 border-y border-outline-light py-2 text-label-sm">
+                        <div>
+                          <dt className="text-on-surface-variant">Nivel:</dt>
+                          <dd className="font-semibold text-secondary">
+                            {niveles[curso?.nivel] ?? curso?.nivel ?? 'Sin nivel'}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-on-surface-variant">Estado:</dt>
+                          <dd
+                            className={`font-semibold ${
+                              completadoCurso ? 'text-success' : 'text-primary'
+                            }`}
+                          >
+                            {completadoCurso ? 'Completado' : 'En progreso'}
+                          </dd>
+                        </div>
+                        {fecha && (
+                          <div className="col-span-2">
+                            <dt className="text-on-surface-variant">Inscrito el:</dt>
+                            <dd className="font-semibold text-secondary">{fecha}</dd>
+                          </div>
+                        )}
+                      </dl>
+                    </CourseCard>
                   </li>
                 );
               })}
